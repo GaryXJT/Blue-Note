@@ -1,5 +1,5 @@
 import type { NextApiRequest, NextApiResponse } from 'next'
-import { Post } from '@/api/types'
+import { Post } from '../../../api/types'
 
 // 模拟数据
 const mockPosts: Post[] = Array(50)

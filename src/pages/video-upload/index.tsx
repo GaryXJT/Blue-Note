@@ -5,7 +5,7 @@ import { Button, Upload, message } from 'antd'
 import { UploadOutlined } from '@ant-design/icons'
 import styles from './VideoUpload.module.scss'
 import type { UploadProps } from 'antd'
-import PublishVideoPage from '@/components/publish/PublishVideoPage'
+import PublishVideoPage from '../../components/publish/PublishVideoPage'
 
 const VideoUploadPage: React.FC = () => {
   const router = useRouter()
