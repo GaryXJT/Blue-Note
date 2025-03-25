@@ -1,12 +1,13 @@
 import React, { useState } from 'react'
-import { Modal, Form, Input, Button, Checkbox } from 'antd'
+import { Modal, Form, Input, Button, Checkbox, message } from 'antd'
 import { UserOutlined, LockOutlined, SafetyCertificateOutlined } from '@ant-design/icons'
 import styles from './LoginModal.module.scss'
+import * as authAPI from '../../api/services/auth'
 
 interface LoginModalProps {
   visible: boolean
   onClose: () => void
-  onLogin: (token: string, role: string) => void
+  onLogin: (username: string, password: string, captchaId: string, captchaCode: string) => void
 }
 
 interface CaptchaData {
@@ -24,16 +25,23 @@ const LoginModal: React.FC<LoginModalProps> = ({
     captchaId: '',
     captchaImage: ''
   })
+  const [loading, setLoading] = useState(false)
 
   // 获取验证码
   const fetchCaptcha = async () => {
     try {
-      // 这里添加获取验证码的接口调用
-      // const response = await api.getCaptcha()
-      // setCaptcha(response)
-      console.log('获取验证码')
+      // 调用验证码API
+      const result = await authAPI.getCaptcha()
+      if (result.data) {
+        setCaptcha({
+          captchaId: result.data.captcha_id,
+          captchaImage: result.data.captcha_image
+        })
+        console.log(result.data)
+      }
     } catch (error) {
       console.error('获取验证码失败:', error)
+      message.error('获取验证码失败，请刷新重试')
     }
   }
 
@@ -46,13 +54,23 @@ const LoginModal: React.FC<LoginModalProps> = ({
 
   const handleSubmit = async (values: any) => {
     try {
-      // 这里添加实际的登录逻辑
-      console.log('登录信息:', values)
-      onLogin('dummy-token', 'user')
+      setLoading(true)
+      const { username, password, captcha: captchaCode } = values
+      
+      if (!captcha.captchaId) {
+        message.error('验证码已失效，请刷新验证码')
+        return
+      }
+      
+      // 调用父组件的登录方法
+      await onLogin(username, password, captcha.captchaId, captchaCode)
+      
+      // 成功后重置表单
       form.resetFields()
-      onClose()
+      setLoading(false)
     } catch (error) {
       console.error('登录失败:', error)
+      setLoading(false)
     }
   }
 
@@ -128,7 +146,7 @@ const LoginModal: React.FC<LoginModalProps> = ({
           </Checkbox>
         </Form.Item>
         <Form.Item>
-          <Button type="primary" htmlType="submit" block size="large">
+          <Button type="primary" htmlType="submit" block size="large" loading={loading}>
             登录
           </Button>
         </Form.Item>
