@@ -1,18 +1,18 @@
-import axios, { AxiosInstance, AxiosRequestConfig, AxiosResponse } from 'axios'
+import axios, { AxiosInstance, AxiosRequestConfig, AxiosResponse, InternalAxiosRequestConfig } from 'axios'
 import { message } from 'antd'
-import { API_BASE_URL, API_CONFIG } from '../config/api'
+import { API_CONFIG } from '../config/api'
 
 // 创建axios实例
 const request: AxiosInstance = axios.create({
-  baseURL: API_BASE_URL,
   ...API_CONFIG,
 })
 
 // 请求拦截器
 request.interceptors.request.use(
-  (config) => {
+  (config: InternalAxiosRequestConfig<any>) => {
     const token = localStorage.getItem('token')
     if (token) {
+      config.headers = config.headers || {}
       config.headers.Authorization = `Bearer ${token}`
     }
     return config

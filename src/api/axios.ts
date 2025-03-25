@@ -1,4 +1,4 @@
-import axios, { AxiosInstance, AxiosRequestConfig, AxiosResponse } from 'axios'
+import axios, { AxiosInstance, AxiosRequestConfig, AxiosResponse, InternalAxiosRequestConfig } from 'axios'
 
 // 创建自定义错误类
 export class ApiError extends Error {
@@ -8,10 +8,17 @@ export class ApiError extends Error {
   }
 }
 
-// 创建请求配置接口
-export interface RequestConfig extends AxiosRequestConfig {
-  loading?: boolean // 是否显示加载状态
-  skipErrorHandler?: boolean // 是否跳过错误处理
+// 创建请求配置接口，继承自AxiosRequestConfig而不是扩展它
+export interface RequestConfig {
+  url?: string;
+  method?: string;
+  baseURL?: string;
+  headers?: Record<string, string>;
+  params?: any;
+  data?: any;
+  timeout?: number;
+  loading?: boolean; // 是否显示加载状态
+  skipErrorHandler?: boolean; // 是否跳过错误处理
 }
 
 // 创建响应数据接口
@@ -23,7 +30,7 @@ export interface ApiResponse<T = any> {
 
 // 创建Axios实例
 const instance: AxiosInstance = axios.create({
-  baseURL: process.env.NEXT_PUBLIC_API_BASE_URL || '/api', // API基础URL
+  baseURL: process.env.NEXT_PUBLIC_API_BASE_URL || 'https://gxzkgaibncip.sealoshzh.site/api/v1', // API基础URL
   timeout: 10000, // 请求超时时间
   headers: {
     'Content-Type': 'application/json',
@@ -32,7 +39,7 @@ const instance: AxiosInstance = axios.create({
 
 // 请求拦截器
 instance.interceptors.request.use(
-  (config: RequestConfig) => {
+  (config: InternalAxiosRequestConfig<any>) => {
     // 获取token（如果有的话）
     const token = localStorage.getItem('token')
     if (token) {
@@ -48,16 +55,9 @@ instance.interceptors.request.use(
 
 // 响应拦截器
 instance.interceptors.response.use(
-  (response: AxiosResponse<ApiResponse>) => {
-    const { data } = response
-
-    // 如果响应码不是0，说明接口出错
-    if (data.code !== 0) {
-      const error = new ApiError(data.code, data.message, data.data)
-      return Promise.reject(error)
-    }
-
-    return data
+  (response: AxiosResponse) => {
+    // 直接返回响应数据，不做处理
+    return response;
   },
   (error) => {
     if (error.response) {
@@ -102,8 +102,12 @@ export const request = async <T = any>(
   config: RequestConfig
 ): Promise<ApiResponse<T>> => {
   try {
-    const response = await instance.request<any, ApiResponse<T>>(config)
-    return response
+    // 提取自定义属性
+    const { loading, skipErrorHandler, ...axiosConfig } = config;
+    
+    // 传递标准AxiosRequestConfig给axios
+    const response = await instance.request<any, AxiosResponse<ApiResponse<T>>>(axiosConfig as AxiosRequestConfig)
+    return response.data
   } catch (error) {
     if (error instanceof ApiError) {
       throw error

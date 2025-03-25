@@ -10,6 +10,8 @@ import styles from '@/styles/Home.module.scss'
 import { mockPosts } from '@/data/mockData'
 import Link from 'next/link'
 import { UserOutlined } from '@ant-design/icons'
+import { message } from 'antd'
+import * as authAPI from '@/api/services/auth'
 
 const Home: React.FC = () => {
   const router = useRouter()
@@ -75,32 +77,34 @@ const Home: React.FC = () => {
     captchaCode: string
   ) => {
     try {
-      // TODO: 实现实际的登录逻辑
-      console.log('Login attempt with:', {
+      // 调用登录API
+      const result = await authAPI.login({
         username,
         password,
         captchaId,
         captchaCode,
       })
 
-      // 模拟验证码验证
-      if (!captchaCode) {
-        alert('请输入验证码')
-        return
+      // 保存登录状态
+      if (result.data) {
+        // 提取后端返回的数据
+        const { token, user_id, username: user, role } = result.data
+        
+        // 将token和用户信息保存到本地存储
+        localStorage.setItem('token', token)
+        localStorage.setItem('userId', user_id)
+        localStorage.setItem('username', user)
+        localStorage.setItem('role', role)
+
+        // 关闭登录弹窗
+        setIsLoginModalOpen(false)
+
+        // 提示登录成功
+        message.success('登录成功')
       }
-
-      // 模拟登录成功
-      localStorage.setItem('token', 'dummy_token')
-      localStorage.setItem('username', username)
-
-      // 关闭登录弹窗
-      setIsLoginModalOpen(false)
-
-      // 可以添加登录成功的提示
-      alert('登录成功！')
     } catch (error) {
       console.error('Login failed:', error)
-      alert('登录失败，请重试')
+      message.error('登录失败，请检查用户名和密码是否正确')
     }
   }
 
