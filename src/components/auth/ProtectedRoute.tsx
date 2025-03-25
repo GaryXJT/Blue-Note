@@ -20,14 +20,20 @@ const ProtectedRoute: React.FC<ProtectedRouteProps> = ({
     // 检查是否登录
     if (!isLoggedIn) {
       message.error('请先登录')
-      router.push('/')
+      // 如果当前不在登录页面，才重定向
+      if (router.pathname !== '/') {
+        router.push('/')
+      }
       return
     }
     
     // 如果需要特定角色，检查用户角色
     if (requiredRole && user?.role !== requiredRole) {
       message.error('您没有权限访问此页面')
-      router.push('/')
+      // 如果当前不在首页，才重定向
+      if (router.pathname !== '/') {
+        router.push('/')
+      }
       return
     }
   }, [isLoggedIn, user, requiredRole, router])
@@ -41,4 +47,4 @@ const ProtectedRoute: React.FC<ProtectedRouteProps> = ({
   return <>{children}</>
 }
 
-export default ProtectedRoute 
+export default ProtectedRoute
