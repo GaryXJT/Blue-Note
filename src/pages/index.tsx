@@ -11,7 +11,7 @@ import { mockPosts } from '@/data/mockData'
 import Link from 'next/link'
 import { UserOutlined } from '@ant-design/icons'
 import { message } from 'antd'
-import * as authAPI from '@/api/services/auth'
+import { authAPI } from '@/api/services'
 
 const Home: React.FC = () => {
   const router = useRouter()

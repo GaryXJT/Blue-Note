@@ -2,7 +2,7 @@ import React, { useState } from 'react'
 import { Modal, Form, Input, Button, Checkbox, message } from 'antd'
 import { UserOutlined, LockOutlined, SafetyCertificateOutlined } from '@ant-design/icons'
 import styles from './LoginModal.module.scss'
-import * as authAPI from '../../api/services/auth'
+import { authAPI } from '@/api/services'
 
 interface LoginModalProps {
   visible: boolean
