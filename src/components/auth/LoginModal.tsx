@@ -3,8 +3,9 @@ import { Modal, Form, Input, Button, Checkbox, message } from 'antd'
 import { UserOutlined, LockOutlined, SafetyOutlined } from '@ant-design/icons'
 import styles from './LoginModal.module.scss'
 import { useRouter } from 'next/router'
-import { authAPI } from '@api/services'
+import { getCaptcha, login as loginApi, LoginResponse } from '@/api/services/auth'
 import useAuthStore from '@/store/useAuthStore'
+import { ApiResponse } from '@/api/axios'
 
 interface LoginModalProps {
   visible: boolean
@@ -34,14 +35,11 @@ const LoginModal: React.FC<LoginModalProps> = ({
   // 获取验证码
   const fetchCaptcha = async () => {
     try {
-      // 调用验证码API
-      const result = await authAPI.getCaptcha()
-      if (result.data) {
-        setCaptcha({
-          captchaId: result.data.captcha_id,
-          captchaImage: result.data.captcha_image
-        })
-      }
+      const response = await getCaptcha()
+      setCaptcha({
+        captchaId: response.data.captcha_id,
+        captchaImage: response.data.captcha_image
+      })
     } catch (error) {
       console.error('获取验证码失败:', error)
       message.error('获取验证码失败，请刷新重试')
@@ -66,27 +64,26 @@ const LoginModal: React.FC<LoginModalProps> = ({
         return
       }
       
-      // 调用登录API
-      const result = await authAPI.login({
+      const response: ApiResponse<LoginResponse> = await loginApi({
         username,
         password,
         captchaId: captcha.captchaId,
         captchaCode
       })
       
-      if (result.data) {
+      if (response) {
         // 使用zustand存储用户信息和token
         login({
-          userId: result.data.user_id,
-          username: result.data.username,
-          role: result.data.role
-        }, result.data.token)
+          userId: response.data.user_id,
+          username: response.data.username,
+          role: response.data.role
+        }, response.data.token)
         
         message.success('登录成功')
         onCancel() // 关闭登录弹窗
         
         // 可以根据用户角色决定跳转到哪个页面
-        if (result.data.role === 'admin') {
+        if (response.data.role === 'admin') {
           router.push('/admin')
         } else {
           router.push('/post/profile')
