@@ -3,7 +3,7 @@ import { Modal, Form, Input, Button, Checkbox, message } from 'antd'
 import { UserOutlined, LockOutlined, SafetyOutlined } from '@ant-design/icons'
 import styles from './LoginModal.module.scss'
 import { useRouter } from 'next/router'
-import * as authAPI from '../../api/services/auth'
+import {authAPI} from '../../api/services/index'
 
 interface LoginModalProps {
   visible: boolean
