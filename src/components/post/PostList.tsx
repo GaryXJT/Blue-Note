@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react'
 import { Select, Input, Spin, Empty, message, Pagination } from 'antd'
 import { SearchOutlined } from '@ant-design/icons'
-import { postAPI } from '../../services/api'
+import { postsAPI } from '@api/services'
 import type { Post as ApiPost } from '../../types/api'
 import PostCard from './PostCard'
 import styles from './PostList.module.scss'
@@ -24,22 +24,24 @@ const PostList: React.FC<PostListProps> = ({ userId, type, tag, status }) => {
   const [searchText, setSearchText] = useState('')
 
   // 获取帖子列表
-  const fetchPosts = async (page = 1) => {
+  const fetchPosts = async (pageNum?: number) => {
     setLoading(true)
     try {
-      const response = await postAPI.getPosts({
-        page,
+      const response = await postsAPI.getPosts({
+        page: pageNum || current,
         limit: pageSize,
-        type,
-        tag,
-        status,
-        userId,
+        status: 'published',
+        ...(type && { type }),
+        ...(tag && { tag }),
+        ...(userId && { userId }),
+        ...(searchText && { search: searchText })
       })
-      setPosts(response.data.posts as unknown as ApiPost[])
+      setPosts(response.data.posts as any)
       setTotal(response.data.total)
+      setLoading(false)
     } catch (error) {
+      console.error('获取帖子列表失败:', error)
       message.error('获取帖子列表失败')
-    } finally {
       setLoading(false)
     }
   }

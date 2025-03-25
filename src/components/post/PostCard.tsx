@@ -1,7 +1,7 @@
 import React, { useState } from 'react'
 import { Card, Avatar, Tag, Space, message } from 'antd'
 import { HeartOutlined, HeartFilled, CommentOutlined } from '@ant-design/icons'
-import { postAPI } from '../../services/api'
+import { postsAPI } from '@api/services'
 import type { Post } from '../../types/api'
 import styles from './PostCard.module.scss'
 
@@ -17,11 +17,11 @@ const PostCard: React.FC<PostCardProps> = ({ post }) => {
   const handleLike = async () => {
     try {
       if (liked) {
-        await postAPI.unlikePost(post.postId)
+        await postsAPI.unlikePost(post.postId)
         setLikes((prev) => prev - 1)
         message.success('取消点赞成功')
       } else {
-        await postAPI.likePost(post.postId)
+        await postsAPI.likePost(post.postId)
         setLikes((prev) => prev + 1)
         message.success('点赞成功')
       }

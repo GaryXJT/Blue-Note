@@ -28,6 +28,7 @@ import {
 import type { UploadFile, UploadProps } from 'antd'
 import type { ColumnsType } from 'antd/es/table'
 import type { Post } from '@/api/types' // 仅导入Post类型
+import type { MenuType } from '@/types' // 导入MenuType类型
 import PostHeader from '@/components/post/PostHeader'
 import PublishPage from '@/components/publish/PublishPage'
 import PublishVideoPage from '@/components/publish/PublishVideoPage'
@@ -35,8 +36,6 @@ import SideMenu from '@/components/post/SideMenu'
 import Waterfall from '@/components/layout/Waterfall'
 import styles from './Post.module.scss'
 import PostModal from '@/components/post/PostModal'
-
-type MenuType = 'publish' | 'drafts' | 'works' | 'profile' | 'notifications'
 
 // 定义笔记数据接口
 interface PostData {
@@ -124,6 +123,7 @@ const Post: React.FC = () => {
   const [profilePosts, setProfilePosts] = useState<Post[]>([])
   const [isLoadingPosts, setIsLoadingPosts] = useState(false)
   const [profilePostsPage, setProfilePostsPage] = useState(1)
+  const [userHasNoPosts, setUserHasNoPosts] = useState(true)
 
   // 添加通知相关状态
   const [activeNotificationTab, setActiveNotificationTab] = useState<
@@ -756,7 +756,8 @@ const Post: React.FC = () => {
   // 模拟加载个人主页笔记数据
   const loadProfilePosts = useCallback(() => {
     // 实际项目中应该从API获取数据
-    setIsLoadingPosts(true)
+    setIsLoadingPosts(true);
+    setUserHasNoPosts(false); // 确保变量已定义
 
     // 模拟网络请求延迟
     setTimeout(() => {
@@ -865,7 +866,6 @@ const Post: React.FC = () => {
         ]
 
         setProfilePosts(userPosts)
-        setUserHasNoPosts(false)
       } else if (profilePostsPage === 2) {
         // 第二页添加更多数据
         const morePosts: Post[] = [
@@ -1009,9 +1009,9 @@ const Post: React.FC = () => {
         setProfilePosts((prev) => [...prev, ...morePosts])
       }
 
-      setIsLoadingPosts(false)
-    }, 800)
-  }, [profilePostsPage])
+      setIsLoadingPosts(false);
+    }, 800);
+  }, [profilePostsPage]);
 
   // 加载更多笔记
   const handleLoadMorePosts = useCallback(() => {
@@ -1021,8 +1021,6 @@ const Post: React.FC = () => {
   }, [isLoadingPosts, profilePostsPage])
 
   // 当切换到个人主页的笔记标签时加载数据
-  const [userHasNoPosts, setUserHasNoPosts] = useState(true)
-
   useEffect(() => {
     if (activeMenu === 'profile' && activeProfileTab === 'all') {
       if (profilePosts.length === 0) {

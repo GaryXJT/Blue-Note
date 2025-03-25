@@ -1,33 +1,86 @@
 import { request } from '../axios'
-import { Post, PostListParams, PostListResponse } from '../types'
+import { Post } from '../../types'
 
-export const PostsApi = {
-  // 获取帖子列表
-  getPosts: (params: PostListParams) =>
-    request<PostListResponse>({
-      url: '/posts',
-      method: 'GET',
-      params,
-    }),
+// 创建帖子
+export const createPost = (data: {
+  title: string
+  content: string
+  images: string[]
+  video?: string
+}) => {
+  return request<Post>({
+    url: '/posts',
+    method: 'POST',
+    data
+  })
+}
 
-  // 获取单个帖子详情
-  getPost: (id: string) =>
-    request<Post>({
-      url: `/posts/${id}`,
-      method: 'GET',
-    }),
+// 获取帖子列表
+export const getPosts = (params?: {
+  page?: number
+  limit?: number
+  userId?: string
+  status?: string
+  type?: 'image' | 'video'
+  tag?: string
+}) => {
+  return request<{ posts: Post[]; total: number }>({
+    url: '/posts',
+    method: 'GET',
+    params
+  })
+}
 
-  // 点赞帖子
-  likePost: (id: string) =>
-    request<{ likes: number }>({
-      url: `/posts/${id}/like`,
-      method: 'POST',
-    }),
+// 获取帖子详情
+export const getPostDetail = (postId: string) => {
+  return request<Post>({
+    url: `/posts/${postId}`,
+    method: 'GET'
+  })
+}
 
-  // 取消点赞
-  unlikePost: (id: string) =>
-    request<{ likes: number }>({
-      url: `/posts/${id}/unlike`,
-      method: 'POST',
-    }),
+// 更新帖子
+export const updatePost = (postId: string, data: {
+  title?: string
+  content?: string
+  images?: string[]
+  video?: string
+}) => {
+  return request<Post>({
+    url: `/posts/${postId}`,
+    method: 'PUT',
+    data
+  })
+}
+
+// 删除帖子
+export const deletePost = (postId: string) => {
+  return request({
+    url: `/posts/${postId}`,
+    method: 'DELETE'
+  })
+}
+
+// 点赞帖子
+export const likePost = (postId: string) => {
+  return request({
+    url: `/posts/${postId}/like`,
+    method: 'POST'
+  })
+}
+
+// 取消点赞
+export const unlikePost = (postId: string) => {
+  return request({
+    url: `/posts/${postId}/like`,
+    method: 'DELETE'
+  })
+}
+
+// 检查点赞状态
+export const checkLikeStatus = (postId: string) => {
+  return request<{ hasLiked: boolean }>({
+    url: `/posts/${postId}/like`,
+    method: 'GET'
+  })
 }

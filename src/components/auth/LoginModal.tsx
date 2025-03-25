@@ -3,12 +3,12 @@ import { Modal, Form, Input, Button, Checkbox, message } from 'antd'
 import { UserOutlined, LockOutlined, SafetyOutlined } from '@ant-design/icons'
 import styles from './LoginModal.module.scss'
 import { useRouter } from 'next/router'
-import {authAPI} from '../../api/services/index'
+import { authAPI } from '@/api/services'
+import useAuthStore from '@/store/useAuthStore'
 
 interface LoginModalProps {
   visible: boolean
-  onClose: () => void
-  onLogin: (username: string, password: string, captchaId: string, captchaCode: string) => void
+  onCancel: () => void
 }
 
 interface CaptchaData {
@@ -18,15 +18,18 @@ interface CaptchaData {
 
 const LoginModal: React.FC<LoginModalProps> = ({
   visible,
-  onClose,
-  onLogin,
+  onCancel,
 }) => {
   const [form] = Form.useForm()
+  const router = useRouter()
+  const [loading, setLoading] = useState(false)
   const [captcha, setCaptcha] = useState<CaptchaData>({
     captchaId: '',
     captchaImage: ''
   })
-  const [loading, setLoading] = useState(false)
+
+  // 使用zustand auth store
+  const login = useAuthStore(state => state.login)
 
   // 获取验证码
   const fetchCaptcha = async () => {
@@ -38,7 +41,6 @@ const LoginModal: React.FC<LoginModalProps> = ({
           captchaId: result.data.captcha_id,
           captchaImage: result.data.captcha_image
         })
-        console.log(result.data)
       }
     } catch (error) {
       console.error('获取验证码失败:', error)
@@ -47,11 +49,12 @@ const LoginModal: React.FC<LoginModalProps> = ({
   }
 
   // 在弹窗显示时获取验证码
-  React.useEffect(() => {
+  useEffect(() => {
     if (visible) {
       fetchCaptcha()
+      form.resetFields()
     }
-  }, [visible])
+  }, [visible, form])
 
   const handleSubmit = async (values: any) => {
     try {
@@ -63,14 +66,46 @@ const LoginModal: React.FC<LoginModalProps> = ({
         return
       }
       
-      // 调用父组件的登录方法
-      await onLogin(username, password, captcha.captchaId, captchaCode)
+      // 调用登录API
+      const result = await authAPI.login({
+        username,
+        password,
+        captchaId: captcha.captchaId,
+        captchaCode
+      })
       
-      // 成功后重置表单
-      form.resetFields()
-      setLoading(false)
+      if (result.data) {
+        // 使用zustand存储登录信息
+        login(
+          {
+            userId: result.data.user_id,
+            username: result.data.username,
+            nickname: result.data.username, // 假设初始昵称与用户名相同
+            avatar: '', // 默认头像
+            bio: '',
+            role: result.data.role as 'user' | 'admin',
+            createdAt: new Date().toISOString(),
+            updatedAt: new Date().toISOString()
+          }, 
+          result.data.token
+        )
+        
+        message.success('登录成功')
+        onCancel()
+        
+        // 可以在登录成功后刷新或重定向
+        if (router.pathname === '/') {
+          window.location.reload()
+        } else {
+          router.push('/')
+        }
+      }
     } catch (error) {
       console.error('登录失败:', error)
+      message.error('登录失败，请检查账号密码和验证码')
+      // 刷新验证码
+      fetchCaptcha()
+    } finally {
       setLoading(false)
     }
   }
@@ -79,7 +114,7 @@ const LoginModal: React.FC<LoginModalProps> = ({
     <Modal
       title="账号登录"
       open={visible}
-      onCancel={onClose}
+      onCancel={onCancel}
       footer={null}
       width={400}
       className={styles.loginModal}
@@ -123,7 +158,7 @@ const LoginModal: React.FC<LoginModalProps> = ({
             />
             <div className={styles.captchaImage} onClick={fetchCaptcha}>
               {captcha.captchaImage ? (
-                <img src={captcha.captchaImage} alt="验证码" />
+                <div dangerouslySetInnerHTML={{ __html: captcha.captchaImage }} />
               ) : (
                 <div className={styles.captchaPlaceholder}>点击获取验证码</div>
               )}
@@ -152,7 +187,7 @@ const LoginModal: React.FC<LoginModalProps> = ({
           </Button>
         </Form.Item>
         <div className={styles.register}>
-          新用户可直接登录注册
+          <span>新用户登录即自动注册</span>
         </div>
       </Form>
     </Modal>

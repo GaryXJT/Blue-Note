@@ -11,8 +11,7 @@ import { mockPosts } from '@/data/mockData'
 import Link from 'next/link'
 import { UserOutlined } from '@ant-design/icons'
 import { message } from 'antd'
-import * as authAPI from '@/api/services/auth'
-
+import { authAPI } from '@api/services'
 const Home: React.FC = () => {
   const router = useRouter()
   const [posts, setPosts] = useState<any[]>([])
@@ -70,44 +69,6 @@ const Home: React.FC = () => {
     setIsLoginModalOpen(true)
   }
 
-  const handleLoginSubmit = async (
-    username: string,
-    password: string,
-    captchaId: string,
-    captchaCode: string
-  ) => {
-    try {
-      // 调用登录API
-      const result = await authAPI.login({
-        username,
-        password,
-        captchaId,
-        captchaCode,
-      })
-
-      // 保存登录状态
-      if (result.data) {
-        // 提取后端返回的数据
-        const { token, user_id, username: user, role } = result.data
-        
-        // 将token和用户信息保存到本地存储
-        localStorage.setItem('token', token)
-        localStorage.setItem('userId', user_id)
-        localStorage.setItem('username', user)
-        localStorage.setItem('role', role)
-
-        // 关闭登录弹窗
-        setIsLoginModalOpen(false)
-
-        // 提示登录成功
-        message.success('登录成功')
-      }
-    } catch (error) {
-      console.error('Login failed:', error)
-      message.error('登录失败，请检查用户名和密码是否正确')
-    }
-  }
-
   return (
     <>
       <Head>
@@ -145,8 +106,7 @@ const Home: React.FC = () => {
 
       <LoginModal
         visible={isLoginModalOpen}
-        onClose={() => setIsLoginModalOpen(false)}
-        onLogin={handleLoginSubmit}
+        onCancel={() => setIsLoginModalOpen(false)}
       />
     </>
   )
