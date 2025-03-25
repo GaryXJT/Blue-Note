@@ -3,9 +3,9 @@ import { Modal, Form, Input, Button, Checkbox, message } from 'antd'
 import { UserOutlined, LockOutlined, SafetyOutlined } from '@ant-design/icons'
 import styles from './LoginModal.module.scss'
 import { useRouter } from 'next/router'
-import { getCaptcha, login as loginApi, LoginResponse } from '@/api/services/auth'
-import useAuthStore from '@/store/useAuthStore'
-import { ApiResponse } from '@/api/axios'
+import { getCaptcha, login as loginApi, LoginResponse } from '../../api/services/auth'
+import useAuthStore from '../../store/useAuthStore'
+import { ApiResponse } from '../../api/axios'
 
 interface LoginModalProps {
   visible: boolean
