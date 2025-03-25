@@ -3,7 +3,7 @@ import { Modal, Form, Input, Button, Checkbox, message } from 'antd'
 import { UserOutlined, LockOutlined, SafetyOutlined } from '@ant-design/icons'
 import styles from './LoginModal.module.scss'
 import { useRouter } from 'next/router'
-import { authAPI } from '../../api/services'
+// import { authAPI } from '../../api/services'
 import useAuthStore from '../../store/useAuthStore'
 import { ApiResponse } from '../../api/axios'
 
@@ -38,11 +38,11 @@ const LoginModal: React.FC<LoginModalProps> = ({
   // 获取验证码
   const fetchCaptcha = async () => {
     try {
-      const response = await authAPI.getCaptcha()
-      setCaptcha({
-        captchaId: response.data.captcha_id,
-        captchaImage: response.data.captcha_image
-      })
+      // const response = await authAPI.getCaptcha()
+      // setCaptcha({
+      //   captchaId: response.data.captcha_id,
+      //   captchaImage: response.data.captcha_image
+      // })
     } catch (error) {
       console.error('获取验证码失败:', error)
       message.error('获取验证码失败，请刷新重试')
@@ -67,31 +67,31 @@ const LoginModal: React.FC<LoginModalProps> = ({
         return
       }
       
-      const response: ApiResponse<LoginResponse> = await authAPI.login({
-        username,
-        password,
-        captchaId: captcha.captchaId,
-        captchaCode
-      })
+      // const response: ApiResponse<LoginResponse> = await authAPI.login({
+      //   username,
+      //   password,
+      //   captchaId: captcha.captchaId,
+      //   captchaCode
+      // })
       
-      if (response) {
-        // 使用zustand存储用户信息和token
-        login({
-          userId: response.data.user_id,
-          username: response.data.username,
-          role: response.data.role
-        }, response.data.token)
+      // if (response) {
+      //   // 使用zustand存储用户信息和token
+      //   login({
+      //     userId: response.data.user_id,
+      //     username: response.data.username,
+      //     role: response.data.role
+      //   }, response.data.token)
         
-        message.success('登录成功')
-        onCancel() // 关闭登录弹窗
+      //   message.success('登录成功')
+      //   onCancel() // 关闭登录弹窗
         
-        // 可以根据用户角色决定跳转到哪个页面
-        if (response.data.role === 'admin') {
-          router.push('/admin')
-        } else {
-          router.push('/post/profile')
-        }
-      }
+      //   // 可以根据用户角色决定跳转到哪个页面
+      //   if (response.data.role === 'admin') {
+      //     router.push('/admin')
+      //   } else {
+      //     router.push('/post/profile')
+      //   }
+      // }
     } catch (error) {
       console.error('登录失败:', error)
       message.error('登录失败，请检查账号密码和验证码')
