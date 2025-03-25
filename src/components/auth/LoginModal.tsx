@@ -40,8 +40,7 @@ const LoginModal: React.FC<LoginModalProps> = ({
     try {
       const response = await authAPI.getCaptcha()
       console.log(123213213213213213)
-      console.log(response.data)
-      console.log(response.data.captcha_id)
+      console.log(response)
       setCaptcha({
         captchaId: response.data.captcha_id,
         captchaImage: response.data.captcha_image
