@@ -4,8 +4,8 @@ import { UserOutlined, LockOutlined, SafetyOutlined } from '@ant-design/icons'
 import styles from './LoginModal.module.scss'
 import { useRouter } from 'next/router'
 // import { authAPI } from '../../api/services'
-import useAuthStore from '../../store/useAuthStore'
-import { ApiResponse } from '../../api/axios'
+// import useAuthStore from '../../store/useAuthStore'
+// import { ApiResponse } from '../../api/axios'
 
 // 导入LoginResponse类型
 import type { LoginResponse } from '../../api/services/auth'
@@ -33,7 +33,7 @@ const LoginModal: React.FC<LoginModalProps> = ({
   })
   
   // 使用zustand状态管理
-  const login = useAuthStore((state) => state.login)
+  // const login = useAuthStore((state) => state.login)
 
   // 获取验证码
   const fetchCaptcha = async () => {
