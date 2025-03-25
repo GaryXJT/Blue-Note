@@ -1,4 +1,6 @@
 /** @type {import('next').NextConfig} */
+const path = require('path');
+
 const nextConfig = {
   reactStrictMode: true,
   images: {
@@ -7,6 +9,10 @@ const nextConfig = {
   },
   sassOptions: {
     includePaths: ['./src/styles'],
+  },
+  webpack: (config) => {
+    config.resolve.alias['@'] = path.join(__dirname, 'src');
+    return config;
   }
 }
 
