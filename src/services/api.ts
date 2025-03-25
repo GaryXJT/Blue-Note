@@ -64,6 +64,8 @@ export const postAPI = {
     limit?: number
     userId?: string
     status?: string
+    type?: 'image' | 'video'
+    tag?: string
   }) => {
     return request.get<{ posts: Post[]; total: number }>('/posts', { params })
   },

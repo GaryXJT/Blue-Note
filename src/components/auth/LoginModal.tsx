@@ -1,75 +1,72 @@
-import React, { useState } from 'react'
+import React, { useState, useEffect } from 'react'
 import { Modal, Form, Input, Button, Checkbox, message } from 'antd'
-import { UserOutlined, LockOutlined, SafetyCertificateOutlined } from '@ant-design/icons'
+import { UserOutlined, LockOutlined, SafetyOutlined } from '@ant-design/icons'
 import styles from './LoginModal.module.scss'
-import * as authAPI from '../../api/services/auth'
+import { useRouter } from 'next/router'
+import { authAPI } from '../../api/services'
 
 interface LoginModalProps {
   visible: boolean
-  onClose: () => void
-  onLogin: (username: string, password: string, captchaId: string, captchaCode: string) => void
-}
-
-interface CaptchaData {
-  captchaId: string
-  captchaImage: string
+  onCancel: () => void
+  onLoginSuccess: (token: string, userId: string) => void
 }
 
 const LoginModal: React.FC<LoginModalProps> = ({
   visible,
-  onClose,
-  onLogin,
+  onCancel,
+  onLoginSuccess,
 }) => {
   const [form] = Form.useForm()
-  const [captcha, setCaptcha] = useState<CaptchaData>({
+  const router = useRouter()
+  const [loading, setLoading] = useState(false)
+  const [captchaInfo, setCaptchaInfo] = useState({
     captchaId: '',
     captchaImage: ''
   })
-  const [loading, setLoading] = useState(false)
 
   // 获取验证码
   const fetchCaptcha = async () => {
     try {
-      // 调用验证码API
-      const result = await authAPI.getCaptcha()
-      if (result.data) {
-        setCaptcha({
-          captchaId: result.data.captcha_id,
-          captchaImage: result.data.captcha_image
-        })
-        console.log(result.data)
-      }
+      const response = await authAPI.getCaptcha()
+      setCaptchaInfo({
+        captchaId: response.data.captcha_id,
+        captchaImage: response.data.captcha_image
+      })
     } catch (error) {
       console.error('获取验证码失败:', error)
-      message.error('获取验证码失败，请刷新重试')
+      message.error('获取验证码失败，请重试')
     }
   }
 
-  // 在弹窗显示时获取验证码
-  React.useEffect(() => {
+  // 当模态框显示时获取验证码
+  useEffect(() => {
     if (visible) {
       fetchCaptcha()
+      form.resetFields()
     }
-  }, [visible])
+  }, [visible, form])
 
+  // 提交登录表单
   const handleSubmit = async (values: any) => {
     try {
       setLoading(true)
-      const { username, password, captcha: captchaCode } = values
+      const response = await authAPI.login({
+        username: values.username,
+        password: values.password,
+        captchaId: captchaInfo.captchaId,
+        captchaCode: values.captcha
+      })
       
-      if (!captcha.captchaId) {
-        message.error('验证码已失效，请刷新验证码')
-        return
-      }
-      
-      // 调用父组件的登录方法
-      await onLogin(username, password, captcha.captchaId, captchaCode)
-      
-      // 成功后重置表单
-      form.resetFields()
-      setLoading(false)
+      message.success('登录成功')
+      // 调用登录成功回调，传递token和userId
+      onLoginSuccess(response.data.token, response.data.user_id)
+      onCancel()
     } catch (error) {
       console.error('登录失败:', error)
+      message.error('登录失败，请检查账号密码和验证码')
+      // 刷新验证码
+      fetchCaptcha()
+    } finally {
       setLoading(false)
     }
   }
@@ -78,17 +75,16 @@ const LoginModal: React.FC<LoginModalProps> = ({
     <Modal
       title="账号登录"
       open={visible}
-      onCancel={onClose}
+      onCancel={onCancel}
       footer={null}
-      width={400}
       className={styles.loginModal}
-      centered
+      destroyOnClose
     >
       <Form
         form={form}
-        onFinish={handleSubmit}
-        layout="vertical"
+        name="login"
         className={styles.loginForm}
+        onFinish={handleSubmit}
       >
         <Form.Item
           name="username"
@@ -96,39 +92,43 @@ const LoginModal: React.FC<LoginModalProps> = ({
         >
           <Input
             prefix={<UserOutlined />}
-            placeholder="请输入用户名"
+            placeholder="用户名"
             size="large"
           />
         </Form.Item>
+        
         <Form.Item
           name="password"
           rules={[{ required: true, message: '请输入密码' }]}
         >
           <Input.Password
             prefix={<LockOutlined />}
-            placeholder="请输入密码"
+            placeholder="密码"
             size="large"
           />
         </Form.Item>
+        
         <Form.Item
           name="captcha"
           rules={[{ required: true, message: '请输入验证码' }]}
         >
           <div className={styles.captchaWrapper}>
             <Input
-              prefix={<SafetyCertificateOutlined />}
-              placeholder="请输入验证码"
+              prefix={<SafetyOutlined />}
+              placeholder="验证码"
               size="large"
             />
-            <div className={styles.captchaImage} onClick={fetchCaptcha}>
-              {captcha.captchaImage ? (
-                <img src={captcha.captchaImage} alt="验证码" />
-              ) : (
-                <div className={styles.captchaPlaceholder}>点击获取验证码</div>
-              )}
-            </div>
+            {captchaInfo.captchaImage && (
+              <img
+                src={captchaInfo.captchaImage}
+                alt="验证码"
+                onClick={fetchCaptcha}
+                className={styles.captchaImage}
+              />
+            )}
           </div>
         </Form.Item>
+        
         <Form.Item
           name="agreement"
           valuePropName="checked"
@@ -137,21 +137,29 @@ const LoginModal: React.FC<LoginModalProps> = ({
               validator: (_, value) =>
                 value
                   ? Promise.resolve()
-                  : Promise.reject(new Error('请阅读并同意用户协议和隐私政策')),
+                  : Promise.reject(new Error('请同意用户协议和隐私政策')),
             },
           ]}
         >
           <Checkbox>
-            我已阅读并同意 <a href="#">《用户协议》</a>、<a href="#">《隐私政策》</a>
+            我已阅读并同意 <a href="#" className={styles.agreementLink}>用户协议</a> 和 <a href="#" className={styles.agreementLink}>隐私政策</a>
           </Checkbox>
         </Form.Item>
+        
         <Form.Item>
-          <Button type="primary" htmlType="submit" block size="large" loading={loading}>
+          <Button
+            type="primary"
+            htmlType="submit"
+            size="large"
+            block
+            loading={loading}
+          >
             登录
           </Button>
         </Form.Item>
-        <div className={styles.register}>
-          新用户可直接登录注册
+        
+        <div className={styles.registerPrompt}>
+          还没有账号？<a href="#" onClick={() => router.push('/register')}>立即注册</a>
         </div>
       </Form>
     </Modal>

@@ -132,22 +132,27 @@
   :global {
     .ant-modal-content {
       border-radius: 12px;
-      padding: 24px;
+      overflow: hidden;
     }
-    
+
     .ant-modal-header {
-      margin-bottom: 20px;
-      
-      .ant-modal-title {
-        font-size: 20px;
-        font-weight: 600;
-        text-align: center;
-      }
+      border-bottom: none;
+      padding: 24px 24px 20px;
+      text-align: center;
+    }
+
+    .ant-modal-title {
+      font-size: 20px;
+      font-weight: 600;
+      color: #333;
     }
 
     .ant-modal-close {
-      top: 24px;
-      right: 24px;
+      color: #999;
+    }
+
+    .ant-modal-body {
+      padding: 0 24px 24px;
     }
 
     .ant-form-item {
@@ -159,91 +164,77 @@
     }
 
     .ant-input-affix-wrapper {
+      padding: 11px 15px;
       border-radius: 8px;
-      padding: 8px 16px;
-      border-color: #e5e5e5;
       
-      &:hover, &:focus {
+      &:hover, &:focus-within {
         border-color: #1890ff;
       }
-      
-      .anticon {
-        color: #999;
+    }
+
+    .ant-input-password-icon {
+      color: #999;
+      &:hover {
+        color: #1890ff;
       }
     }
 
     .ant-btn-primary {
-      background: #1890ff;
+      background-color: #1890ff;
+      height: 44px;
       border-radius: 8px;
-      height: 48px;
       font-size: 16px;
+      margin-top: 8px;
+      
       &:hover {
-        background: #40a9ff;
+        background-color: #40a9ff;
       }
     }
 
     .ant-checkbox-wrapper {
       color: #666;
-      font-size: 14px;
+    }
+  }
 
+  .loginForm {
+    .captchaWrapper {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      
+      input {
+        flex: 1;
+      }
+      
+      .captchaImage {
+        height: 44px;
+        border-radius: 4px;
+        cursor: pointer;
+        user-select: none;
+      }
+    }
+
+    .agreementLink {
+      color: #1890ff;
+      
+      &:hover {
+        color: #40a9ff;
+      }
+    }
+
+    .registerPrompt {
+      margin-top: 16px;
+      text-align: center;
+      color: #666;
+      
       a {
         color: #1890ff;
-        text-decoration: none;
+        font-weight: 500;
         
         &:hover {
           color: #40a9ff;
         }
       }
     }
-
-    .ant-form-item-explain-error {
-      font-size: 12px;
-      margin-top: 4px;
-    }
-  }
-}
-
-.loginForm {
-  .captchaWrapper {
-    display: flex;
-    gap: 12px;
-    align-items: flex-start;
-
-    .ant-input-affix-wrapper {
-      flex: 1;
-    }
-
-    .captchaImage {
-      width: 120px;
-      height: 40px;
-      border-radius: 8px;
-      overflow: hidden;
-      cursor: pointer;
-      border: 1px solid #e5e5e5;
-      
-      img {
-        width: 100%;
-        height: 100%;
-        object-fit: cover;
-      }
-
-      .captchaPlaceholder {
-        width: 100%;
-        height: 100%;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        background: #f5f5f5;
-        color: #999;
-        font-size: 12px;
-      }
-    }
-  }
-  
-  .register {
-    text-align: center;
-    margin-top: 16px;
-    color: #999;
-    font-size: 14px;
   }
 }

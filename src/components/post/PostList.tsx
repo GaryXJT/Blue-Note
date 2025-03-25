@@ -1,8 +1,8 @@
 import React, { useState, useEffect } from 'react'
-import { Select, Input, Spin, Empty, message } from 'antd'
+import { Select, Input, Spin, Empty, message, Pagination } from 'antd'
 import { SearchOutlined } from '@ant-design/icons'
 import { postAPI } from '../../services/api'
-import type { Post } from '../../types/api'
+import type { Post as ApiPost } from '../../types/api'
 import PostCard from './PostCard'
 import styles from './PostList.module.scss'
 
@@ -16,7 +16,7 @@ interface PostListProps {
 }
 
 const PostList: React.FC<PostListProps> = ({ userId, type, tag, status }) => {
-  const [posts, setPosts] = useState<Post[]>([])
+  const [posts, setPosts] = useState<ApiPost[]>([])
   const [loading, setLoading] = useState(false)
   const [total, setTotal] = useState(0)
   const [current, setCurrent] = useState(1)
@@ -27,7 +27,7 @@ const PostList: React.FC<PostListProps> = ({ userId, type, tag, status }) => {
   const fetchPosts = async (page = 1) => {
     setLoading(true)
     try {
-      const data = await postAPI.getPosts({
+      const response = await postAPI.getPosts({
         page,
         limit: pageSize,
         type,
@@ -35,8 +35,8 @@ const PostList: React.FC<PostListProps> = ({ userId, type, tag, status }) => {
         status,
         userId,
       })
-      setPosts(data.posts)
-      setTotal(data.total)
+      setPosts(response.data.posts as unknown as ApiPost[])
+      setTotal(response.data.total)
     } catch (error) {
       message.error('获取帖子列表失败')
     } finally {
