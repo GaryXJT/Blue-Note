@@ -3,9 +3,12 @@ import { Modal, Form, Input, Button, Checkbox, message } from 'antd'
 import { UserOutlined, LockOutlined, SafetyOutlined } from '@ant-design/icons'
 import styles from './LoginModal.module.scss'
 import { useRouter } from 'next/router'
-import { getCaptcha, login as loginApi, LoginResponse } from '../../api/services/auth'
+import { authAPI } from '../../api/services'
 import useAuthStore from '../../store/useAuthStore'
 import { ApiResponse } from '../../api/axios'
+
+// 导入LoginResponse类型
+import type { LoginResponse } from '../../api/services/auth'
 
 interface LoginModalProps {
   visible: boolean
@@ -35,7 +38,7 @@ const LoginModal: React.FC<LoginModalProps> = ({
   // 获取验证码
   const fetchCaptcha = async () => {
     try {
-      const response = await getCaptcha()
+      const response = await authAPI.getCaptcha()
       setCaptcha({
         captchaId: response.data.captcha_id,
         captchaImage: response.data.captcha_image
@@ -64,7 +67,7 @@ const LoginModal: React.FC<LoginModalProps> = ({
         return
       }
       
-      const response: ApiResponse<LoginResponse> = await loginApi({
+      const response: ApiResponse<LoginResponse> = await authAPI.login({
         username,
         password,
         captchaId: captcha.captchaId,
