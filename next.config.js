@@ -10,12 +10,9 @@ const nextConfig = {
   sassOptions: {
     includePaths: ['./src/styles'],
   },
-  experimental: {
-    esmExternals: true,
-  },
   webpack: (config) => {
     config.resolve.alias['@'] = path.join(__dirname, 'src');
-    config.resolve.alias['@api'] = path.resolve(__dirname, 'src/api');
+    config.resolve.alias['@api'] = path.resolve(__dirname, 'src/api')
     return config;
   }
 }

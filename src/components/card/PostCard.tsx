@@ -1,5 +1,5 @@
 import React, { useState, useMemo } from 'react'
-import { Post } from '../../api/types'
+import { Post } from '@/api/types'
 import { HeartOutlined, HeartFilled } from '@ant-design/icons'
 import PostModal from '../post/PostModal'
 import styles from './PostCard.module.scss'

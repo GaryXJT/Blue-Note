@@ -1,7 +1,7 @@
 import React, { useEffect, useRef, useState } from 'react'
 import PostCard, { PostCardSkeleton } from '../card/PostCard'
 import styles from './Waterfall.module.scss'
-import { Post } from '../../api/types'
+import { Post } from '@/api/types'
 import { Skeleton } from 'antd'
 
 interface WaterfallProps {

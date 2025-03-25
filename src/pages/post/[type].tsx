@@ -27,15 +27,15 @@ import {
 } from '@ant-design/icons'
 import type { UploadFile, UploadProps } from 'antd'
 import type { ColumnsType } from 'antd/es/table'
-import type { Post } from '../../api/types' // 仅导入Post类型
-import type { MenuType } from '../../types' // 导入MenuType类型
-import PostHeader from '../../components/post/PostHeader'
-import PublishPage from '../../components/publish/PublishPage'
-import PublishVideoPage from '../../components/publish/PublishVideoPage'
-import SideMenu from '../../components/post/SideMenu'
-import Waterfall from '../../components/layout/Waterfall'
+import type { Post } from '@/api/types' // 仅导入Post类型
+import type { MenuType } from '@/types' // 导入MenuType类型
+import PostHeader from '@/components/post/PostHeader'
+import PublishPage from '@/components/publish/PublishPage'
+import PublishVideoPage from '@/components/publish/PublishVideoPage'
+import SideMenu from '@/components/post/SideMenu'
+import Waterfall from '@/components/layout/Waterfall'
 import styles from './Post.module.scss'
-import PostModal from '../../components/post/PostModal'
+import PostModal from '@/components/post/PostModal'
 
 // 定义笔记数据接口
 interface PostData {
