@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react'
 import { Card, Avatar, Form, Input, Button, Upload, message, Spin } from 'antd'
 import { UserOutlined, EditOutlined, UploadOutlined } from '@ant-design/icons'
-import { authAPI, uploadAPI } from '@api/services'
+import { userAPI, uploadAPI } from '@api/services'
 import type { User } from '../../types/api'
 import styles from './index.module.scss'
 import { RcFile } from 'antd/lib/upload'
@@ -15,7 +15,7 @@ const ProfilePage: React.FC = () => {
   // 获取用户信息
   const fetchUserInfo = async () => {
     try {
-      const response = await authAPI.getProfile()
+      const response = await userAPI.getProfile()
       setUserInfo(response.data as any)
       form.setFieldsValue({
         nickname: response.data.nickname,
@@ -37,7 +37,7 @@ const ProfilePage: React.FC = () => {
   const handleAvatarUpload = async (file: RcFile) => {
     try {
       const response = await uploadAPI.uploadFile(file, '/upload/avatar')
-      await authAPI.updateProfile({ avatar: response.data.url })
+      await userAPI.updateProfile({ avatar: response.data.url })
       setUserInfo((prev: User | null) => (prev ? { ...prev, avatar: response.data.url } : null))
       message.success('头像更新成功')
       return false // 阻止自动上传
@@ -52,7 +52,7 @@ const ProfilePage: React.FC = () => {
   const handleSubmit = async (values: any) => {
     setLoading(true)
     try {
-      const response = await authAPI.updateProfile(values)
+      const response = await userAPI.updateProfile(values)
       setUserInfo(response.data as any)
       setEditing(false)
       message.success('个人资料更新成功')
