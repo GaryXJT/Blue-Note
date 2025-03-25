@@ -1,0 +1,141 @@
+.imageEditor {
+  margin-bottom: 16px;
+}
+
+.imageGrid {
+  display: grid;
+  grid-template-columns: repeat(6, 100px);
+  gap: 8px;
+  margin-bottom: 8px;
+
+  .imageItem {
+    position: relative;
+    width: 100px;
+    height: 100px;
+
+    .imageWrapper {
+      width: 100%;
+      height: 100%;
+      border-radius: 4px;
+      overflow: hidden;
+      position: relative;
+
+      img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+      }
+
+      .imageOverlay {
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: rgba(0, 0, 0, 0.3);
+        opacity: 0;
+        transition: opacity 0.2s;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+
+        &:hover {
+          opacity: 1;
+        }
+      }
+
+      .removeButton {
+        width: 24px;
+        height: 24px;
+        border-radius: 50%;
+        background: rgba(0, 0, 0, 0.6);
+        border: none;
+        color: #fff;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        cursor: pointer;
+        transition: all 0.2s;
+
+        &:hover {
+          background: rgba(0, 0, 0, 0.8);
+          transform: scale(1.1);
+        }
+
+        i {
+          font-size: 14px;
+        }
+      }
+    }
+
+    .coverTag {
+      position: absolute;
+      top: 4px;
+      left: 4px;
+      padding: 2px 6px;
+      background: rgba(0, 0, 0, 0.6);
+      color: #fff;
+      border-radius: 2px;
+      font-size: 12px;
+    }
+  }
+
+  .addButton {
+    width: 100px;
+    height: 100px;
+    border: 1px dashed #ddd;
+    border-radius: 4px;
+    background: #fafafa;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 4px;
+    cursor: pointer;
+    transition: all 0.2s;
+
+    &:hover {
+      border-color: #1890ff;
+      background: #e6f7ff;
+
+      i,
+      span {
+        color: #1890ff;
+      }
+    }
+
+    i {
+      font-size: 20px;
+      color: #999;
+      transition: color 0.2s;
+    }
+
+    span {
+      font-size: 12px;
+      color: #999;
+      transition: color 0.2s;
+    }
+  }
+}
+
+.imageInfo {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+
+  .imageCount {
+    color: #999;
+    font-size: 12px;
+  }
+
+  .imageTip {
+    color: #999;
+    font-size: 12px;
+  }
+}
+
+@media screen and (max-width: 768px) {
+  .imageGrid {
+    grid-template-columns: repeat(3, 100px);
+  }
+}

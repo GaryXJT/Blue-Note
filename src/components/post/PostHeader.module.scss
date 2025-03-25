@@ -1,0 +1,59 @@
+.header {
+  height: 56px;
+  background: #fff;
+  border-bottom: 1px solid #f0f0f0;
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 1000;
+}
+
+.content {
+  height: 100%;
+  margin: 0 auto;
+  padding: 0 24px;
+  display: flex;
+  align-items: center;
+}
+
+.logo {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  text-decoration: none;
+  color: #262626;
+  font-size: 18px;
+  font-weight: 600;
+}
+
+.divider {
+  width: 1px;
+  height: 16px;
+  background-color: #e8e8e8;
+  margin: 0 16px;
+}
+
+.platformTitle {
+  font-size: 16px;
+  font-weight: 500;
+  color: #262626;
+  margin-left: 16px;
+}
+
+.publishButton {
+  height: 36px;
+  padding: 0 20px;
+  background: #ff2442;
+  color: #fff;
+  border: none;
+  border-radius: 4px;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background 0.3s;
+
+  &:hover {
+    background: #ff4d64;
+  }
+}

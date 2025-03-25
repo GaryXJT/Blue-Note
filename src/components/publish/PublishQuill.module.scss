@@ -1,0 +1,20 @@
+/* 编辑器容器 */
+.quillWrapper {
+  position: relative;
+  width: 100%;
+}
+
+/* 编辑器字符计数器 */
+.quillCounter {
+  position: absolute;
+  bottom: 8px;
+  right: 16px;
+  font-size: 12px;
+  color: #8c8c8c;
+  z-index: 10;
+
+  &.error {
+    color: #ff4d4f;
+    font-weight: 500;
+  }
+}

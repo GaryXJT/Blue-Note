@@ -1,0 +1,73 @@
+@import './variables.scss';
+
+.container {
+  min-height: 100vh;
+  background-color: #fff;
+  overflow-x: hidden;
+}
+
+.main {
+  width: 100%;
+  margin: 0 auto;
+  padding: 0 24px;
+  max-width: 1730px;
+}
+
+.content {
+  display: flex;
+  gap: 32px;
+  padding-top: 16px;
+  position: relative;
+}
+
+.mainContent {
+  flex: 1;
+  min-width: 0;
+  margin-left: calc(32px + (100vw - 7 * 32px) / 6 * 1);
+}
+
+.mainInsideContent {
+  padding-left: 32px;
+}
+
+@media screen and (max-width: 1727px) and (min-width: 1424px) {
+  .mainContent {
+    margin-left: calc(32px + (100vw - 7 * 32px) / 6 * 1);
+  }
+}
+
+@media screen and (max-width: 1423px) and (min-width: 1192px) {
+  .mainContent {
+    margin-left: calc(24px + (100vw - 6 * 24px) / 5 * 1);
+  }
+}
+
+@media screen and (max-width: 1191px) and (min-width: 960px) {
+  .mainContent {
+    margin-left: calc(24px + (100vw - 5 * 24px) / 4 * 1);
+  }
+}
+
+@media (max-width: 960px) {
+  .container {
+    padding-bottom: 60px; // 为底部导航预留空间
+  }
+
+  .main {
+    padding: 0 12px;
+  }
+
+  .content {
+    padding-top: 12px;
+    gap: 12px;
+  }
+
+  .mainContent {
+    margin-left: 0;
+    padding-bottom: 60px;
+
+    .mainInsideContent {
+      padding: 0 16px;
+    }
+  }
+}

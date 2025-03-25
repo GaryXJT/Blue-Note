@@ -1,0 +1,48 @@
+.sideMenuContainer {
+  width: 240px;
+  height: 100vh;
+  background: #fff;
+  border-right: 1px solid #f0f0f0;
+  display: flex;
+  flex-direction: column;
+
+  .publishButton {
+    margin: 16px;
+    height: 40px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: #1890ff;
+    color: #fff;
+    border-radius: 4px;
+    cursor: pointer;
+    transition: all 0.3s;
+
+    &:hover {
+      background: #40a9ff;
+    }
+
+    span {
+      margin-left: 8px;
+    }
+  }
+
+  .divider {
+    height: 1px;
+    background-color: #f0f0f0;
+    margin: 0 16px;
+  }
+
+  .menu {
+    flex: 1;
+    border-right: none;
+
+    :global(.ant-menu-item) {
+      margin: 4px 0;
+    }
+
+    :global(.ant-menu-item-selected) {
+      background-color: #e6f7ff;
+    }
+  }
+} 

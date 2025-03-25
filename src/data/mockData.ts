@@ -1,0 +1,123 @@
+// 模拟数据
+export const mockPosts = [
+  {
+    id: '1',
+    title: '把时间分给喜欢的人',
+    coverUrl: '/static/pic/post1.jpg',
+    width: 800,
+    height: 1000,
+    author: {
+      name: 'ciuni',
+      avatar: '/static/pic/default-avatar.jpg',
+    },
+    likes: 1700,
+  },
+  {
+    id: '2',
+    title: '女孩结婚前一定要谈恋爱，否则后悔',
+    coverUrl: '/static/pic/post2.jpg',
+    width: 900,
+    height: 600,
+    author: {
+      name: '追星一辈子',
+      avatar: '/static/pic/default-avatar.jpg',
+    },
+    likes: 1500,
+  },
+  {
+    id: '3',
+    title: '杨紫琼亲证婚讯，这张甜蜜床照',
+    coverUrl: '/static/pic/post3.jpg',
+    width: 800,
+    height: 800,
+    author: {
+      name: '马中星辰',
+      avatar: '/static/pic/default-avatar.jpg',
+    },
+    likes: 1000,
+  },
+  {
+    id: '4',
+    title: '想瘦大腿的姐妹看过来！可以开始瘦腿了',
+    coverUrl: '/static/pic/post4.jpg',
+    width: 1920,
+    height: 1080,
+    author: {
+      name: '吃瓜zhazha',
+      avatar: '/static/pic/default-avatar.jpg',
+    },
+    likes: 1700,
+  },
+  {
+    id: '5',
+    title: '老以为景德镇已经绝了，直到我去了上海...',
+    coverUrl: '/static/pic/post5.jpg',
+    width: 800,
+    height: 600,
+    author: {
+      name: '卡布奇诺Bo',
+      avatar: '/static/pic/default-avatar.jpg',
+    },
+    likes: 1700,
+  },
+  {
+    id: '6',
+    title: '被这只鸭子治愈了',
+    coverUrl: '/static/pic/post6.jpg',
+    width: 900,
+    height: 600,
+    author: {
+      name: 'ciuni',
+      avatar: '/static/pic/default-avatar.jpg',
+    },
+    likes: 1700,
+  },
+  {
+    id: '7',
+    title: '这条裙子太美了，适合夏天穿',
+    coverUrl: '/static/pic/post1.jpg',
+    width: 800,
+    height: 1000,
+    author: {
+      name: '小仙女',
+      avatar: '/static/pic/default-avatar.jpg',
+    },
+    likes: 2100,
+  },
+  {
+    id: '8',
+    title: '后悔没早点知道这个化妆技巧！',
+    coverUrl: '/static/pic/post2.jpg',
+    width: 900,
+    height: 600,
+    author: {
+      name: '美妆达人',
+      avatar: '/static/pic/default-avatar.jpg',
+    },
+    likes: 1800,
+  },
+  {
+    id: '9',
+    title: '这家咖啡店也太好拍了吧',
+    coverUrl: '/static/pic/post3.jpg',
+    width: 800,
+    height: 800,
+    author: {
+      name: '咖啡控',
+      avatar: '/static/pic/default-avatar.jpg',
+    },
+    likes: 1300,
+  },
+  {
+    id: '10',
+    title: '周末和闺蜜的野餐日记',
+    coverUrl: '/static/pic/post4.jpg',
+    width: 1920,
+    height: 1080,
+    author: {
+      name: '生活家',
+      avatar: '/static/pic/default-avatar.jpg',
+    },
+    likes: 1600,
+  },
+]

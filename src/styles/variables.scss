@@ -1,0 +1,48 @@
+// 主题颜色
+$primary-color: #007bff;
+$secondary-color: #6c757d;
+$success-color: #28a745;
+$danger-color: #dc3545;
+$warning-color: #ffc107;
+$info-color: #17a2b8;
+
+// 文字颜色
+$text-primary: #333333;
+$text-secondary: #666666;
+$text-light: #999999;
+
+// 背景颜色
+$bg-primary: #ffffff;
+$bg-secondary: #f8f9fa;
+$bg-light: #f5f5f5;
+
+// 边框颜色
+$border-color: #e8e8e8;
+
+// 断点
+$breakpoints: (
+  'sm': 576px,
+  'md': 768px,
+  'lg': 992px,
+  'xl': 1200px,
+  'xxl': 1400px,
+);
+
+// 间距
+$spacing-unit: 4px;
+$spacing: (
+  'xs': $spacing-unit,
+  'sm': $spacing-unit * 2,
+  'md': $spacing-unit * 4,
+  'lg': $spacing-unit * 6,
+  'xl': $spacing-unit * 8,
+);
+
+// 圆角
+$border-radius: (
+  'sm': 2px,
+  'md': 4px,
+  'lg': 8px,
+  'xl': 16px,
+  'full': 9999px,
+);
