@@ -3,7 +3,7 @@ import { Modal, Form, Input, Button, Checkbox, message } from 'antd'
 import { UserOutlined, LockOutlined, SafetyOutlined } from '@ant-design/icons'
 import styles from './LoginModal.module.scss'
 import { useRouter } from 'next/router'
-import { authAPI } from '@/api/services'
+import { authAPI } from '@api/services'
 import useAuthStore from '@/store/useAuthStore'
 
 interface LoginModalProps {
@@ -27,9 +27,9 @@ const LoginModal: React.FC<LoginModalProps> = ({
     captchaId: '',
     captchaImage: ''
   })
-
-  // 使用zustand auth store
-  const login = useAuthStore(state => state.login)
+  
+  // 使用zustand状态管理
+  const login = useAuthStore((state) => state.login)
 
   // 获取验证码
   const fetchCaptcha = async () => {
@@ -75,29 +75,21 @@ const LoginModal: React.FC<LoginModalProps> = ({
       })
       
       if (result.data) {
-        // 使用zustand存储登录信息
-        login(
-          {
-            userId: result.data.user_id,
-            username: result.data.username,
-            nickname: result.data.username, // 假设初始昵称与用户名相同
-            avatar: '', // 默认头像
-            bio: '',
-            role: result.data.role as 'user' | 'admin',
-            createdAt: new Date().toISOString(),
-            updatedAt: new Date().toISOString()
-          }, 
-          result.data.token
-        )
+        // 使用zustand存储用户信息和token
+        login({
+          userId: result.data.user_id,
+          username: result.data.username,
+          role: result.data.role
+        }, result.data.token)
         
         message.success('登录成功')
-        onCancel()
+        onCancel() // 关闭登录弹窗
         
-        // 可以在登录成功后刷新或重定向
-        if (router.pathname === '/') {
-          window.location.reload()
+        // 可以根据用户角色决定跳转到哪个页面
+        if (result.data.role === 'admin') {
+          router.push('/admin')
         } else {
-          router.push('/')
+          router.push('/post/profile')
         }
       }
     } catch (error) {
@@ -158,7 +150,7 @@ const LoginModal: React.FC<LoginModalProps> = ({
             />
             <div className={styles.captchaImage} onClick={fetchCaptcha}>
               {captcha.captchaImage ? (
-                <div dangerouslySetInnerHTML={{ __html: captcha.captchaImage }} />
+                <img src={captcha.captchaImage} alt="验证码" />
               ) : (
                 <div className={styles.captchaPlaceholder}>点击获取验证码</div>
               )}
@@ -187,7 +179,7 @@ const LoginModal: React.FC<LoginModalProps> = ({
           </Button>
         </Form.Item>
         <div className={styles.register}>
-          <span>新用户登录即自动注册</span>
+          新用户可直接登录注册
         </div>
       </Form>
     </Modal>

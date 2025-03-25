@@ -11,7 +11,8 @@ import { mockPosts } from '@/data/mockData'
 import Link from 'next/link'
 import { UserOutlined } from '@ant-design/icons'
 import { message } from 'antd'
-import { authAPI } from '@api/services'
+import useAuthStore from '@/store/useAuthStore'
+
 const Home: React.FC = () => {
   const router = useRouter()
   const [posts, setPosts] = useState<any[]>([])
@@ -19,6 +20,10 @@ const Home: React.FC = () => {
   const [page, setPage] = useState(1)
   const [isLoginModalOpen, setIsLoginModalOpen] = useState(false)
   const [key, setKey] = useState(0) // 用于强制重新渲染瀑布流组件
+  
+  // 从zustand获取登录状态
+  const isLoggedIn = useAuthStore((state) => state.isLoggedIn)
+  const user = useAuthStore((state) => state.user)
 
   // 初始加载
   useEffect(() => {
