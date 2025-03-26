@@ -1,0 +1,342 @@
+.container {
+  flex: 1;
+  padding: 16px;
+}
+
+.userProfileCard {
+  background-color: #fff;
+  border-radius: 8px;
+  padding: 24px;
+  margin-bottom: 16px;
+  max-width: 800px;
+  margin-left: auto;
+  margin-right: auto;
+}
+
+.userProfileContent {
+  display: flex;
+  position: relative;
+  justify-content: center;
+}
+
+.avatarContainer {
+  text-align: center;
+  width: calc((1728px - 7 * 32px) / 6 * 1);
+  height: calc(0.7 * calc((1728px - 7 * 32px) / 6 * 1));
+}
+
+.avatar {
+  width: 70%;
+  height: 100%;
+  border-radius: 50%;
+  object-fit: cover;
+  border: 2px solid #fff;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  overflow: hidden;
+  display: block;
+}
+
+.userInfo {
+  flex: 1;
+  max-width: 400px;
+}
+
+.nameRow {
+  display: flex;
+  align-items: center;
+  margin-bottom: 8px;
+}
+
+.nickname {
+  font-size: 22px;
+  font-weight: 600;
+  margin: 0;
+  margin-right: 8px;
+}
+
+.gender {
+  font-size: 16px;
+  color: #ff2e63;
+  margin-right: 8px;
+}
+
+.accountId {
+  font-size: 14px;
+  color: #999;
+  margin-bottom: 12px;
+}
+
+.bio {
+  font-size: 14px;
+  color: #333;
+  margin-bottom: 8px;
+}
+
+.location {
+  font-size: 14px;
+  color: #999;
+  margin-bottom: 16px;
+  display: flex;
+  align-items: center;
+}
+
+.statsRow {
+  display: flex;
+  margin-top: 8px;
+  justify-content: space-between;
+}
+
+.statItem {
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.statValue {
+  font-size: 16px;
+  font-weight: 600;
+  color: #333;
+}
+
+.statLabel {
+  font-size: 12px;
+  color: #999;
+}
+
+.followButtonContainer {
+  position: absolute;
+  top: 0;
+  right: 0;
+}
+
+.followButton {
+  background-color: #1890ff;
+  border-color: #1890ff;
+  border-radius: 24px;
+  padding: 0 20px;
+  height: 40px;
+  width: 96px;
+  font-size: 14px;
+}
+
+.followButton:hover {
+  background-color: #40a9ff;
+  border-color: #40a9ff;
+}
+
+.tabs {
+  background: #fff;
+  border-radius: 8px;
+  padding: 0 16px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+  margin-left: auto;
+  margin-right: auto;
+}
+
+.notesSection {
+  width: 100%;
+  padding: 16px 0;
+}
+
+.profileWaterfallWrapper {
+  width: 100%;
+}
+
+.emptyContent {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 48px 0;
+  color: #999;
+
+  .emptyIcon {
+    margin-bottom: 16px;
+
+    img {
+      width: 120px;
+      height: 120px;
+      object-fit: contain;
+    }
+  }
+
+  p {
+    font-size: 14px;
+    margin-bottom: 16px;
+  }
+}
+
+.createButton {
+  padding: 8px 24px;
+  background-color: #ff2e63;
+  color: #fff;
+  border: none;
+  border-radius: 4px;
+  font-size: 14px;
+  cursor: pointer;
+  transition: all 0.3s;
+
+  &:hover {
+    background-color: #ff4778;
+  }
+}
+
+/* 大大大屏幕设备 */
+@media screen and (min-width: 1424px) and (max-width: 1727px) {
+  .avatarContainer {
+    width: calc((100vw - 7 * 32px) / 6 * 1);
+    height: calc(0.7 * calc((100vw - 7 * 32px) / 6 * 1));
+  }
+
+  .avatar {
+    border-radius: 50%;
+    margin: 0 auto;
+    width: 70%;
+    height: 100%;
+    object-fit: cover;
+  }
+}
+
+/* 大大屏幕设备 */
+@media screen and (min-width: 1192px) and (max-width: 1423px) {
+  .avatarContainer {
+    width: calc((100vw - 6 * 24px) / 5 * 1);
+    height: calc(0.7 * calc((100vw - 6 * 24px) / 5 * 1));
+  }
+
+  .avatar {
+    border-radius: 50%;
+    margin: 0 auto;
+    width: 70%;
+    height: 100%;
+    object-fit: cover;
+  }
+}
+
+/* 大屏幕设备 */
+@media screen and (min-width: 960px) and (max-width: 1191px) {
+  .avatarContainer {
+    width: calc((100vw - 5 * 24px) / 4 * 1);
+    height: calc(0.7 * calc((100vw - 5 * 24px) / 4 * 1));
+  }
+
+  .avatar {
+    border-radius: 50%;
+    margin: 0 auto;
+    width: 70%;
+    height: 100%;
+    object-fit: cover;
+  }
+}
+
+/* 中等屏幕设备 */
+@media screen and (min-width: 696px) and (max-width: 959px) {
+  .userProfileCard {
+    padding: 24px;
+    margin-right: 24px;
+  }
+  .userProfileContent {
+    justify-content: space-between;
+  }
+  .avatarContainer {
+    width: calc((100vw - 4 * 24px) / 3 * 1);
+    height: calc(0.7 * calc((100vw - 4 * 24px) / 3 * 1));
+  }
+
+  .avatar {
+    border-radius: 50%;
+    margin: 0 auto;
+    width: 70%;
+    height: 100%;
+    object-fit: cover;
+  }
+}
+
+/* 小屏幕设备 - 覆盖之前的媒体查询 */
+@media screen and (max-width: 695px) {
+  .avatarContainer {
+    width: 120px;
+    height: 120px;
+    margin-bottom: 16px;
+  }
+
+  .avatar {
+    width: 120px;
+    height: 120px;
+  }
+
+  .userProfileContent {
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+  }
+
+  .avatarContainer {
+    margin-right: 0;
+    margin-bottom: 16px;
+  }
+
+  .userInfo {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+  }
+
+  .statsRow {
+    width: 100%;
+    gap: 42px;
+    justify-content: space-around;
+  }
+
+  .followButtonContainer {
+    position: static;
+    margin-top: 16px;
+  }
+
+  .location {
+    justify-content: center;
+  }
+}
+
+.editButton {
+  border-radius: 24px;
+  padding: 0 20px;
+  height: 40px;
+  width: 96px;
+  font-size: 14px;
+  border: 1px solid #d9d9d9;
+}
+
+.editButton:hover {
+  border-color: #1890ff;
+  color: #1890ff;
+}
+
+.followingButton {
+  border-radius: 24px;
+  padding: 0 20px;
+  height: 40px;
+  width: 96px;
+  font-size: 14px;
+  border: 1px solid #d9d9d9;
+  background-color: #f5f5f5;
+  color: #333;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.followingButton:hover {
+  background-color: #f0f0f0;
+  border-color: #d9d9d9;
+  color: #ff4d4f;
+}
+
+.followingButton:hover::before {
+  content: "取消";
+}
+
+.followingButton:hover span {
+  display: none;
+}

@@ -1,4 +1,4 @@
-import { request } from '../axios'
+import { request, ApiResponse } from '../axios'
 import { AxiosResponse } from 'axios'
 
 // 验证码返回数据接口
@@ -16,47 +16,28 @@ export interface LoginResponse {
 }
 
 // 获取验证码API
-export const getCaptcha = () => {
-  return request<CaptchaResponse>({
+export const getCaptcha = (): Promise<AxiosResponse<CaptchaResponse>> => {
+  return request<AxiosResponse<CaptchaResponse>>({
     url: '/auth/captcha',
     method: 'GET'
   })
 }
 
-// 用户登录API
-export const login = (data: {
+// 用户登录/注册API
+export const loginOrRegister = (data: {
   username: string
   password: string
   captchaId: string
   captchaCode: string
-}) => {
-  return request<LoginResponse>({
+}): Promise<AxiosResponse<ApiResponse<LoginResponse>>> => {
+  return request<AxiosResponse<ApiResponse<LoginResponse>>>({
     url: '/auth/login',
     method: 'POST',
     data: {
       username: data.username,
       password: data.password,
-      captcha_id: data.captchaId,
-      captcha_code: data.captchaCode
+      captchaId: data.captchaId,
+      captchaCode: data.captchaCode
     }
   })
 }
-
-// 用户注册API
-export const register = (data: {
-  username: string
-  password: string
-  captchaId: string
-  captchaCode: string
-}) => {
-  return request<LoginResponse>({
-    url: '/auth/register',
-    method: 'POST',
-    data: {
-      username: data.username,
-      password: data.password,
-      captcha_id: data.captchaId,
-      captcha_code: data.captchaCode
-    }
-  })
-} 

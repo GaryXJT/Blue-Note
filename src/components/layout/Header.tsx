@@ -1,8 +1,8 @@
-import React from 'react'
-import Link from 'next/link'
-import Image from 'next/image'
-import styles from './Header.module.scss'
-import { UserOutlined, SearchOutlined } from '@ant-design/icons'
+import React from "react";
+import Link from "next/link";
+import Image from "next/image";
+import styles from "./Header.module.scss";
+import { UserOutlined, SearchOutlined } from "@ant-design/icons";
 
 const Header: React.FC = () => {
   return (
@@ -23,7 +23,7 @@ const Header: React.FC = () => {
         </div>
       </div>
     </header>
-  )
-}
+  );
+};
 
-export default Header
+export default Header;

@@ -1,13 +1,33 @@
 // 用户类型
 export interface User {
-  id: string
-  username: string
-  nickname: string
-  avatar: string
-  bio: string
-  role: 'user' | 'admin'
-  createdAt: string
-  updatedAt: string
+  userId?: string;
+  username?: string;
+  nickname?: string;
+  avatar?: string;
+  role?: string;
+  bio?: string;
+  gender?: string;
+  birthday?: string;
+  location?: string;
+  status?: string;
+}
+
+// 用户资料信息
+export interface UserInfo {
+  avatar: string;
+  nickname: string;
+  username: string;
+  accountId: string;
+  bio?: string;
+  gender?: string;
+  birthday?: string;
+  location?: string;
+  status?: string;
+  followCount: number;
+  fansCount: number;
+  likeCount: number;
+  collectCount: number;
+  postCount: number;
 }
 
 // 菜单类型

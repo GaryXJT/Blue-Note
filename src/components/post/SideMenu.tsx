@@ -23,11 +23,6 @@ const SideMenu: React.FC<SideMenuProps> = ({ activeMenu, onMenuChange }) => {
   // 菜单项配置
   const menuItems = [
     {
-      key: 'profile',
-      icon: <UserOutlined />,
-      label: '个人主页',
-    },
-    {
       key: 'works',
       icon: <AppstoreOutlined />,
       label: '笔记管理',
@@ -62,9 +57,6 @@ const SideMenu: React.FC<SideMenuProps> = ({ activeMenu, onMenuChange }) => {
         break
       case 'notifications':
         router.push('/post/notifications')
-        break
-      case 'profile':
-        router.push('/post/profile')
         break
     }
   }
