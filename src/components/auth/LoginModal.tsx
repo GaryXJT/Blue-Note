@@ -3,7 +3,7 @@ import { Modal, Form, Input, Button, Checkbox, message } from "antd";
 import { UserOutlined, LockOutlined, SafetyOutlined } from "@ant-design/icons";
 import styles from "./LoginModal.module.scss";
 import { useRouter } from "next/router";
-import { authAPI } from "../../api/services";
+import { authAPI, profileAPI } from "../../api/services";
 import useAuthStore from "../../store/useAuthStore";
 
 interface LoginModalProps {
@@ -27,6 +27,7 @@ const LoginModal: React.FC<LoginModalProps> = ({ visible, onCancel }) => {
 
   // 使用zustand状态管理
   const login = useAuthStore((state) => state.login);
+  const updateUser = useAuthStore((state) => state.updateUser);
 
   // 获取验证码
   const fetchCaptcha = async () => {
@@ -50,6 +51,27 @@ const LoginModal: React.FC<LoginModalProps> = ({ visible, onCancel }) => {
     }
   }, [visible, form]);
 
+  // 获取用户详细资料（包括头像）
+  const fetchUserProfile = async (userId: string) => {
+    try {
+      const response = await profileAPI.getUserProfile(userId);
+      // 正确获取嵌套在response中的数据
+      const profileData = (response.data as any)?.data;
+
+      if (profileData) {
+        // 更新用户头像和昵称等基本信息
+        updateUser({
+          avatar: profileData.avatar,
+          nickname: profileData.nickname,
+        });
+      }
+    } catch (error) {
+      console.error("获取用户资料失败:", error);
+      // 这里我们不显示错误提示，因为登录已经成功
+      // 如果获取头像失败，界面将使用默认头像
+    }
+  };
+
   const handleSubmit = async (values: any) => {
     try {
       setLoading(true);
@@ -67,15 +89,20 @@ const LoginModal: React.FC<LoginModalProps> = ({ visible, onCancel }) => {
       });
 
       if (response) {
-        // zustand传递 token
+        const userId = response.data.data.user_id;
+
+        // 登录 - 存储基本用户信息
         login(
           {
-            userId: response.data.data.user_id,
+            userId: userId,
             username: response.data.data.username,
             role: response.data.data.role,
           },
           response.data.data.token
         );
+
+        // 获取更详细的用户信息（特别是头像）
+        await fetchUserProfile(userId);
 
         // 根据后端返回的状态判断是新用户注册还是老用户登录
         if (response.data.code === 201) {

@@ -24,6 +24,7 @@ export interface RequestConfig {
   timeout?: number;
   loading?: boolean; // 是否显示加载状态
   skipErrorHandler?: boolean; // 是否跳过错误处理
+  onUploadProgress?: (event: ProgressEvent) => void; // 上传进度回调
 }
 
 // 创建响应数据接口
@@ -73,12 +74,12 @@ instance.interceptors.response.use(
       switch (status) {
         case 401:
           // 未授权，清除token
-          localStorage.removeItem("token");
+          // localStorage.removeItem("token");
 
           // 只有当当前路径不是根路径时才跳转
-          if (window.location.pathname !== "/") {
-            window.location.href = "/";
-          }
+          // if (window.location.pathname !== "/") {
+          //   window.location.href = "/";
+          // }
           break;
         case 403:
           // 权限不足
@@ -113,6 +114,7 @@ export const request = async <T = any>(config: RequestConfig): Promise<T> => {
   try {
     const { loading, skipErrorHandler, ...axiosConfig } = config;
 
+    // 将axiosConfig作为AxiosRequestConfig传递，保留所有属性包括onUploadProgress
     return await instance.request<any, T>(axiosConfig as AxiosRequestConfig);
   } catch (error) {
     if (error instanceof ApiError) {

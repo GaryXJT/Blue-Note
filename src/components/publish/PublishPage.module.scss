@@ -124,12 +124,11 @@
   display: block;
 }
 
-// 正文文本框容器
-.contentTextareaWrapper {
+// 正文输入容器
+.contentInput {
   position: relative;
-  margin-top: 16px;
-  border: none;
-  background: #fff;
+  margin-bottom: 24px;
+  width: 100%;
 }
 
 // 正文文本框样式
@@ -217,13 +216,13 @@
   .imageTitle {
     display: flex;
     align-items: center;
-    
+
     span {
       font-size: 16px;
       font-weight: 500;
       color: #444;
     }
-    
+
     .imageCounter {
       margin-left: 8px;
       font-size: 14px;
@@ -231,12 +230,12 @@
       color: #999;
     }
   }
-  
+
   .clearLink {
     font-size: 14px;
     color: #1890ff;
     cursor: pointer;
-    
+
     &:hover {
       color: #40a9ff;
       text-decoration: underline;
@@ -330,4 +329,56 @@
     border-color: #1890ff;
     color: #1890ff;
   }
-} 
+
+  &:disabled {
+    border-color: #f5f5f5;
+    background: #f5f5f5;
+    color: #bfbfbf;
+    cursor: not-allowed;
+  }
+}
+
+.publishingModal {
+  :global(.ant-modal-header) {
+    text-align: center;
+  }
+
+  :global(.ant-modal-body) {
+    padding: 24px;
+  }
+}
+
+.publishingContent {
+  padding: 10px;
+
+  .publishingText {
+    margin-top: 16px;
+    text-align: center;
+    font-size: 15px;
+    color: var(--text-color);
+  }
+}
+
+// 适配深色模式
+[data-theme="dark"] {
+  .publishingModal {
+    :global(.ant-modal-content) {
+      background-color: var(--card-background);
+    }
+
+    :global(.ant-modal-header) {
+      background-color: var(--card-background);
+      border-bottom-color: var(--border-color);
+    }
+
+    :global(.ant-modal-title) {
+      color: var(--text-color);
+    }
+  }
+
+  .publishingContent {
+    .publishingText {
+      color: #e8e8e8;
+    }
+  }
+}

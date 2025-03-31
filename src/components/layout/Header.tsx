@@ -2,9 +2,22 @@ import React from "react";
 import Link from "next/link";
 import Image from "next/image";
 import styles from "./Header.module.scss";
-import { UserOutlined, SearchOutlined } from "@ant-design/icons";
+import {
+  UserOutlined,
+  SearchOutlined,
+  MoonOutlined,
+  SunOutlined,
+} from "@ant-design/icons";
+import { Switch } from "antd";
+import useThemeStore from "@/store/useThemeStore";
 
 const Header: React.FC = () => {
+  const { mode, toggleMode } = useThemeStore();
+
+  const handleThemeChange = () => {
+    toggleMode();
+  };
+
   return (
     <header className={styles.header}>
       <div className={styles.content}>
@@ -20,6 +33,15 @@ const Header: React.FC = () => {
           <button className={styles.searchButton}>
             <SearchOutlined />
           </button>
+        </div>
+
+        <div className={styles.themeSwitch}>
+          <Switch
+            checked={mode === "dark"}
+            onChange={handleThemeChange}
+            checkedChildren={<MoonOutlined />}
+            unCheckedChildren={<SunOutlined />}
+          />
         </div>
       </div>
     </header>

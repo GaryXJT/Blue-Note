@@ -1,6 +1,6 @@
 import { create } from "zustand";
 import { persist } from "zustand/middleware";
-import { User } from '@/types';
+import { User } from "@/types";
 
 // 身份验证状态接口
 interface AuthState {
@@ -40,25 +40,25 @@ const useAuthStore = create<AuthState>()(
       // 更新用户信息
       updateUser: (userData) =>
         set((state) => ({
-          user: state.user ? { ...state.user, ...userData } : null
+          user: state.user ? { ...state.user, ...userData } : null,
         })),
     }),
     {
       name: "auth-storage",
-      // 存储所有状态，不使用 partialize
-      storage: {
-        getItem: (name) => {
-          const str = localStorage.getItem(name);
-          if (!str) return null;
-          return JSON.parse(str);
-        },
-        setItem: (name, value) => {
-          localStorage.setItem(name, JSON.stringify(value));
-        },
-        removeItem: (name) => {
-          localStorage.removeItem(name);
-        },
-      },
+      // 只存储必要的用户信息
+      partialize: (state) => ({
+        isLoggedIn: state.isLoggedIn,
+        token: state.token,
+        user: state.user
+          ? {
+              userId: state.user.userId,
+              username: state.user.username,
+              role: state.user.role,
+              avatar: state.user.avatar, // 保留头像URL，用于在界面上显示
+              nickname: state.user.nickname, // 保留昵称，用于在界面上显示
+            }
+          : null,
+      }),
     }
   )
 );

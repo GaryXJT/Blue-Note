@@ -1,15 +1,16 @@
-@import './variables.scss';
+@import "./variables.scss";
 
 .container {
   min-height: 100vh;
-  background-color: #fff;
+  background-color: var(--background-color);
   overflow-x: hidden;
+  padding-top: 72px; // 为固定定位的header预留空间
+  transition: background-color 0.3s ease;
 }
 
 .main {
   width: 100%;
   margin: 0 auto;
-  padding: 0 24px;
   max-width: 1730px;
 }
 
@@ -18,16 +19,37 @@
   gap: 32px;
   padding-top: 16px;
   position: relative;
+
+  // 优化深色模式下的内容分隔
+  [data-theme="dark"] & {
+    gap: 40px;
+  }
 }
 
 .mainContent {
   flex: 1;
   min-width: 0;
   margin-left: calc(32px + (100vw - 7 * 32px) / 6 * 1);
+
+  // 深色模式下增加内容区域的视觉分隔
+  [data-theme="dark"] & {
+    position: relative;
+
+    &::before {
+      content: "";
+      position: absolute;
+      left: -20px;
+      top: 0;
+      bottom: 0;
+      width: 1px;
+      background: var(--divider-color);
+      opacity: 0.4;
+    }
+  }
 }
 
 .mainInsideContent {
-  padding-left: 32px;
+  padding: 0 32px;
 }
 
 @media screen and (max-width: 1727px) and (min-width: 1424px) {
@@ -60,11 +82,21 @@
   .content {
     padding-top: 12px;
     gap: 12px;
+
+    // 深色模式下调整移动端间距
+    [data-theme="dark"] & {
+      gap: 16px;
+    }
   }
 
   .mainContent {
     margin-left: 0;
     padding-bottom: 60px;
+
+    // 移动端下移除深色模式的分隔线
+    [data-theme="dark"] &::before {
+      display: none;
+    }
 
     .mainInsideContent {
       padding: 0 16px;

@@ -4,6 +4,16 @@ import {
   UserOutlined,
   EnvironmentOutlined,
   CheckOutlined,
+  SmileOutlined,
+  CoffeeOutlined,
+  MehOutlined,
+  RocketOutlined,
+  FrownOutlined,
+  ExclamationCircleOutlined,
+  HeartOutlined,
+  ThunderboltOutlined,
+  ClockCircleOutlined,
+  BulbOutlined,
 } from "@ant-design/icons";
 import styles from "./ProfileContent.module.scss";
 import Waterfall from "../layout/Waterfall";
@@ -28,7 +38,7 @@ interface ProfileContentProps {
 const ProfileContent: React.FC<ProfileContentProps> = ({
   activeProfileTab,
   setActiveProfileTab,
-  userInfo,
+  userInfo: initialUserInfo,
   userHasNoPosts,
   profilePosts,
   isLoadingPosts,
@@ -40,12 +50,18 @@ const ProfileContent: React.FC<ProfileContentProps> = ({
   const isLoggedIn = useAuthStore((state) => state.isLoggedIn);
   const currentUser = useAuthStore((state) => state.user);
 
+  // 添加本地状态来管理userInfo
+  const [userInfo, setUserInfo] = useState(initialUserInfo);
+
   // 获取路由信息，用于提取 URL 中的 userId
   const router = useRouter();
-  const { id } = router.query;
+  // 从查询参数中获取用户ID（支持新的profile查询参数形式）
+  const userId = router.query.profile || router.query.id;
 
   // 判断是否是当前登录用户的资料页
   const [isSelf, setIsSelf] = useState(false);
+  // 添加加载状态，在确定是否为当前用户之前隐藏按钮
+  const [isProfileLoading, setIsProfileLoading] = useState(true);
 
   // 关注状态
   const [isFollowing, setIsFollowing] = useState(false);
@@ -61,13 +77,63 @@ const ProfileContent: React.FC<ProfileContentProps> = ({
 
   // 根据 URL 中的 userId 和当前登录用户的 userId 判断是否是自己的资料页
   useEffect(() => {
-    if (isLoggedIn && currentUser?.userId && id) {
-      // 如果 URL 中的 id 与当前登录用户的 userId 一致，则是自己的资料页
-      setIsSelf(id === currentUser.userId);
+    if (!userId) {
+      return;
+    }
+
+    // 立即判断是否为当前用户（这不需要等待API）
+    if (isLoggedIn && currentUser?.userId) {
+      setIsSelf(userId === currentUser.userId);
     } else {
       setIsSelf(false);
     }
-  }, [isLoggedIn, currentUser?.userId, id]);
+  }, [isLoggedIn, currentUser?.userId, userId]);
+
+  // 根据URL中的userId获取用户完整资料
+  useEffect(() => {
+    const fetchUserProfile = async () => {
+      if (!userId) return;
+
+      setIsProfileLoading(true);
+      try {
+        const response = await profileAPI.getUserProfile(userId as string);
+        const profileData = (response.data as any)?.data;
+
+        if (profileData) {
+          // 如果是自己的资料，更新zustand store
+          if (isSelf && isLoggedIn) {
+            useAuthStore.getState().updateUser(profileData);
+          }
+
+          // 更新本地userInfo状态
+          setUserInfo((prevUserInfo) => ({
+            ...prevUserInfo,
+            avatar: profileData.avatar || prevUserInfo.avatar,
+            nickname: profileData.nickname || prevUserInfo.nickname,
+            username: profileData.username || prevUserInfo.username,
+            accountId: profileData.userId || prevUserInfo.accountId,
+            bio: profileData.bio || prevUserInfo.bio,
+            gender: profileData.gender || prevUserInfo.gender,
+            birthday: profileData.birthday || prevUserInfo.birthday,
+            location: profileData.location || prevUserInfo.location,
+            status: profileData.status || prevUserInfo.status,
+            followCount: profileData.followCount || prevUserInfo.followCount,
+            fansCount: profileData.fansCount || prevUserInfo.fansCount,
+            likeCount: profileData.likeCount || prevUserInfo.likeCount,
+            collectCount: profileData.collectCount || prevUserInfo.collectCount,
+            postCount: profileData.postCount || prevUserInfo.postCount,
+          }));
+        }
+      } catch (error) {
+        console.error("获取用户资料失败:", error);
+      } finally {
+        // 完成加载，显示适当的按钮
+        setIsProfileLoading(false);
+      }
+    };
+
+    fetchUserProfile();
+  }, [userId, isSelf, isLoggedIn]);
 
   // 检查是否已关注该用户
   useEffect(() => {
@@ -78,13 +144,13 @@ const ProfileContent: React.FC<ProfileContentProps> = ({
     if (!isLoggedIn) return;
 
     // 如果没有用户ID，不需要检查
-    if (!id) return;
+    if (!userId) return;
 
     // 从API获取关注状态
     const checkFollowStatus = async () => {
       try {
         setIsLoadingFollow(true);
-        const response = await profileAPI.checkFollowStatus(id as string);
+        const response = await profileAPI.checkFollowStatus(userId as string);
         const isFollowing = (response.data as any)?.data?.isFollowing || false;
         setIsFollowing(isFollowing);
       } catch (error) {
@@ -95,7 +161,7 @@ const ProfileContent: React.FC<ProfileContentProps> = ({
     };
 
     checkFollowStatus();
-  }, [isSelf, isLoggedIn, id]);
+  }, [isSelf, isLoggedIn, userId]);
 
   // 处理关注/取消关注
   const handleFollowToggle = async () => {
@@ -105,7 +171,7 @@ const ProfileContent: React.FC<ProfileContentProps> = ({
       return;
     }
 
-    if (!id) {
+    if (!userId) {
       message.error("用户ID不存在");
       return;
     }
@@ -114,11 +180,11 @@ const ProfileContent: React.FC<ProfileContentProps> = ({
     try {
       if (isFollowing) {
         // 取消关注
-        await profileAPI.unfollowUser(id as string);
+        await profileAPI.unfollowUser(userId as string);
         message.success("已取消关注");
       } else {
         // 关注
-        await profileAPI.followUser(id as string);
+        await profileAPI.followUser(userId as string);
         message.success("关注成功");
       }
       // 切换关注状态
@@ -141,6 +207,98 @@ const ProfileContent: React.FC<ProfileContentProps> = ({
     setIsEditModalVisible(false);
   };
 
+  // 刷新用户资料
+  const refreshUserProfile = async () => {
+    if (!userId) return;
+
+    // 设置加载状态，可以展示一个小的loading效果
+    setIsProfileLoading(true);
+
+    try {
+      const response = await profileAPI.getUserProfile(userId as string);
+      const profileData = (response.data as any)?.data;
+
+      if (profileData) {
+        // 处理头像URL，添加时间戳以避免缓存问题
+        if (profileData.avatar) {
+          profileData.avatar = `${profileData.avatar}${
+            profileData.avatar.includes("?") ? "&" : "?"
+          }t=${new Date().getTime()}`;
+        }
+
+        // 如果是自己的资料，更新zustand store
+        if (isSelf && isLoggedIn) {
+          useAuthStore.getState().updateUser(profileData);
+        }
+
+        // 更新本地userInfo状态
+        setUserInfo((prevUserInfo) => ({
+          ...prevUserInfo,
+          avatar: profileData.avatar || prevUserInfo.avatar,
+          nickname: profileData.nickname || prevUserInfo.nickname,
+          username: profileData.username || prevUserInfo.username,
+          accountId: profileData.userId || prevUserInfo.accountId,
+          bio: profileData.bio || prevUserInfo.bio,
+          gender: profileData.gender || prevUserInfo.gender,
+          birthday: profileData.birthday || prevUserInfo.birthday,
+          location: profileData.location || prevUserInfo.location,
+          status: profileData.status || prevUserInfo.status,
+          followCount: profileData.followCount || prevUserInfo.followCount,
+          fansCount: profileData.fansCount || prevUserInfo.fansCount,
+          likeCount: profileData.likeCount || prevUserInfo.likeCount,
+          collectCount: profileData.collectCount || prevUserInfo.collectCount,
+          postCount: profileData.postCount || prevUserInfo.postCount,
+        }));
+      }
+    } catch (error) {
+      console.error("刷新用户资料失败:", error);
+      // 可选：显示错误提示
+      message.error("刷新资料失败，请稍后再试");
+    } finally {
+      // 无论成功还是失败，都结束加载状态
+      setIsProfileLoading(false);
+    }
+  };
+
+  // 根据状态码获取中文状态文本
+  const getStatusText = (status: string): string => {
+    const statusMap: Record<string, string> = {
+      happy: "开心",
+      relaxed: "慵懒",
+      bored: "无聊",
+      excited: "兴奋",
+      sad: "难过",
+      anxious: "焦虑",
+      peaceful: "平静",
+      energetic: "甲亢",
+      tired: "疲惫",
+      thinking: "沉思",
+    };
+
+    return statusMap[status] || status;
+  };
+
+  // 计算年龄
+  const calculateAge = (birthday?: string): number | null => {
+    if (!birthday) return null;
+
+    const birthDate = new Date(birthday);
+    const today = new Date();
+
+    let age = today.getFullYear() - birthDate.getFullYear();
+    const monthDiff = today.getMonth() - birthDate.getMonth();
+
+    // 如果还没过生日，年龄减1
+    if (
+      monthDiff < 0 ||
+      (monthDiff === 0 && today.getDate() < birthDate.getDate())
+    ) {
+      age--;
+    }
+
+    return age >= 0 ? age : null; // 避免显示负数年龄
+  };
+
   return (
     <div className={styles.container}>
       {/* 用户信息部分 */}
@@ -148,7 +306,9 @@ const ProfileContent: React.FC<ProfileContentProps> = ({
         <div className={styles.userProfileContent}>
           <div className={styles.avatarContainer}>
             <img
-              src={userInfo.avatar || "/images/default-avatar.png"}
+              src={`${userInfo.avatar || "/images/default-avatar.png"}${
+                userInfo.avatar?.includes("?") ? "&" : "?"
+              }v=${new Date().getTime()}`}
               alt="用户头像"
               className={styles.avatar}
             />
@@ -163,21 +323,66 @@ const ProfileContent: React.FC<ProfileContentProps> = ({
               小蓝书号：{userInfo.username}
             </div>
 
-            <div className={styles.bio}>{userInfo.bio || "认真吃饭"}</div>
+            <div className={styles.bio}>{userInfo.bio}</div>
 
             <div className={styles.location}>
-              {userInfo.gender === "male" ? (
-                <span className={styles.gender}>♂</span>
-              ) : userInfo.gender === "female" ? (
-                <span className={styles.gender}>♀</span>
-              ) : (
-                <span className={styles.gender}>⚧</span>
+              {(userInfo.gender ||
+                (userInfo.birthday &&
+                  calculateAge(userInfo.birthday) !== null)) && (
+                <span
+                  className={`${styles.tagItem} ${styles.genderAgeTag} ${
+                    userInfo.gender === "male"
+                      ? styles.maleTag
+                      : userInfo.gender === "female"
+                      ? styles.femaleTag
+                      : styles.otherTag
+                  }`}
+                  title="性别和年龄"
+                >
+                  {userInfo.gender === "male" ? (
+                    <span>♂</span>
+                  ) : userInfo.gender === "female" ? (
+                    <span>♀</span>
+                  ) : userInfo.gender ? (
+                    <span>⚧</span>
+                  ) : null}
+
+                  {userInfo.birthday &&
+                    calculateAge(userInfo.birthday) !== null && (
+                      <span className={styles.ageText}>
+                        {" "}
+                        {calculateAge(userInfo.birthday)}岁
+                      </span>
+                    )}
+                </span>
               )}
+
               {userInfo.location && (
-                <>
-                  <EnvironmentOutlined />
+                <span className={styles.tagItem} title="所在地区">
                   {userInfo.location}
-                </>
+                </span>
+              )}
+
+              {userInfo.status && userInfo.status !== "" && (
+                <span
+                  className={`${styles.tagItem} ${styles.statusTag} ${
+                    styles[`status-${userInfo.status}`]
+                  }`}
+                  title={getStatusText(userInfo.status)}
+                >
+                  {userInfo.status === "happy" && <SmileOutlined />}
+                  {userInfo.status === "relaxed" && <CoffeeOutlined />}
+                  {userInfo.status === "bored" && <MehOutlined />}
+                  {userInfo.status === "excited" && <RocketOutlined />}
+                  {userInfo.status === "sad" && <FrownOutlined />}
+                  {userInfo.status === "anxious" && (
+                    <ExclamationCircleOutlined />
+                  )}
+                  {userInfo.status === "peaceful" && <HeartOutlined />}
+                  {userInfo.status === "energetic" && <ThunderboltOutlined />}
+                  {userInfo.status === "tired" && <ClockCircleOutlined />}
+                  {userInfo.status === "thinking" && <BulbOutlined />}
+                </span>
               )}
             </div>
 
@@ -210,7 +415,9 @@ const ProfileContent: React.FC<ProfileContentProps> = ({
           </div>
 
           <div className={styles.followButtonContainer}>
-            {isSelf ? (
+            {isProfileLoading ? (
+              <div className={styles.buttonPlaceholder}></div>
+            ) : isSelf ? (
               <Button
                 type="default"
                 className={styles.editButton}
@@ -279,18 +486,6 @@ const ProfileContent: React.FC<ProfileContentProps> = ({
               ),
             },
             {
-              key: "likes",
-              label: "喜欢",
-              children: (
-                <div className={styles.emptyContent}>
-                  <div className={styles.emptyIcon}>
-                    <img src="/images/empty-likes.png" alt="暂无喜欢" />
-                  </div>
-                  <p>还没有喜欢任何笔记</p>
-                </div>
-              ),
-            },
-            {
               key: "collections",
               label: "收藏",
               children: (
@@ -299,6 +494,18 @@ const ProfileContent: React.FC<ProfileContentProps> = ({
                     <img src="/images/empty-collections.png" alt="暂无收藏" />
                   </div>
                   <p>还没有收藏任何笔记</p>
+                </div>
+              ),
+            },
+            {
+              key: "likes",
+              label: "点赞",
+              children: (
+                <div className={styles.emptyContent}>
+                  <div className={styles.emptyIcon}>
+                    <img src="/images/empty-likes.png" alt="暂无点赞" />
+                  </div>
+                  <p>还没有点赞任何笔记</p>
                 </div>
               ),
             },
@@ -321,6 +528,7 @@ const ProfileContent: React.FC<ProfileContentProps> = ({
           location: userInfo.location,
           status: userInfo.status,
         }}
+        refreshUserProfile={refreshUserProfile}
       />
     </div>
   );

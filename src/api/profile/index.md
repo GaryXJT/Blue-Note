@@ -16,6 +16,41 @@ Authorization: Bearer <token>
 
 ## API 端点
 
+### 1. 获取个人资料
+
+获取当前登录用户的个人资料信息。
+
+**请求**
+
+```
+GET /users/profile
+```
+
+**响应**
+
+```json
+{
+  "code": 0,
+  "message": "成功",
+  "data": {
+    "userId": "12345",
+    "username": "blue_note_user",
+    "nickname": "蓝色笔记",
+    "avatar": "https://example.com/avatar.jpg",
+    "bio": "认真吃饭",
+    "gender": "female",
+    "birthday": "1995-01-01",
+    "location": "北京 海淀区",
+    "status": "happy",
+    "followCount": 120,
+    "fansCount": 230,
+    "likeCount": 1500,
+    "collectCount": 345,
+    "postCount": 56
+  }
+}
+```
+
 ### 2. 获取指定用户资料
 
 根据用户 ID 获取指定用户的个人资料信息。
@@ -54,7 +89,7 @@ GET /users/profile/:userId
 
 ### 3. 更新个人资料
 
-更新当前登录用户的个人资料信息。
+更新当前登录用户的个人资料信息。支持同时更新文本信息和头像。
 
 **请求**
 
@@ -62,13 +97,32 @@ GET /users/profile/:userId
 PUT /users/profile
 ```
 
-**请求参数**
+**两种请求方式**
+
+1. **包含头像的请求**：使用 `multipart/form-data` 格式
+
+```
+Content-Type: multipart/form-data
+```
+
+表单字段:
+
+- `avatar`: 图片文件 (可选)
+- `username`: 用户名 (可选)
+- `nickname`: 昵称 (可选)
+- `bio`: 个人简介 (可选)
+- `gender`: 性别 (可选) - "male", "female", "other"
+- `birthday`: 生日 (可选) - YYYY-MM-DD 格式
+- `location`: 地区 (可选)
+- `status`: 状态 (可选) - "happy", "relaxed", "bored", "excited", 等...
+
+2. **不包含头像的请求**：使用 `application/json` 格式
 
 ```json
 {
   "username": "new_username",
   "nickname": "新昵称",
-  "avatar": "data:image/jpeg;base64,/9j/4AAQSkZJRgABAQEA...", // Base64编码的图片数据或图片URL
+  "avatar": "https://example.com/avatar.jpg", // 已存在的头像URL
   "bio": "新的个人简介",
   "gender": "male", // "male", "female", "other"
   "birthday": "1990-01-01", // YYYY-MM-DD格式

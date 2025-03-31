@@ -1,6 +1,5 @@
 .sidebar {
-  height: calc(100vh - 72px);
-  width: calc(16px + (100vw - 7 * 32px) / 6 * 1);
+  height: calc(100vh - 60px);
   min-width: 232px;
   display: flex;
   flex-direction: column;
@@ -10,6 +9,8 @@
   position: fixed;
   overflow: visible;
   margin-left: 16px;
+  margin-top: 24px;
+  top: 60px;
 }
 
 .logo {
@@ -177,7 +178,7 @@
   margin-bottom: 20px;
   padding-bottom: 16px;
   border-bottom: 1px solid rgba(0, 0, 0, 0.06);
-  
+
   &:hover {
     opacity: 0.85;
   }
@@ -207,18 +208,24 @@
   font-size: 12px;
   color: #666;
   padding: 0 4px;
-  
+
   :global(.anticon) {
     color: #0093dd;
     margin-bottom: 4px;
     font-size: 16px;
   }
-  
+
   span:first-of-type {
     font-size: 16px;
     font-weight: 600;
     color: #333;
     margin: 4px 0;
+  }
+}
+@media screen and (min-width: 1728px) {
+  .sidebar {
+    width: calc(16px + calc((1728px - 7 * 32px) / 6 * 1));
+    margin-left: 16px;
   }
 }
 
@@ -253,6 +260,7 @@
     position: fixed;
     left: 0;
     bottom: 0;
+    top: auto;
     z-index: 100;
     border-top: 1px solid #eee;
     border-radius: 0;
@@ -287,4 +295,60 @@
   .more {
     display: none;
   }
+}
+
+/* 添加一个本地类名，再通过它修改下拉菜单样式 */
+.moreDropdown {
+  margin-bottom: 10px;
+
+  /* 样式下拉菜单组件，但保留本地类的作用域 */
+  :global {
+    .ant-dropdown-menu {
+      min-width: 180px;
+      border-radius: 8px;
+      box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+      padding: 8px 0;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen,
+        Ubuntu, Cantarell, "Fira Sans", "Droid Sans", "Helvetica Neue",
+        sans-serif;
+    }
+
+    .ant-dropdown-menu-item {
+      padding: 8px 16px !important;
+      font-size: 14px;
+      color: #333;
+      line-height: 22px;
+
+      &:hover {
+        background-color: #f5f5f5;
+      }
+
+      .anticon {
+        margin-right: 10px;
+        font-size: 16px;
+        color: #666;
+      }
+    }
+
+    .ant-dropdown-menu-item-divider {
+      margin: 4px 0;
+      background-color: #f0f0f0;
+    }
+
+    .ant-dropdown-menu-item-danger {
+      color: #ff4d4f !important;
+
+      &:hover {
+        background-color: rgba(255, 77, 79, 0.1) !important;
+      }
+
+      .anticon {
+        color: #ff4d4f;
+      }
+    }
+  }
+}
+
+.moreBtn:global(.ant-dropdown-open) {
+  background-color: #f0f0f0;
 }

@@ -1,0 +1,13 @@
+.themeSwitchContainer {
+  display: flex;
+  align-items: center;
+  margin-right: 8px;
+}
+
+.themeSwitch {
+  background-color: var(--primary-color);
+
+  &:global(.ant-switch-checked) {
+    background-color: #4b4b7a; // 深色模式下的开关颜色
+  }
+}

@@ -13,6 +13,9 @@
 
 .content {
   padding: 24px;
+  width: 100%;
+  display: flex;
+  flex-direction: column;
 }
 
 .backButton {
@@ -51,6 +54,298 @@
   &:hover {
     background: transparent !important;
   }
+}
+
+/* 视频信息条 - 顶部信息 */
+.videoInfoBar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  border-bottom: 1px solid #eaeaea;
+  padding: 14px 18px;
+  margin-bottom: 0;
+  background-color: #f9f9f9;
+  border-top-left-radius: 8px;
+  border-top-right-radius: 8px;
+}
+
+.videoInfoText {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 15px;
+  font-weight: 500;
+  color: #333;
+
+  .videoDuration,
+  .videoSize {
+    color: #888;
+    font-size: 13px;
+    font-weight: normal;
+  }
+}
+
+.videoSection {
+  width: 100%;
+  border-radius: 8px;
+  overflow: hidden;
+  background-color: #ffffff;
+  border: 1px solid #eaeaea;
+  margin-bottom: 28px;
+  padding-bottom: 18px;
+  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.03);
+}
+
+.videoHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 12px 16px;
+  background-color: #fcfcfc;
+  border-bottom: 1px solid #f0f0f0;
+}
+
+.videoTitle {
+  font-weight: 500;
+  color: #444;
+  display: flex;
+  align-items: center;
+
+  .videoDuration {
+    margin-left: 8px;
+    font-weight: normal;
+    color: #999;
+  }
+}
+
+.videoSize {
+  margin-left: 8px;
+  font-weight: normal;
+  color: #999;
+  font-size: 12px;
+}
+
+.videoNote {
+  font-size: 12px;
+  color: #666;
+
+  button {
+    font-size: 12px;
+    height: auto;
+    padding: 3px 10px;
+  }
+}
+
+.videoPreview {
+  width: 100%;
+  position: relative;
+  background-color: #fafafa;
+  display: flex;
+  justify-content: center;
+  align-items: stretch;
+  padding: 16px 16px 8px;
+}
+
+/* 视频区域和封面区域的容器 */
+.videoPlayerContainer {
+  display: flex;
+  width: 100%;
+  max-width: 1024px;
+  gap: 30px;
+  position: relative;
+  padding: 16px 16px 0;
+
+  &::before {
+    content: "";
+    position: absolute;
+    left: 50%;
+    top: 60px; // 距离顶部更远一些
+    height: calc(100% - 100px); // 使用固定高度而不是bottom属性
+    width: 1px;
+    background-color: #dcdcdc;
+    transform: translateX(-50%);
+  }
+}
+
+/* 视频区域和封面区域的标题 */
+.contentTitle {
+  font-size: 16px;
+  font-weight: 500;
+  color: #666;
+  margin-bottom: 12px;
+  display: flex;
+  align-items: center;
+  position: relative;
+  padding-left: 2px;
+}
+
+/* 视频区域容器 */
+.videoContentContainer {
+  flex: 1;
+  position: relative;
+  max-width: calc(50% - 15px);
+  display: flex;
+  flex-direction: column;
+}
+
+/* 封面区域容器 */
+.coverContentContainer {
+  flex: 1;
+  position: relative;
+  max-width: calc(50% - 15px);
+  display: flex;
+  flex-direction: column;
+}
+
+.videoContentHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 10px;
+}
+
+.videoContentTitle {
+  font-size: 14px;
+  font-weight: 500;
+  color: #444;
+}
+
+.videoActionButtons {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  z-index: 10;
+  opacity: 0;
+  transition: opacity 0.2s;
+  background-color: rgba(0, 0, 0, 0.5);
+  padding: 4px 8px;
+  border-radius: 4px;
+
+  button {
+    color: white;
+    border: none;
+    background: transparent;
+    font-size: 12px;
+    padding: 2px 8px;
+    cursor: pointer;
+
+    &:hover {
+      color: #40a9ff;
+    }
+  }
+}
+
+.videoContentContainer:hover .videoActionButtons {
+  opacity: 1;
+}
+
+.coverContentHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 10px;
+}
+
+.coverContentTitle {
+  font-size: 14px;
+  font-weight: 500;
+  color: #444;
+}
+
+.videoPlayer {
+  width: 100%;
+  aspect-ratio: 16 / 9;
+  object-fit: contain;
+  background-color: #000;
+  border-radius: 4px;
+}
+
+.coverPreview {
+  width: 100%;
+  aspect-ratio: 16 / 9;
+  background-color: #fff;
+  border: 1px solid #f0f0f0;
+  border-radius: 4px;
+  overflow: hidden;
+}
+
+.coverImageContainer {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  background-color: #eaeaea;
+}
+
+.coverImage {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+.coverPlaceholder {
+  width: 100%;
+  height: 100%;
+  aspect-ratio: 16 / 9;
+  background-color: #f0f0f0;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  color: #666;
+  text-align: center;
+  padding: 24px;
+  border-radius: 4px;
+  border: 1px solid #e0e0e0;
+
+  p {
+    margin: 8px 0;
+    font-weight: 500;
+  }
+}
+
+.coverActions {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  z-index: 10;
+  opacity: 0;
+  transition: opacity 0.2s;
+  background-color: rgba(0, 0, 0, 0.5);
+  padding: 4px 8px;
+  border-radius: 4px;
+}
+
+.coverImageContainer:hover .coverActions {
+  opacity: 1;
+}
+
+.coverUploadContainer {
+  width: 100%;
+  height: 100%;
+  aspect-ratio: 16 / 9;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  gap: 10px;
+
+  p {
+    margin: 0;
+    color: #666;
+  }
+}
+
+.coverTip {
+  font-size: 12px;
+  color: #999;
+  margin-top: 8px;
+  text-align: center;
+  max-width: 220px;
 }
 
 .titleInput {
@@ -124,15 +419,12 @@
   display: block;
 }
 
-// 正文文本框容器
-.contentTextareaWrapper {
+.contentInput {
   position: relative;
-  margin-top: 16px;
-  border: none;
-  background: #fff;
+  margin-bottom: 24px;
+  width: 100%;
 }
 
-// 正文文本框样式
 .contentTextarea {
   width: 100%;
   height: 240px;
@@ -159,7 +451,6 @@
   }
 }
 
-// 正文字数计数器
 .contentCount {
   position: absolute;
   right: 50px;
@@ -172,7 +463,6 @@
   z-index: 10;
 }
 
-// 正文表情按钮
 .contentEmojiButton {
   position: absolute;
   right: 12px;
@@ -199,254 +489,291 @@
   }
 }
 
-// 视频上传区域样式
-.videoSection {
-  margin-bottom: 24px;
-  padding: 20px;
-  background: #fcfcfc;
-  border-radius: 6px;
-  border: 1px solid #f0f0f0;
-}
-
-.videoHeader {
-  margin-bottom: 16px;
-
-  span {
-    font-size: 16px;
-    font-weight: 500;
-    color: #444;
-  }
-}
-
-.videoUploader {
-  :global {
-    .ant-upload {
-      width: 100%;
-    }
-
-    .ant-upload-select {
-      display: block;
-    }
-
-    .ant-upload-list {
-      margin-top: 16px;
-    }
-
-    .ant-upload-list-item {
-      background: #f5f5f5;
-      padding: 12px;
-      border-radius: 6px;
-      margin-bottom: 12px;
-      border: 1px solid #eee;
-    }
-
-    .ant-upload-list-item-name {
-      color: #333;
-      font-size: 14px;
-      font-weight: 500;
-    }
-
-    .ant-upload-list-item-progress {
-      bottom: 14px;
-      padding-inline: 14px;
-    }
-
-    .ant-upload-list-item-card-actions {
-      position: absolute;
-      right: 8px;
-      top: 50%;
-      transform: translateY(-50%);
-    }
-  }
-}
-
-// 视频容器样式
-.videoContainer {
-  width: 100%;
-  margin-top: 10px;
-}
-
-// 进度条容器
-.progressContainer {
-  margin-top: 16px;
-  width: 100%;
-}
-
-// 进度条外层
-.progressBar {
-  width: 100%;
-  height: 10px;
-  background-color: #f0f0f0;
-  border-radius: 5px;
-  overflow: hidden;
-}
-
-// 进度条内层
-.progressInner {
-  height: 100%;
-  background-color: #1890ff;
-  border-radius: 5px;
-  transition: width 0.3s ease-in-out;
-}
-
-// 进度文字
-.progressText {
-  margin-top: 8px;
-  font-size: 12px;
-  color: #666;
-  text-align: center;
-}
-
-// 视频预览区域
-.videoPreview {
-  margin-top: 16px;
-  width: 100%;
-}
-
-// 视频播放器
-.videoPlayer {
-  width: 100%;
-  max-width: 480px;
-  border-radius: 6px;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-}
-
-// 视频操作区域
-.videoActions {
-  margin-top: 12px;
-  display: flex;
-  align-items: center;
-}
-
-// 删除按钮
-.deleteBtn {
-  background-color: #fff;
-  border-color: #ff4d4f;
-  color: #ff4d4f;
-
-  &:hover {
-    background-color: #fff1f0;
-    border-color: #ff7875;
-    color: #ff7875;
-  }
-}
-
-// 上传按钮
-.uploadVideoBtn {
-  width: 100%;
-  height: 120px;
-  display: flex;
-  flex-direction: column;
-  justify-content: center;
-  align-items: center;
-  background-color: #fafafa;
-  border: 1px dashed #d9d9d9;
-  border-radius: 8px;
-  cursor: pointer;
-  transition: all 0.3s;
-  margin-top: 8px;
-  color: #666;
-
-  &:hover {
-    border-color: #1890ff;
-    color: #1890ff;
-    background-color: #e6f7ff;
-  }
-
-  :global {
-    .anticon {
-      font-size: 24px;
-      margin-bottom: 8px;
-    }
-  }
-}
-
-.videoTip {
-  margin-top: 12px;
-  font-size: 12px;
-  color: #999;
-}
-
-.emojiGrid {
-  display: grid;
-  grid-template-columns: repeat(10, 1fr);
-  gap: 5px;
-  padding: 10px;
-  max-width: 300px;
-}
-
-.emojiItem {
-  width: 24px;
-  height: 24px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  cursor: pointer;
-  background: none;
-  border: none;
-  border-radius: 4px;
-  font-size: 18px;
-  padding: 0;
-  transition: background-color 0.2s;
-
-  &:hover {
-    background-color: #f0f0f0;
-  }
-}
-
-.emojiPopover {
-  :global {
-    .ant-popover-arrow {
-      display: none;
-    }
-    .ant-popover-inner {
-      border-radius: 8px;
-    }
-  }
-}
-
 .actionButtons {
   display: flex;
   justify-content: flex-end;
-  gap: 12px;
-  margin-top: 24px;
+  gap: 16px;
+  margin-top: 32px;
 }
 
 .publishButton {
-  height: 36px;
-  padding: 0 24px;
+  height: 42px;
+  padding: 0 32px;
   background: #1890ff;
   color: #fff;
   border: none;
-  border-radius: 4px;
-  font-size: 14px;
+  border-radius: 6px;
+  font-size: 16px;
+  font-weight: 500;
   cursor: pointer;
   transition: all 0.3s;
+  box-shadow: 0 4px 12px rgba(24, 144, 255, 0.25);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 120px;
 
   &:hover {
     background: #40a9ff;
+    box-shadow: 0 6px 16px rgba(24, 144, 255, 0.35);
+    transform: translateY(-2px);
+  }
+
+  &:active {
+    transform: translateY(0);
+    box-shadow: 0 2px 8px rgba(24, 144, 255, 0.2);
   }
 
   &:disabled {
     background: #f5f5f5;
     color: #bfbfbf;
     cursor: not-allowed;
+    box-shadow: none;
+    transform: none;
   }
 }
 
 .draftButton {
-  height: 36px;
-  padding: 0 24px;
+  height: 42px;
+  padding: 0 32px;
   background: #fff;
-  color: #595959;
+  color: #444;
   border: 1px solid #d9d9d9;
-  border-radius: 4px;
-  font-size: 14px;
+  border-radius: 6px;
+  font-size: 16px;
+  font-weight: 500;
   cursor: pointer;
   transition: all 0.3s;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 120px;
 
   &:hover {
     border-color: #1890ff;
     color: #1890ff;
+    box-shadow: 0 4px 12px rgba(24, 144, 255, 0.12);
+    transform: translateY(-2px);
   }
+
+  &:active {
+    transform: translateY(0);
+    box-shadow: 0 2px 6px rgba(24, 144, 255, 0.08);
+  }
+
+  &:disabled {
+    border-color: #f5f5f5;
+    background: #f5f5f5;
+    color: #bfbfbf;
+    cursor: not-allowed;
+    box-shadow: none;
+    transform: none;
+  }
+}
+
+.uploadButton {
+  text-align: center;
+  cursor: pointer;
+  padding: 24px;
+  border: 2px dashed #d0d0d0;
+  border-radius: 8px;
+  background-color: #f9f9f9;
+  width: 100%;
+  height: 100%;
+  aspect-ratio: 16 / 9;
+  transition: all 0.3s;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+
+  &:hover {
+    border-color: #1890ff;
+    background-color: #f0f7ff;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.05);
+  }
+
+  .uploadIcon {
+    font-size: 42px;
+    color: #1890ff;
+    margin-bottom: 16px;
+  }
+
+  p {
+    margin: 4px 0;
+    color: #333;
+    font-weight: 500;
+  }
+}
+
+.uploadTip {
+  font-size: 12px;
+  color: #999;
+  margin-top: 8px;
+  text-align: center;
+  max-width: 220px;
+}
+
+/* 上传进度区域 */
+.uploadProgressSection {
+  width: 100%;
+  height: auto;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background-color: #f5f5f5;
+  aspect-ratio: 16 / 9;
+  border-radius: 4px;
+  overflow: hidden;
+  border: 1px solid #e0e0e0;
+}
+
+.videoUploadSection {
+  width: 100%;
+  height: auto;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  aspect-ratio: 16 / 9;
+}
+
+.videoLoadingOverlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-color: rgba(0, 0, 0, 0.5);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  color: white;
+  border-radius: 4px;
+  backdrop-filter: blur(2px);
+
+  p {
+    margin-top: 12px;
+    font-size: 15px;
+    font-weight: 500;
+    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
+  }
+}
+
+/* 视频控制按钮 */
+.videoControls {
+  position: absolute;
+  top: 0;
+  right: 0;
+  z-index: 20;
+}
+
+/* 封面控制按钮 */
+.coverControls {
+  position: absolute;
+  top: 0;
+  right: 0;
+  z-index: 20;
+}
+
+.controlButton {
+  background-color: #f0f0f0;
+  border: 1px solid #d9d9d9;
+  color: #333;
+  padding: 6px 16px;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 14px;
+  font-weight: 500;
+  transition: all 0.3s;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+  height: 28px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  &:hover {
+    background-color: #e6f7ff;
+    color: #1890ff;
+    border-color: #1890ff;
+    box-shadow: 0 2px 6px rgba(24, 144, 255, 0.25);
+    transform: translateY(-1px);
+  }
+
+  &:active {
+    transform: translateY(0);
+    box-shadow: 0 1px 2px rgba(24, 144, 255, 0.15);
+  }
+}
+
+.publishingModal {
+  :global(.ant-modal-header) {
+    text-align: center;
+  }
+
+  :global(.ant-modal-body) {
+    padding: 24px;
+  }
+}
+
+.publishingContent {
+  padding: 10px;
+
+  .publishingText {
+    margin-top: 16px;
+    text-align: center;
+    font-size: 15px;
+    color: #333;
+  }
+}
+
+.emojiPopover {
+  width: 240px;
+}
+
+.emojiGrid {
+  display: grid;
+  grid-template-columns: repeat(6, 1fr);
+  gap: 8px;
+  padding: 8px;
+}
+
+.emojiItem {
+  width: 32px;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: none;
+  background: none;
+  cursor: pointer;
+  border-radius: 4px;
+  font-size: 20px;
+  transition: background-color 0.3s;
+
+  &:hover {
+    background-color: #f0f0f0;
+  }
+}
+
+.uploadingText {
+  font-size: 16px;
+  color: #333;
+  margin: 16px 0 8px 0;
+  text-align: center;
+}
+
+.loadingText {
+  font-size: 14px;
+  color: #888;
+  margin: 8px 0;
+  text-align: center;
+}
+
+.errorIcon {
+  font-size: 40px;
+  margin-bottom: 12px;
+  color: #ff4d4f;
 }

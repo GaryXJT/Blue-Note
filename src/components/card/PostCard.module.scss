@@ -1,14 +1,28 @@
-@import '@/styles/variables.scss';
+@import "@/styles/variables.scss";
 
 .card {
-  background: #fff;
+  background: var(--card-background);
   overflow: hidden;
   transition: all 0.3s ease;
   cursor: pointer;
   width: 100%;
+  border-radius: 8px;
+  box-shadow: 0 1px 3px var(--shadow-color);
 
   &:hover {
     transform: translateY(-2px);
+    box-shadow: 0 4px 12px var(--shadow-color);
+  }
+
+  // 深色模式下调整边框和阴影
+  [data-theme="dark"] & {
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.3);
+
+    &:hover {
+      box-shadow: 0 4px 16px rgba(0, 0, 0, 0.4);
+      border-color: rgba(64, 169, 255, 0.2);
+    }
   }
 }
 
@@ -39,6 +53,16 @@
     object-fit: cover;
     width: 100%;
     height: 100%;
+    transition: transform 0.5s ease;
+  }
+
+  // 深色模式下的图片悬停缩放效果
+  [data-theme="dark"] & {
+    &:hover {
+      :global(.ant-image-img) {
+        transform: scale(1.05);
+      }
+    }
   }
 }
 
@@ -54,7 +78,11 @@
   align-items: center;
   justify-content: center;
   overflow: hidden;
-  background-color: #f0f0f0;
+  background-color: var(--secondary-color);
+
+  [data-theme="dark"] & {
+    background-color: #2a2a2a;
+  }
 }
 
 .blurredImage {
@@ -63,6 +91,10 @@
   filter: blur(20px);
   transform: scale(1.1);
   opacity: 0.8;
+
+  [data-theme="dark"] & {
+    opacity: 0.6;
+  }
 }
 
 // 骨架屏样式
@@ -75,13 +107,25 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  background-color: #f0f0f0;
+  background-color: var(--secondary-color);
   z-index: 2;
+
+  [data-theme="dark"] & {
+    background-color: var(--skeleton-color);
+  }
 
   :global(.ant-skeleton-image) {
     width: 100% !important;
     height: 100% !important;
     min-height: 100px;
+
+    [data-theme="dark"] & {
+      background-color: var(--skeleton-color);
+
+      svg {
+        fill: var(--skeleton-highlight);
+      }
+    }
   }
 }
 
@@ -92,22 +136,44 @@
 
 .content {
   padding: 12px;
+
+  [data-theme="dark"] & {
+    padding: 14px;
+  }
 }
 
 .title {
   font-size: 14px;
   font-weight: 500;
   margin-bottom: 8px;
-  color: #333;
+  color: var(--text-color);
   overflow: hidden;
   text-overflow: ellipsis;
   display: -webkit-box;
   -webkit-line-clamp: 2;
   -webkit-box-orient: vertical;
+  transition: color 0.3s ease;
+
+  // 深色模式下增强标题对比度
+  [data-theme="dark"] & {
+    font-weight: 600;
+    font-size: 15px;
+    line-height: 1.4;
+  }
+
+  .card:hover & {
+    color: var(--primary-color);
+  }
 }
 
 .footer {
   margin-top: 8px;
+
+  [data-theme="dark"] & {
+    margin-top: 10px;
+    padding-top: 8px;
+    border-top: 1px solid rgba(255, 255, 255, 0.05);
+  }
 }
 
 .author {
@@ -128,20 +194,41 @@
       border-radius: 50%;
       overflow: hidden;
       flex-shrink: 0;
+      transition: transform 0.3s ease;
 
       img {
         width: 100%;
         height: 100%;
         object-fit: cover;
       }
+
+      // 深色模式下增加轮廓和悬停效果
+      [data-theme="dark"] & {
+        border: 1px solid rgba(255, 255, 255, 0.2);
+        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
+      }
+
+      &:hover {
+        transform: scale(1.1);
+      }
     }
 
     .name {
       font-size: 12px;
-      color: #666;
+      color: var(--icon-color);
       overflow: hidden;
       text-overflow: ellipsis;
       white-space: nowrap;
+      transition: color 0.3s ease;
+
+      // 深色模式下调整作者名称颜色
+      [data-theme="dark"] & {
+        color: #d9d9d9;
+      }
+
+      &:hover {
+        color: var(--primary-color);
+      }
     }
   }
 
@@ -149,7 +236,7 @@
     display: flex;
     align-items: center;
     gap: 4px;
-    color: #999;
+    color: var(--icon-color);
     font-size: 12px;
     flex-shrink: 0;
     cursor: pointer;
@@ -162,13 +249,25 @@
     &.liked {
       color: #ff4d4f;
     }
+
+    // 深色模式下调整喜欢图标的颜色
+    [data-theme="dark"] & {
+      color: #d9d9d9;
+
+      &:hover,
+      &.liked {
+        color: #ff7875; // 更亮的红色
+      }
+    }
   }
 }
 
 // 骨架屏样式
 .skeleton {
-  background: #fff;
+  background: var(--card-background);
   width: 100%;
+  border-radius: 8px;
+  box-shadow: 0 1px 3px var(--shadow-color);
 
   .imageWrapper {
     position: relative;
@@ -184,7 +283,12 @@
     left: 0;
     width: 100%;
     height: 100%;
-    background: linear-gradient(90deg, #f5f5f5 25%, #fafafa 50%, #f5f5f5 75%);
+    background: linear-gradient(
+      90deg,
+      var(--secondary-color) 25%,
+      var(--background-color) 50%,
+      var(--secondary-color) 75%
+    );
     background-size: 200% 100%;
     animation: shimmer 1.5s infinite;
   }
@@ -196,16 +300,16 @@
   .titleSkeleton {
     height: 14px;
     margin-bottom: 8px;
-    background: #f5f5f5;
+    background: var(--secondary-color);
     border-radius: 2px;
 
     &::after {
-      content: '';
+      content: "";
       display: block;
       width: 70%;
       height: 14px;
       margin-top: 6px;
-      background: #f5f5f5;
+      background: var(--secondary-color);
       border-radius: 2px;
     }
   }
@@ -220,14 +324,14 @@
       width: 22px;
       height: 22px;
       border-radius: 50%;
-      background: #f5f5f5;
+      background: var(--secondary-color);
       flex-shrink: 0;
     }
 
     .nameSkeleton {
       width: 60px;
       height: 12px;
-      background: #f5f5f5;
+      background: var(--secondary-color);
       border-radius: 2px;
       flex-shrink: 0;
     }

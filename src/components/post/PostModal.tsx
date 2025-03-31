@@ -1,5 +1,5 @@
-import React, { useState } from 'react'
-import { Post } from '@/api/types'
+import React, { useState } from "react";
+import { Post } from "@/types";
 import {
   CloseOutlined,
   LeftOutlined,
@@ -8,16 +8,16 @@ import {
   HeartFilled,
   PlusOutlined,
   CheckOutlined,
-} from '@ant-design/icons'
-import styles from './PostModal.module.scss'
+} from "@ant-design/icons";
+import styles from "./PostModal.module.scss";
 
 interface PostModalProps {
-  post: Post
-  isOpen: boolean
-  onClose: () => void
-  isLiked?: boolean
-  onLike?: (e: React.MouseEvent) => void
-  likesCount?: number
+  post: Post;
+  isOpen: boolean;
+  onClose: () => void;
+  isLiked?: boolean;
+  onLike?: (e: React.MouseEvent) => void;
+  likesCount?: number;
 }
 
 const PostModal: React.FC<PostModalProps> = ({
@@ -28,33 +28,37 @@ const PostModal: React.FC<PostModalProps> = ({
   onLike,
   likesCount,
 }) => {
-  const [currentIndex, setCurrentIndex] = useState(0)
-  const [isFollowing, setIsFollowing] = useState(false)
-  const images = post.images || [post.coverUrl]
-  const displayLikes = likesCount !== undefined ? likesCount : post.likes
+  const [currentIndex, setCurrentIndex] = useState(0);
+  const [isFollowing, setIsFollowing] = useState(false);
+  const images = post.images || [post.coverUrl];
+  const displayLikes = likesCount !== undefined ? likesCount : post.likes;
 
   const handlePrev = () => {
-    setCurrentIndex((prev) => (prev === 0 ? images.length - 1 : prev - 1))
-  }
+    setCurrentIndex((prev) => (prev === 0 ? images.length - 1 : prev - 1));
+  };
 
   const handleNext = () => {
-    setCurrentIndex((prev) => (prev === images.length - 1 ? 0 : prev + 1))
-  }
+    setCurrentIndex((prev) => (prev === images.length - 1 ? 0 : prev + 1));
+  };
 
   const handleFollow = (e: React.MouseEvent) => {
-    e.stopPropagation()
-    setIsFollowing(!isFollowing)
+    e.stopPropagation();
+    setIsFollowing(!isFollowing);
     // 这里可以添加调用后端API的逻辑
-    console.log(`${isFollowing ? '取消关注' : '关注'} ${post.author.name}`)
-  }
+    console.log(
+      `${isFollowing ? "取消关注" : "关注"} ${
+        post.author?.name || post.username || post.nickname || "未知用户"
+      }`
+    );
+  };
 
   const handleLikeClick = (e: React.MouseEvent) => {
     if (onLike) {
-      onLike(e)
+      onLike(e);
     }
-  }
+  };
 
-  if (!isOpen) return null
+  if (!isOpen) return null;
 
   return (
     <div className={styles.overlay} onClick={onClose}>
@@ -76,12 +80,14 @@ const PostModal: React.FC<PostModalProps> = ({
               <>
                 <button
                   className={`${styles.navBtn} ${styles.prevBtn}`}
-                  onClick={handlePrev}>
+                  onClick={handlePrev}
+                >
                   <LeftOutlined />
                 </button>
                 <button
                   className={`${styles.navBtn} ${styles.nextBtn}`}
-                  onClick={handleNext}>
+                  onClick={handleNext}
+                >
                   <RightOutlined />
                 </button>
                 <div className={styles.dots}>
@@ -89,7 +95,7 @@ const PostModal: React.FC<PostModalProps> = ({
                     <button
                       key={index}
                       className={`${styles.dot} ${
-                        index === currentIndex ? styles.active : ''
+                        index === currentIndex ? styles.active : ""
                       }`}
                       onClick={() => setCurrentIndex(index)}
                     />
@@ -103,13 +109,27 @@ const PostModal: React.FC<PostModalProps> = ({
             <div className={styles.header}>
               <h2>{post.title}</h2>
               <div className={styles.author}>
-                <img src={post.author.avatar} alt={post.author.name} />
-                <span>{post.author.name}</span>
+                <img
+                  src={post.author?.avatar || "/images/default-avatar.png"}
+                  alt={
+                    post.author?.name ||
+                    post.username ||
+                    post.nickname ||
+                    "未知用户"
+                  }
+                />
+                <span>
+                  {post.author?.name ||
+                    post.username ||
+                    post.nickname ||
+                    "未知用户"}
+                </span>
                 <button
                   className={`${styles.followBtn} ${
-                    isFollowing ? styles.following : ''
+                    isFollowing ? styles.following : ""
                   }`}
-                  onClick={handleFollow}>
+                  onClick={handleFollow}
+                >
                   {isFollowing ? (
                     <>
                       <CheckOutlined /> 已关注
@@ -125,8 +145,9 @@ const PostModal: React.FC<PostModalProps> = ({
 
             <div className={styles.stats}>
               <div
-                className={`${styles.likes} ${isLiked ? styles.liked : ''}`}
-                onClick={handleLikeClick}>
+                className={`${styles.likes} ${isLiked ? styles.liked : ""}`}
+                onClick={handleLikeClick}
+              >
                 {isLiked ? <HeartFilled /> : <HeartOutlined />}
                 <span>{displayLikes}</span>
               </div>
@@ -148,7 +169,7 @@ const PostModal: React.FC<PostModalProps> = ({
         </div>
       </div>
     </div>
-  )
-}
+  );
+};
 
-export default PostModal
+export default PostModal;

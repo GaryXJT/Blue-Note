@@ -1,3 +1,6 @@
+// 导入主题样式
+@import "./themes.scss";
+
 * {
   margin: 0;
   padding: 0;
@@ -6,13 +9,14 @@
 
 html,
 body {
-  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto,
-    'Helvetica Neue', Arial, 'Noto Sans', sans-serif, 'Apple Color Emoji',
-    'Segoe UI Emoji', 'Segoe UI Symbol', 'Noto Color Emoji';
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto,
+    "Helvetica Neue", Arial, "Noto Sans", sans-serif, "Apple Color Emoji",
+    "Segoe UI Emoji", "Segoe UI Symbol", "Noto Color Emoji";
   font-size: 14px;
   line-height: 1.5;
-  color: #333;
-  background: #fff;
+  color: var(--text-color);
+  background: var(--background-color);
+  transition: color 0.3s, background-color 0.3s;
 }
 
 a {
@@ -79,16 +83,16 @@ img {
 // 清除浮动
 .clearfix {
   &::after {
-    content: '';
+    content: "";
     display: table;
     clear: both;
   }
 }
 
 // 图标字体基础样式
-[class^='icon-'],
-[class*=' icon-'] {
-  font-family: 'iconfont' !important;
+[class^="icon-"],
+[class*=" icon-"] {
+  font-family: "iconfont" !important;
   font-style: normal;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;

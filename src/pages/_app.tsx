@@ -2,11 +2,11 @@ import React, { useEffect } from "react";
 import type { AppProps } from "next/app";
 import { useRouter } from "next/router";
 import useAuthStore from "@/store/useAuthStore";
+import ThemeProvider from "@/components/theme/ThemeProvider";
 import "@/styles/globals.scss";
 
 // 定义需要登录才能访问的路由
 const protectedRoutes = [
-  "/post/profile",
   "/post/drafts",
   "/post/works",
   "/admin",
@@ -55,5 +55,9 @@ export default function App({ Component, pageProps }: AppProps) {
     };
   }, []);
 
-  return <Component {...pageProps} />;
+  return (
+    <ThemeProvider>
+      <Component {...pageProps} />
+    </ThemeProvider>
+  );
 }

@@ -14,21 +14,59 @@ export const getUserProfile = (userId: string) => {
 export const updateUserProfile = (data: {
   username?: string;
   nickname?: string;
-  avatar?: string;
+  avatar?: string | File; // 允许传入头像文件或URL字符串
   bio?: string;
   gender?: "male" | "female" | "other";
   birthday?: string;
   location?: string;
   status?: string;
 }) => {
-  return request<AxiosResponse<User>>({
-    url: "/users/profile",
-    method: "PUT",
-    data,
-  });
+  // 检查是否有头像文件需要上传
+  if (data.avatar instanceof File) {
+    // 使用FormData提交，支持文件上传
+    const formData = new FormData();
+
+    // 添加头像文件
+    formData.append("avatar", data.avatar);
+
+    // 添加其他个人资料字段
+    Object.entries(data).forEach(([key, value]) => {
+      // 跳过头像，因为已经添加过了
+      if (key !== "avatar" && value !== undefined) {
+        formData.append(key, value.toString());
+      }
+    });
+
+    // 获取token
+    const token = localStorage.getItem("token");
+
+    // 发送含有文件的FormData请求
+    return request<AxiosResponse<User>>({
+      url: "/users/profile",
+      method: "PUT",
+      data: formData,
+      headers: {
+        "Content-Type": "multipart/form-data",
+        ...(token ? { Authorization: `Bearer ${token}` } : {}),
+      },
+    });
+  } else {
+    // 获取token
+    const token = localStorage.getItem("token");
+
+    // 常规JSON请求 (当avatar是URL字符串或未定义时)
+    return request<AxiosResponse<User>>({
+      url: "/users/profile",
+      method: "PUT",
+      data,
+      headers: {
+        ...(token ? { Authorization: `Bearer ${token}` } : {}),
+      },
+    });
+  }
 };
 
-// 上传头像
+// 上传头像 (保留此方法以兼容旧代码，但优先考虑使用updateUserProfile)
 export const uploadAvatar = (avatarFile: File) => {
   const formData = new FormData();
   formData.append("avatar", avatarFile);

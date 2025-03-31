@@ -30,7 +30,6 @@ import useAuthStore from "@/store/useAuthStore";
 import styles from "./EditProfileModal.module.scss";
 import { provinceData } from "@/data/location"; // 我们需要创建这个文件
 import { profileAPI } from "@/api/services"; // 导入新的profile API
-import { ApiResponse } from "@/api/axios"; // 导入API响应类型
 
 const { Option } = Select;
 const { TextArea } = Input;
@@ -49,12 +48,14 @@ interface EditProfileModalProps {
     location?: string;
     status?: string;
   };
+  refreshUserProfile?: () => Promise<void>;
 }
 
 const EditProfileModal: React.FC<EditProfileModalProps> = ({
   visible,
   onCancel,
   userInfo,
+  refreshUserProfile,
 }) => {
   const [form] = Form.useForm();
   const [loading, setLoading] = useState(false);
@@ -67,9 +68,9 @@ const EditProfileModal: React.FC<EditProfileModalProps> = ({
 
   const updateUser = useAuthStore((state) => state.updateUser);
 
-  // 初始化文件列表
+  // 初始化文件列表和字符长度
   useEffect(() => {
-    if (visible && userInfo.avatar) {
+    if (visible) {
       setFileList(
         userInfo.avatar
           ? [
@@ -77,15 +78,22 @@ const EditProfileModal: React.FC<EditProfileModalProps> = ({
                 uid: "-1",
                 name: "avatar.png",
                 status: "done",
-                url: userInfo.avatar,
+                url: `${userInfo.avatar}${
+                  userInfo.avatar.includes("?") ? "&" : "?"
+                }v=${new Date().getTime()}`,
               },
             ]
-          : [] // 如果没有头像，则使用空数组，后端会返回默认头像
+          : []
       );
+
+      // 设置初始字符长度
+      setUsernameLength(userInfo.username?.length || 0);
+      setNicknameLength(userInfo.nickname?.length || 0);
+      setBioLength(userInfo.bio?.length || 0);
     } else {
       setFileList([]);
     }
-  }, [visible, userInfo.avatar]);
+  }, [visible, userInfo]);
 
   // 处理图片上传
   const handleUpload: UploadProps["onChange"] = ({ fileList }) => {
@@ -128,31 +136,44 @@ const EditProfileModal: React.FC<EditProfileModalProps> = ({
 
       // 格式化籍贯
       if (values.location && values.location.length) {
-        formattedValues.location = values.location.join(" ");
+        // 存储中文位置名称，而不是代码
+        const provinceData = form.getFieldsValue().location;
+        if (Array.isArray(provinceData)) {
+          // 将位置数组转换为字符串，保留中文值
+          formattedValues.location = provinceData.join(" ");
+        } else {
+          formattedValues.location = provinceData;
+        }
       }
 
-      // 处理头像上传
+      // 处理头像和资料更新
       try {
-        if (fileList.length > 0 && fileList[0].originFileObj) {
-          // 如果有新上传的文件，先上传头像
-          const avatarResponse = await profileAPI.uploadAvatar(
-            fileList[0].originFileObj
-          );
-          // 安全地获取avatarUrl
-          const avatarUrl = (avatarResponse.data as any)?.data?.avatarUrl || "";
-          formattedValues.avatar = avatarUrl;
-        } else if (fileList.length > 0) {
-          // 使用现有头像
-          formattedValues.avatar = fileList[0].url;
-        } else {
-          // 空头像，使用默认头像
-          formattedValues.avatar = "";
+        // 检查token是否存在
+        const token = localStorage.getItem("token");
+        console.log("更新个人资料时的token:", token ? "存在" : "不存在");
+        if (!token) {
+          message.error("您的登录已过期，请重新登录");
+          // 可能需要重定向到登录页或触发登录弹窗
+          return;
         }
 
-        // 更新用户资料
-        const updateResponse = await profileAPI.updateUserProfile(
-          formattedValues
-        );
+        // 准备要更新的数据
+        const updateData = { ...formattedValues };
+
+        // 处理头像
+        if (fileList.length > 0 && fileList[0].originFileObj) {
+          // 如果有新上传的文件，直接将File对象传给API
+          updateData.avatar = fileList[0].originFileObj;
+        } else if (fileList.length > 0) {
+          // 使用现有头像URL
+          updateData.avatar = fileList[0].url;
+        } else {
+          // 空头像，使用默认头像
+          updateData.avatar = "";
+        }
+
+        // 一次性更新用户资料（包括头像）
+        const updateResponse = await profileAPI.updateUserProfile(updateData);
         // 安全地解析用户数据
         const userData = (updateResponse.data as any)?.data || {};
 
@@ -169,10 +190,41 @@ const EditProfileModal: React.FC<EditProfileModalProps> = ({
         });
 
         message.success("资料更新成功");
+
+        // 先关闭弹窗，然后再刷新数据，避免界面抖动
         onCancel();
+
+        // 使用setTimeout确保弹窗完全关闭后再刷新数据
+        setTimeout(async () => {
+          if (refreshUserProfile) {
+            try {
+              await refreshUserProfile();
+            } catch (refreshError) {
+              console.error("刷新个人资料失败:", refreshError);
+              // 即使刷新失败，用户也不需要重新提交表单，因为修改已经保存到后端
+              // 我们可以静默处理这个错误，因为下次用户进入页面时会自动获取最新数据
+            }
+          }
+        }, 300); // 300ms后刷新数据，确保弹窗动画完成
       } catch (error: any) {
         console.error("API调用失败:", error);
-        message.error(error.response?.data?.message || "保存失败，请稍后再试");
+
+        // 直接提取错误数据
+        const errorData = error.data;
+        let errorMessage = "保存失败，请稍后再试";
+
+        if (errorData) {
+          // 优先使用具体错误信息
+          if (errorData.error) {
+            errorMessage = errorData.error;
+          } else if (errorData.message) {
+            errorMessage = errorData.message;
+          }
+        } else if (error.message && error.message !== "Network Error") {
+          errorMessage = error.message;
+        }
+
+        message.error(errorMessage);
       }
     } catch (validationError) {
       console.error("表单验证失败:", validationError);
@@ -192,7 +244,9 @@ const EditProfileModal: React.FC<EditProfileModalProps> = ({
               uid: "-1",
               name: "avatar.png",
               status: "done",
-              url: userInfo.avatar,
+              url: `${userInfo.avatar}${
+                userInfo.avatar.includes("?") ? "&" : "?"
+              }v=${new Date().getTime()}`,
             },
           ]
         : []
@@ -206,6 +260,7 @@ const EditProfileModal: React.FC<EditProfileModalProps> = ({
   // 解析位置字符串为数组
   const parseLocation = (locationStr?: string) => {
     if (!locationStr) return undefined;
+    // 直接根据空格分隔，获取中文值数组
     return locationStr.split(" ");
   };
 
@@ -239,7 +294,7 @@ const EditProfileModal: React.FC<EditProfileModalProps> = ({
         initialValues={{
           username: userInfo.username,
           nickname: userInfo.nickname,
-          bio: userInfo.bio || "认真吃饭",
+          bio: userInfo.bio,
           gender: userInfo.gender || "female",
           birthday: userInfo.birthday ? dayjs(userInfo.birthday) : undefined,
           location: parseLocation(userInfo.location),
@@ -270,7 +325,7 @@ const EditProfileModal: React.FC<EditProfileModalProps> = ({
           rules={[
             { required: true, message: "请输入小蓝书号" },
             {
-              pattern: /^[a-zA-Z0-9_-]{4,16}$/,
+              pattern: /^[a-zA-Z0-9_-]{1,16}$/,
               message: "小蓝书号只能包含字母、数字、下划线和连字符，长度4-16位",
             },
           ]}
@@ -340,6 +395,12 @@ const EditProfileModal: React.FC<EditProfileModalProps> = ({
                       .toLowerCase()
                       .indexOf(inputValue.toLowerCase()) > -1
                 ),
+            }}
+            displayRender={(labels) => labels.join(" ")}
+            fieldNames={{
+              label: "label",
+              value: "label",
+              children: "children",
             }}
           />
         </Form.Item>

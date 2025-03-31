@@ -4,13 +4,20 @@
 }
 
 .userProfileCard {
-  background-color: #fff;
+  background-color: var(--card-background);
   border-radius: 8px;
   padding: 24px;
   margin-bottom: 16px;
   max-width: 800px;
   margin-left: auto;
   margin-right: auto;
+  box-shadow: 0 2px 8px var(--shadow-color);
+  transition: background-color 0.3s ease, box-shadow 0.3s ease;
+
+  [data-theme="dark"] & {
+    border: 1px solid var(--border-color);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+  }
 }
 
 .userProfileContent {
@@ -30,15 +37,24 @@
   height: 100%;
   border-radius: 50%;
   object-fit: cover;
-  border: 2px solid #fff;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  border: 2px solid var(--background-color);
+  box-shadow: 0 2px 8px var(--shadow-color);
   overflow: hidden;
   display: block;
+
+  [data-theme="dark"] & {
+    border: 3px solid var(--card-background);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
+  }
 }
 
 .userInfo {
   flex: 1;
   max-width: 400px;
+
+  [data-theme="dark"] & {
+    padding-left: 8px;
+  }
 }
 
 .nameRow {
@@ -52,6 +68,11 @@
   font-weight: 600;
   margin: 0;
   margin-right: 8px;
+  color: var(--text-color);
+
+  [data-theme="dark"] & {
+    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.8);
+  }
 }
 
 .gender {
@@ -62,28 +83,228 @@
 
 .accountId {
   font-size: 14px;
-  color: #999;
+  color: var(--icon-color);
   margin-bottom: 12px;
+
+  [data-theme="dark"] & {
+    color: var(--text-color-secondary);
+    opacity: 0.9;
+  }
 }
 
 .bio {
   font-size: 14px;
-  color: #333;
+  color: var(--text-color);
   margin-bottom: 8px;
+  line-height: 1.5;
+
+  [data-theme="dark"] & {
+    color: var(--text-color);
+    opacity: 0.9;
+  }
 }
 
 .location {
   font-size: 14px;
-  color: #999;
+  color: var(--icon-color);
   margin-bottom: 16px;
   display: flex;
   align-items: center;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.tagItem {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background-color: var(--tag-background);
+  border-radius: 16px;
+  padding: 6px 14px;
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--icon-color);
+  cursor: default;
+  transition: all 0.3s ease;
+  height: 24px;
+
+  .anticon {
+    margin-right: 0;
+    font-size: 16px;
+  }
+
+  .anticon + span {
+    margin-left: 4px;
+  }
+
+  &[title] {
+    cursor: pointer;
+    overflow: hidden;
+    position: relative;
+    z-index: 1;
+  }
+
+  // 深色模式下增强标签的可见性
+  [data-theme="dark"] & {
+    color: #d9d9d9;
+    background-color: rgba(255, 255, 255, 0.08);
+    border: 1px solid rgba(255, 255, 255, 0.15);
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+
+    &:hover {
+      transform: translateY(-3px);
+      box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
+    }
+  }
+}
+
+// 性别年龄标签样式
+.genderAgeTag {
+  min-width: 40px;
+  justify-content: center;
+
+  &:hover {
+    transform: translateY(-2px);
+  }
+}
+
+// 简单的位置标签悬停效果，仅上浮
+.tagItem[title="所在地区"]:hover {
+  transform: translateY(-2px);
+}
+
+// 性别样式
+.maleTag {
+  background-color: rgba(24, 144, 255, 0.1);
+  color: #1890ff;
+
+  [data-theme="dark"] & {
+    background-color: rgba(64, 169, 255, 0.2);
+    color: #69c0ff;
+  }
+}
+
+.femaleTag {
+  background-color: rgba(255, 105, 180, 0.1);
+  color: #ff69b4;
+
+  [data-theme="dark"] & {
+    background-color: rgba(255, 105, 180, 0.2);
+    color: #ff85c0;
+  }
+}
+
+.otherTag {
+  background-color: rgba(150, 150, 150, 0.1);
+  color: #666;
+
+  [data-theme="dark"] & {
+    background-color: rgba(200, 200, 200, 0.2);
+    color: #bfbfbf;
+  }
+}
+
+.ageText {
+  margin-left: 4px;
+  font-size: 13px;
+}
+
+// 年龄标签的特殊样式
+.ageTag {
+  border-radius: 50%; // 圆形
+  width: 24px;
+  height: 24px;
+  padding: 0;
+  font-size: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+// 状态标签的特殊样式 - 彩虹效果常驻
+.statusTag {
+  position: relative;
+  overflow: hidden;
+  z-index: 1;
+  color: var(--text-color);
+  background-color: rgba(255, 255, 255, 0.4) !important;
+
+  // 深色模式下优化背景色
+  [data-theme="dark"] & {
+    background-color: rgba(255, 255, 255, 0.15) !important;
+  }
+
+  // 彩虹效果
+  &::before {
+    content: "";
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: linear-gradient(
+      90deg,
+      #ff2400,
+      #e81d1d,
+      #e8b71d,
+      #e3e81d,
+      #1de840,
+      #1ddde8,
+      #2b1de8,
+      #dd00f3,
+      #ff2400
+    );
+    background-size: 200% 100%;
+    z-index: -1;
+    opacity: 0.7 !important;
+    border-radius: 20px;
+    animation: rainbow-scroll 3s linear infinite;
+
+    // 深色模式下增强彩虹效果
+    [data-theme="dark"] & {
+      opacity: 0.8 !important;
+      filter: brightness(1.2);
+    }
+  }
+
+  &:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 2px 8px var(--shadow-color);
+
+    .anticon {
+      animation: pulse 1s infinite alternate;
+    }
+  }
+}
+
+@keyframes rainbow-scroll {
+  0% {
+    background-position: 0% 0%;
+  }
+  100% {
+    background-position: 200% 0%;
+  }
+}
+
+@keyframes pulse {
+  0% {
+    transform: scale(1);
+  }
+  100% {
+    transform: scale(1.2);
+  }
 }
 
 .statsRow {
   display: flex;
-  margin-top: 8px;
+  margin-top: 12px;
   justify-content: space-between;
+  border-top: 1px solid var(--border-color);
+  padding-top: 12px;
+
+  [data-theme="dark"] & {
+    border-top-color: rgba(255, 255, 255, 0.1);
+  }
 }
 
 .statItem {
@@ -91,28 +312,67 @@
   display: flex;
   flex-direction: column;
   align-items: center;
+  cursor: pointer;
+  transition: transform 0.2s ease;
+
+  &:hover {
+    transform: translateY(-2px);
+
+    .statValue {
+      color: var(--primary-color);
+    }
+  }
+
+  [data-theme="dark"] & {
+    padding: 4px 8px;
+    border-radius: 8px;
+
+    &:hover {
+      background-color: rgba(255, 255, 255, 0.05);
+    }
+  }
 }
 
 .statValue {
-  font-size: 16px;
+  font-size: 18px;
   font-weight: 600;
-  color: #333;
+  color: var(--text-color);
+  transition: color 0.2s ease;
+
+  [data-theme="dark"] & {
+    color: var(--primary-color);
+    text-shadow: 0 1px 1px rgba(0, 0, 0, 0.5);
+  }
 }
 
 .statLabel {
   font-size: 12px;
-  color: #999;
+  color: var(--icon-color);
+  margin-top: 2px;
+
+  [data-theme="dark"] & {
+    color: var(--text-color-secondary);
+  }
 }
 
 .followButtonContainer {
   position: absolute;
   top: 0;
   right: 0;
+  min-width: 96px;
+  min-height: 40px;
+}
+
+.buttonPlaceholder {
+  width: 96px;
+  height: 40px;
+  border-radius: 24px;
+  background-color: transparent;
 }
 
 .followButton {
-  background-color: #1890ff;
-  border-color: #1890ff;
+  background-color: var(--primary-color);
+  border-color: var(--primary-color);
   border-radius: 24px;
   padding: 0 20px;
   height: 40px;
@@ -121,22 +381,102 @@
 }
 
 .followButton:hover {
-  background-color: #40a9ff;
-  border-color: #40a9ff;
+  background-color: var(--button-hover);
+  border-color: var(--button-hover);
 }
 
 .tabs {
-  background: #fff;
+  background: var(--card-background);
   border-radius: 8px;
-  padding: 0 16px;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+  padding: 16px 16px 0;
+  box-shadow: 0 1px 3px var(--shadow-color);
   margin-left: auto;
   margin-right: auto;
+
+  // 添加椭圆形标签和居中显示样式
+  :global {
+    .ant-tabs-nav {
+      margin-bottom: 24px;
+
+      [data-theme="dark"] & {
+        border-bottom: 1px solid var(--border-color);
+
+        &::before {
+          border-bottom-color: var(--border-color) !important;
+        }
+      }
+    }
+
+    .ant-tabs-nav-wrap {
+      justify-content: center !important;
+    }
+
+    .ant-tabs-nav-list {
+      background-color: var(--secondary-color);
+      padding: 4px;
+      border-radius: 18px;
+      display: flex;
+      gap: 4px;
+    }
+
+    .ant-tabs-tab {
+      min-width: 80px;
+      height: 32px;
+      background-color: transparent !important;
+      border-radius: 16px !important;
+      padding: 0 20px !important;
+      margin: 0 !important;
+      transition: all 0.3s ease;
+
+      &:hover {
+        color: var(--primary-color) !important;
+      }
+
+      .ant-tabs-tab-btn {
+        text-align: center;
+        width: 100%;
+        font-size: 14px;
+        color: var(--text-color);
+      }
+    }
+
+    .ant-tabs-tab-active {
+      background-color: var(--card-background) !important;
+      box-shadow: 0 2px 8px var(--shadow-color);
+
+      .ant-tabs-tab-btn {
+        color: var(--primary-color) !important;
+        font-weight: 500;
+      }
+    }
+
+    .ant-tabs-ink-bar {
+      [data-theme="dark"] & {
+        background: var(--primary-color);
+      }
+    }
+
+    // 添加分隔线
+    .ant-tabs-content-holder {
+      position: relative;
+      padding-top: 15px;
+
+      &:before {
+        content: "";
+        position: absolute;
+        top: 0;
+        left: -16px;
+        right: -16px;
+        height: 1px;
+        background-color: var(--border-color);
+      }
+    }
+  }
 }
 
 .notesSection {
   width: 100%;
-  padding: 16px 0;
+  padding: 16px 0 24px;
 }
 
 .profileWaterfallWrapper {
@@ -148,8 +488,8 @@
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  padding: 48px 0;
-  color: #999;
+  padding: 32px 0 48px;
+  color: var(--icon-color);
 
   .emptyIcon {
     margin-bottom: 16px;
@@ -158,27 +498,31 @@
       width: 120px;
       height: 120px;
       object-fit: contain;
+      opacity: 0.8;
     }
   }
 
   p {
     font-size: 14px;
-    margin-bottom: 16px;
+    margin-bottom: 20px;
+    color: var(--icon-color);
   }
 }
 
 .createButton {
   padding: 8px 24px;
-  background-color: #ff2e63;
+  background-color: var(--primary-color);
   color: #fff;
   border: none;
-  border-radius: 4px;
+  border-radius: 20px;
   font-size: 14px;
   cursor: pointer;
   transition: all 0.3s;
 
   &:hover {
-    background-color: #ff4778;
+    background-color: var(--button-hover);
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(24, 144, 255, 0.2);
   }
 }
 
@@ -305,12 +649,13 @@
   height: 40px;
   width: 96px;
   font-size: 14px;
-  border: 1px solid #d9d9d9;
+  border: 1px solid var(--border-color);
+  color: var(--text-color);
 }
 
 .editButton:hover {
-  border-color: #1890ff;
-  color: #1890ff;
+  border-color: var(--primary-color);
+  color: var(--primary-color);
 }
 
 .followingButton {
@@ -319,17 +664,17 @@
   height: 40px;
   width: 96px;
   font-size: 14px;
-  border: 1px solid #d9d9d9;
-  background-color: #f5f5f5;
-  color: #333;
+  border: 1px solid var(--border-color);
+  background-color: var(--secondary-color);
+  color: var(--text-color);
   display: flex;
   align-items: center;
   justify-content: center;
 }
 
 .followingButton:hover {
-  background-color: #f0f0f0;
-  border-color: #d9d9d9;
+  background-color: var(--hover-color);
+  border-color: var(--border-color);
   color: #ff4d4f;
 }
 
@@ -339,4 +684,13 @@
 
 .followingButton:hover span {
   display: none;
+}
+
+@keyframes spin {
+  0% {
+    transform: rotate(0deg);
+  }
+  100% {
+    transform: rotate(360deg);
+  }
 }
