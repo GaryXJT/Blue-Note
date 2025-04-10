@@ -7,6 +7,7 @@
 .main {
   display: flex;
   min-height: calc(100vh - 56px);
+  height: 100%;
 }
 
 .container {
@@ -16,6 +17,7 @@
   border-radius: 8px;
   margin: 16px;
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+  height: fit-content;
 }
 
 .header {
@@ -743,5 +745,53 @@
       font-size: 12px;
       margin-top: 4px;
     }
+  }
+}
+
+// 用户表格样式
+.userTable {
+  :global {
+    .ant-table-thead > tr > th {
+      background-color: #f8f9fa;
+      font-weight: 500;
+    }
+
+    .ant-table-tbody > tr:hover > td {
+      background-color: #f0f7ff;
+    }
+
+    .ant-btn {
+      padding: 0 8px;
+      height: 24px;
+      font-size: 12px;
+      min-width: 40px;
+      line-height: 22px;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+  }
+}
+
+// 搜索容器
+.searchContainer {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+// 搜索类型切换
+.searchTypeToggle {
+  margin-right: 8px;
+}
+
+// 作者信息
+.authorInfo {
+  display: flex;
+  align-items: center;
+
+  span {
+    margin-left: 8px;
+    font-weight: 500;
   }
 }

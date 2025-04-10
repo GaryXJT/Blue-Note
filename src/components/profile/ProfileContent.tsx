@@ -359,15 +359,16 @@ const ProfileContent: React.FC<ProfileContentProps> = ({
 
               {userInfo.location && (
                 <span className={styles.tagItem} title="所在地区">
-                  {userInfo.location}
+                  <EnvironmentOutlined />
+                  <span>{userInfo.location}</span>
                 </span>
               )}
 
-              {userInfo.status && userInfo.status !== "" && (
+              {userInfo.status && (
                 <span
                   className={`${styles.tagItem} ${styles.statusTag} ${
                     styles[`status-${userInfo.status}`]
-                  }`}
+                  } ${userInfo.status ? styles.hasStatus : ""}`}
                   title={getStatusText(userInfo.status)}
                 >
                   {userInfo.status === "happy" && <SmileOutlined />}

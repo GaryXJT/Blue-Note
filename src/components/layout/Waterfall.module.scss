@@ -61,10 +61,6 @@
     gap: var(--gap);
     width: var(--column-width);
     min-height: 600px;
-
-    [data-theme="dark"] & {
-      gap: 20px; // 深色模式下增加间距，提高可读性
-    }
   }
 }
 
@@ -104,25 +100,16 @@
   .waterfall {
     background-color: var(--background-color);
   }
-
-  .content,
-  .skeletonContent {
-    gap: 18px; // 深色模式下增加列间距
-  }
 }
 
 @media (max-width: 768px) {
   .waterfall {
-    padding: 0 12px;
+    padding: 0;
   }
 
   .content,
   .skeletonContent {
-    gap: 12px;
-
-    [data-theme="dark"] & {
-      gap: 14px;
-    }
+    gap: 16px;
   }
 }
 
@@ -134,10 +121,6 @@
   .content,
   .skeletonContent {
     gap: 8px;
-
-    [data-theme="dark"] & {
-      gap: 10px;
-    }
   }
 
   .skeletonContainer {

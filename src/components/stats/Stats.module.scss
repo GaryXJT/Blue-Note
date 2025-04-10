@@ -1,0 +1,254 @@
+// 卡片样式
+.statCard {
+  height: 100%;
+  transition: all 0.3s;
+
+  &:hover {
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+    transform: translateY(-2px);
+  }
+}
+
+.statHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 12px;
+}
+
+.title {
+  font-size: 14px;
+  color: #8c8c8c;
+  display: flex;
+  align-items: center;
+}
+
+.tooltipIcon {
+  margin-left: 4px;
+  font-size: 14px;
+  color: #bfbfbf;
+  cursor: help;
+}
+
+.icon {
+  font-size: 24px;
+  color: #1890ff;
+}
+
+.statValue {
+  display: flex;
+  align-items: baseline;
+  font-weight: 500;
+  margin-bottom: 8px;
+}
+
+.prefix {
+  font-size: 16px;
+  margin-right: 4px;
+}
+
+.value {
+  font-size: 24px;
+  line-height: 32px;
+  color: #262626;
+}
+
+.unit {
+  font-size: 14px;
+  margin-left: 4px;
+  color: #8c8c8c;
+}
+
+.growth {
+  font-size: 14px;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.growthTitle {
+  margin-left: 8px;
+  color: #8c8c8c;
+  font-weight: normal;
+}
+
+// 统计概览部分
+.statsOverview {
+  margin-bottom: 24px;
+}
+
+// 统计卡片网格
+.statsGrid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 16px;
+  margin-bottom: 24px;
+
+  @media (max-width: 1200px) {
+    grid-template-columns: repeat(3, 1fr);
+  }
+
+  @media (max-width: 992px) {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  @media (max-width: 576px) {
+    grid-template-columns: 1fr;
+  }
+}
+
+// 图表区块
+.chartCard {
+  background: #fff;
+  border-radius: 4px;
+  padding: 20px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+  margin-bottom: 24px;
+}
+
+.chartHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 16px;
+}
+
+.chartTitle {
+  font-size: 16px;
+  font-weight: 500;
+  color: #262626;
+  margin: 0;
+}
+
+.chartControls {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.chartContent {
+  height: 300px;
+  // 当图表加载中或为空时的样式
+  &.empty {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    background-color: #f9f9f9;
+    border-radius: 4px;
+    height: 300px;
+    color: #bfbfbf;
+    flex-direction: column;
+  }
+}
+
+// 表格区块
+.tableCard {
+  background: #fff;
+  border-radius: 4px;
+  padding: 20px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+  margin-bottom: 24px;
+}
+
+.tableHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 16px;
+}
+
+.tableTitle {
+  font-size: 16px;
+  font-weight: 500;
+  color: #262626;
+  margin: 0;
+}
+
+.tableControls {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+// 多面板布局
+.panels {
+  display: grid;
+  grid-template-columns: 2fr 1fr;
+  gap: 24px;
+  margin-bottom: 24px;
+
+  @media (max-width: 992px) {
+    grid-template-columns: 1fr;
+  }
+}
+
+// 加载状态
+.loading {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 200px;
+}
+
+// 统计页面
+.statsPageWrapper {
+  width: 100%;
+  overflow-x: hidden;
+}
+
+.statsPageHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 24px;
+  h1 {
+    font-size: 24px;
+    font-weight: 600;
+    color: #262626;
+    margin: 0;
+  }
+}
+
+.statsToolbar {
+  display: flex;
+  gap: 16px;
+  align-items: center;
+}
+
+.statsDatePicker {
+  width: 240px;
+}
+
+.statsTabs {
+  margin-bottom: 20px;
+}
+
+// 表格数据标签
+.tableTag {
+  min-width: 60px;
+  text-align: center;
+}
+
+// 进度条包装器
+.progressBarWrapper {
+  width: 100%;
+  padding-right: 30px;
+}
+
+// 用户表格
+.userTable {
+  .avatar {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .userName {
+    font-weight: 500;
+  }
+
+  .userInfo {
+    font-size: 12px;
+    color: #8c8c8c;
+  }
+}

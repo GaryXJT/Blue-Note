@@ -1,10 +1,13 @@
 .sideMenuContainer {
   min-width: 240px;
-  height: 100vh;
+  min-height: 100vh;
+  height: 100%;
   background: #fff;
   border-right: 1px solid #f0f0f0;
   display: flex;
   flex-direction: column;
+  position: sticky;
+  top: 56px; /* 与header高度一致 */
 
   .publishButton {
     margin: 16px;
@@ -30,11 +33,12 @@
   .divider {
     height: 1px;
     background-color: #f0f0f0;
-    margin: 0 16px;
+    margin: 8px 16px;
   }
 
-  .menu {
-    flex: 1;
+  .menu,
+  .adminMenu {
+    height: auto;
     border-right: none;
 
     :global(.ant-menu-item) {
@@ -44,5 +48,34 @@
     :global(.ant-menu-item-selected) {
       background-color: #e6f7ff;
     }
+  }
+
+  // 管理员标签样式
+  .adminLabel {
+    padding: 12px 24px 4px;
+    color: #999;
+    font-size: 12px;
+    font-weight: 500;
+  }
+
+  // 管理员按钮区域样式
+  .adminButtonsContainer {
+    padding: 0;
+    display: flex;
+    flex-direction: column;
+
+    .adminMenu {
+      background: transparent;
+    }
+  }
+
+  // 自动填充剩余空间
+  .spacer {
+    flex-grow: 1;
+  }
+
+  // 在容器中自动推动管理员区域到底部
+  .menu + .divider {
+    margin-top: auto;
   }
 }

@@ -140,7 +140,10 @@ const PublishVideoPage: React.FC<PublishVideoPageProps> = ({
       // 设置视频封面（如果存在）
       if (editData.coverImage) {
         console.log("编辑模式，加载现有视频封面:", editData.coverImage);
-        setCoverImageUrl(editData.coverImage);
+        const coverUrl = editData.coverImage.startsWith("http")
+          ? editData.coverImage
+          : `http://localhost:8080${editData.coverImage}`;
+        setCoverImageUrl(coverUrl);
       }
 
       // 恢复视频会话
@@ -445,8 +448,12 @@ const PublishVideoPage: React.FC<PublishVideoPageProps> = ({
         const coverUrl = extractImageUrl(coverResponse);
         if (coverUrl) {
           console.log("封面上传成功，URL:", coverUrl);
+          // 处理封面URL
+          const processedCoverUrl = coverUrl.startsWith("http")
+            ? coverUrl
+            : `http://localhost:8080${coverUrl}`;
           // 保存封面URL
-          setCoverImageUrl(coverUrl);
+          setCoverImageUrl(processedCoverUrl);
         } else {
           console.warn("无法从响应中获取封面URL，将继续但不使用封面");
         }
@@ -998,7 +1005,11 @@ const PublishVideoPage: React.FC<PublishVideoPageProps> = ({
       // 提取URL
       const imageUrl = extractImageUrl(response);
       if (imageUrl) {
-        setCoverImageUrl(imageUrl);
+        // 处理图片URL
+        const processedImageUrl = imageUrl.startsWith("http")
+          ? imageUrl
+          : `http://localhost:8080${imageUrl}`;
+        setCoverImageUrl(processedImageUrl);
         message.success("封面上传成功");
       } else {
         message.error("封面上传失败，无法获取URL");

@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { Post } from "@/types";
+import { Post } from "@/api/types";
 import {
   CloseOutlined,
   LeftOutlined,
@@ -30,7 +30,7 @@ const PostModal: React.FC<PostModalProps> = ({
 }) => {
   const [currentIndex, setCurrentIndex] = useState(0);
   const [isFollowing, setIsFollowing] = useState(false);
-  const images = post.images || [post.coverUrl];
+  const images = post.files || [post.coverUrl];
   const displayLikes = likesCount !== undefined ? likesCount : post.likes;
 
   const handlePrev = () => {
@@ -71,7 +71,11 @@ const PostModal: React.FC<PostModalProps> = ({
           <div className={styles.imageSection}>
             <div className={styles.imageWrapper}>
               <img
-                src={images[currentIndex]}
+                src={
+                  images[currentIndex]!.startsWith("http")
+                    ? images[currentIndex]
+                    : `http://localhost:8080${images[currentIndex]}`
+                }
                 alt={`${post.title} - 图片 ${currentIndex + 1}`}
                 className={styles.mainImage}
               />

@@ -167,7 +167,8 @@
       padding: 11px 15px;
       border-radius: 8px;
       
-      &:hover, &:focus-within {
+      &:hover,
+      &:focus-within {
         border-color: #1890ff;
       }
     }
@@ -193,6 +194,27 @@
 
     .ant-checkbox-wrapper {
       color: #666;
+    }
+
+    // 标签页样式
+    .ant-tabs {
+      .ant-tabs-nav {
+        margin-bottom: 20px;
+      }
+
+      .ant-tabs-tab {
+        padding: 8px 0;
+        font-size: 15px;
+
+        &.ant-tabs-tab-active .ant-tabs-tab-btn {
+          color: #1890ff;
+          font-weight: 500;
+        }
+      }
+
+      .ant-tabs-ink-bar {
+        background-color: #1890ff;
+      }
     }
   }
 

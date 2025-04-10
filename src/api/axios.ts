@@ -38,7 +38,8 @@ export interface ApiResponse<T = any> {
 const instance: AxiosInstance = axios.create({
   baseURL:
     process.env.NEXT_PUBLIC_API_BASE_URL ||
-    "https://gxzkgaibncip.sealoshzh.site/api/v1", // API基础URL
+    // "https://gxzkgaibncip.sealoshzh.site/api/v1", // API基础URL
+    "http://localhost:8080/api/v1", // API基础URL
   timeout: 10000, // 请求超时时间
   headers: {
     "Content-Type": "application/json",

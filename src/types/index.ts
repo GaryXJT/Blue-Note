@@ -34,12 +34,16 @@ export interface UserInfo {
 
 // 菜单类型
 export type MenuType =
-  | "publish"
-  | "drafts"
-  | "works"
-  | "profile"
   | "home"
-  | "notifications";
+  | "works"
+  | "drafts"
+  | "publish"
+  | "profile"
+  | "notifications"
+  | "settings"
+  | "users"
+  | "stats"
+  | "admin-posts";
 
 // 帖子类型
 export interface Post {

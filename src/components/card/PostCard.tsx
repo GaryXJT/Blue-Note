@@ -1,13 +1,13 @@
-import React, { useState, useMemo } from 'react'
-import { Post } from '@/api/types'
-import { HeartOutlined, HeartFilled } from '@ant-design/icons'
-import PostModal from '../post/PostModal'
-import styles from './PostCard.module.scss'
-import classNames from 'classnames'
-import { Skeleton, Image } from 'antd'
+import React, { useState, useMemo } from "react";
+import { Post } from "@/api/types";
+import { HeartOutlined, HeartFilled } from "@ant-design/icons";
+import PostModal from "../post/PostModal";
+import styles from "./PostCard.module.scss";
+import classNames from "classnames";
+import { Skeleton, Image } from "antd";
 
 interface PostCardProps {
-  post: Post
+  post: Post;
 }
 
 // 骨架屏组件
@@ -25,41 +25,46 @@ export const PostCardSkeleton: React.FC = () => {
         </div>
       </div>
     </div>
-  )
-}
+  );
+};
 
 const PostCard: React.FC<PostCardProps> = ({ post }) => {
-  const [isModalOpen, setIsModalOpen] = useState(false)
-  const [imageLoaded, setImageLoaded] = useState(false)
-  const [isLiked, setIsLiked] = useState(false)
-  const [likesCount, setLikesCount] = useState(post.likes)
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [imageLoaded, setImageLoaded] = useState(false);
+  const [isLiked, setIsLiked] = useState(false);
+  const [likesCount, setLikesCount] = useState(post.likes);
 
   // 计算图片容器的padding-bottom值，以保持原始宽高比
   const imageAspectRatio = useMemo(() => {
-    if (!post.width || !post.height) return '100%' // 默认1:1比例
+    if (!post.width || !post.height) return "100%"; // 默认1:1比例
 
     // 根据图片原始宽高计算比例
-    const ratio = (post.height / post.width) * 100
-    return `${ratio}%`
-  }, [post.width, post.height])
+    const ratio = (post.height / post.width) * 100;
+    return `${ratio}%`;
+  }, [post.width, post.height]);
 
   const handleLike = (e: React.MouseEvent) => {
-    e.stopPropagation() // 阻止冒泡，避免同时打开Modal
-    setIsLiked(!isLiked)
-    setLikesCount((prev) => (isLiked ? prev - 1 : prev + 1))
+    e.stopPropagation(); // 阻止冒泡，避免同时打开Modal
+    setIsLiked(!isLiked);
+    setLikesCount((prev) => (isLiked ? prev - 1 : prev + 1));
     // 这里可以添加调用后端API的逻辑
-    console.log(`${isLiked ? '取消点赞' : '点赞'} 帖子: ${post.id}`)
-  }
+    console.log(`${isLiked ? "取消点赞" : "点赞"} 帖子: ${post.id}`);
+  };
 
   return (
     <>
       <div className={styles.card} onClick={() => setIsModalOpen(true)}>
         <div
           className={styles.imageWrapper}
-          style={{ paddingBottom: imageAspectRatio }}>
+          style={{ paddingBottom: imageAspectRatio }}
+        >
           {/* 使用 Ant Design 的 Image 组件实现预览和虚化效果 */}
           <Image
-            src={post.coverUrl}
+            src={
+              post.coverUrl!.startsWith("http")
+                ? post.coverUrl
+                : `http://localhost:8080${post.coverUrl}`
+            }
             alt={post.title}
             className={styles.image}
             loading="lazy"
@@ -67,7 +72,11 @@ const PostCard: React.FC<PostCardProps> = ({ post }) => {
             placeholder={
               <div className={styles.blurPlaceholder}>
                 <Image
-                  src={post.coverUrl}
+                  src={
+                    post.coverUrl!.startsWith("http")
+                      ? post.coverUrl
+                      : `http://localhost:8080${post.coverUrl}`
+                  }
                   preview={false}
                   className={styles.blurredImage}
                 />
@@ -97,8 +106,9 @@ const PostCard: React.FC<PostCardProps> = ({ post }) => {
                 <span className={styles.name}>{post.author.name}</span>
               </div>
               <div
-                className={`${styles.likes} ${isLiked ? styles.liked : ''}`}
-                onClick={handleLike}>
+                className={`${styles.likes} ${isLiked ? styles.liked : ""}`}
+                onClick={handleLike}
+              >
                 {isLiked ? <HeartFilled /> : <HeartOutlined />}
                 <span>{likesCount}</span>
               </div>
@@ -116,7 +126,7 @@ const PostCard: React.FC<PostCardProps> = ({ post }) => {
         likesCount={likesCount}
       />
     </>
-  )
-}
+  );
+};
 
-export default PostCard
+export default PostCard;

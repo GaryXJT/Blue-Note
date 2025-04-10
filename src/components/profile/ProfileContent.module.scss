@@ -13,11 +13,6 @@
   margin-right: auto;
   box-shadow: 0 2px 8px var(--shadow-color);
   transition: background-color 0.3s ease, box-shadow 0.3s ease;
-
-  [data-theme="dark"] & {
-    border: 1px solid var(--border-color);
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
-  }
 }
 
 .userProfileContent {
@@ -41,20 +36,11 @@
   box-shadow: 0 2px 8px var(--shadow-color);
   overflow: hidden;
   display: block;
-
-  [data-theme="dark"] & {
-    border: 3px solid var(--card-background);
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
-  }
 }
 
 .userInfo {
   flex: 1;
   max-width: 400px;
-
-  [data-theme="dark"] & {
-    padding-left: 8px;
-  }
 }
 
 .nameRow {
@@ -69,10 +55,6 @@
   margin: 0;
   margin-right: 8px;
   color: var(--text-color);
-
-  [data-theme="dark"] & {
-    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.8);
-  }
 }
 
 .gender {
@@ -148,7 +130,6 @@
   [data-theme="dark"] & {
     color: #d9d9d9;
     background-color: rgba(255, 255, 255, 0.08);
-    border: 1px solid rgba(255, 255, 255, 0.15);
     box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
 
     &:hover {
@@ -221,7 +202,7 @@
   justify-content: center;
 }
 
-// 状态标签的特殊样式 - 彩虹效果常驻
+// 状态标签的特殊样式 - 基础样式
 .statusTag {
   position: relative;
   overflow: hidden;
@@ -234,6 +215,18 @@
     background-color: rgba(255, 255, 255, 0.15) !important;
   }
 
+  &:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 2px 8px var(--shadow-color);
+
+    .anticon {
+      animation: pulse 1s infinite alternate;
+    }
+  }
+}
+
+// 有状态时才应用彩虹效果
+.hasStatus {
   // 彩虹效果
   &::before {
     content: "";
@@ -256,23 +249,14 @@
     );
     background-size: 200% 100%;
     z-index: -1;
-    opacity: 0.7 !important;
+    opacity: 0.2 !important;
     border-radius: 20px;
     animation: rainbow-scroll 3s linear infinite;
 
     // 深色模式下增强彩虹效果
     [data-theme="dark"] & {
-      opacity: 0.8 !important;
+      opacity: 0.4 !important;
       filter: brightness(1.2);
-    }
-  }
-
-  &:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 2px 8px var(--shadow-color);
-
-    .anticon {
-      animation: pulse 1s infinite alternate;
     }
   }
 }
@@ -314,13 +298,12 @@
   align-items: center;
   cursor: pointer;
   transition: transform 0.2s ease;
+  padding: 4px 8px;
+  border-radius: 8px;
 
   &:hover {
     transform: translateY(-2px);
-
-    .statValue {
-      color: var(--primary-color);
-    }
+    background-color: rgba(107, 107, 107, 0.048);
   }
 
   [data-theme="dark"] & {
@@ -340,7 +323,6 @@
   transition: color 0.2s ease;
 
   [data-theme="dark"] & {
-    color: var(--primary-color);
     text-shadow: 0 1px 1px rgba(0, 0, 0, 0.5);
   }
 }
@@ -393,83 +375,71 @@
   margin-left: auto;
   margin-right: auto;
 
-  // 添加椭圆形标签和居中显示样式
+  [data-theme="dark"] & {
+    background: none;
+    border: 1px solid #2b2b2b;
+  }
+
   :global {
     .ant-tabs-nav {
-      margin-bottom: 24px;
+      &::before {
+        display: none !important; // 移除底部横线
+      }
 
       [data-theme="dark"] & {
-        border-bottom: 1px solid var(--border-color);
+        border-bottom: none;
+      }
 
-        &::before {
-          border-bottom-color: var(--border-color) !important;
+      // 居中标签容器
+      .ant-tabs-nav-wrap {
+        justify-content: center;
+      }
+    }
+
+    .ant-tabs-tab {
+      margin-top: 6px;
+      padding: 6px 16px;
+      font-size: 16px;
+      transition: all 0.3s;
+      border-radius: 18px;
+      color: #b4b4b4;
+      font-weight: 500;
+
+      &:hover {
+        color: #333;
+        background-color: rgba(0, 0, 0, 0.03);
+      }
+
+      &.ant-tabs-tab-active {
+        background-color: rgba(0, 0, 0, 0.05);
+
+        .ant-tabs-tab-btn {
+          color: #333;
+          font-weight: 600;
+        }
+      }
+
+      [data-theme="dark"] & {
+        color: #e7e7e7;
+
+        &:hover {
+          color: #fff;
+          background-color: rgba(255, 255, 255, 0.08);
+        }
+
+        &.ant-tabs-tab-active {
+          background-color: rgba(255, 255, 255, 0.1);
+
+          .ant-tabs-tab-btn {
+            color: #fff;
+            text-shadow: 0 0 0.25px var(--primary-color);
+          }
         }
       }
     }
 
-    .ant-tabs-nav-wrap {
-      justify-content: center !important;
-    }
-
-    .ant-tabs-nav-list {
-      background-color: var(--secondary-color);
-      padding: 4px;
-      border-radius: 18px;
-      display: flex;
-      gap: 4px;
-    }
-
-    .ant-tabs-tab {
-      min-width: 80px;
-      height: 32px;
-      background-color: transparent !important;
-      border-radius: 16px !important;
-      padding: 0 20px !important;
-      margin: 0 !important;
-      transition: all 0.3s ease;
-
-      &:hover {
-        color: var(--primary-color) !important;
-      }
-
-      .ant-tabs-tab-btn {
-        text-align: center;
-        width: 100%;
-        font-size: 14px;
-        color: var(--text-color);
-      }
-    }
-
-    .ant-tabs-tab-active {
-      background-color: var(--card-background) !important;
-      box-shadow: 0 2px 8px var(--shadow-color);
-
-      .ant-tabs-tab-btn {
-        color: var(--primary-color) !important;
-        font-weight: 500;
-      }
-    }
-
     .ant-tabs-ink-bar {
-      [data-theme="dark"] & {
-        background: var(--primary-color);
-      }
-    }
-
-    // 添加分隔线
-    .ant-tabs-content-holder {
-      position: relative;
-      padding-top: 15px;
-
-      &:before {
-        content: "";
-        position: absolute;
-        top: 0;
-        left: -16px;
-        right: -16px;
-        height: 1px;
-        background-color: var(--border-color);
-      }
+      display: none !important; // 移除底部活动指示器
     }
   }
 }
@@ -649,13 +619,20 @@
   height: 40px;
   width: 96px;
   font-size: 14px;
-  border: 1px solid var(--border-color);
-  color: var(--text-color);
+  border: 1px solid var(#e8e8e8);
+  color: var(#333333);
+
+  [data-theme="dark"] & {
+    border: 1px solid #e8e8e8;
+    color: #e8e8e8;
+    background-color: #333333;
+  }
 }
 
 .editButton:hover {
-  border-color: var(--primary-color);
-  color: var(--primary-color);
+  [data-theme="dark"] & {
+    background-color: #333333 !important;
+  }
 }
 
 .followingButton {

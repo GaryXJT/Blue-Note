@@ -15,6 +15,8 @@ import {
   Modal,
   Tabs,
   Spin,
+  Radio,
+  Avatar,
 } from "antd";
 import {
   InboxOutlined,
@@ -25,6 +27,14 @@ import {
   HeartOutlined,
   UserAddOutlined,
   NotificationOutlined,
+  SettingOutlined,
+  TeamOutlined,
+  SyncOutlined,
+  DatabaseOutlined,
+  CheckOutlined,
+  CloseOutlined,
+  UserOutlined,
+  CrownOutlined,
 } from "@ant-design/icons";
 import type { UploadFile, UploadProps } from "antd";
 import type { ColumnsType } from "antd/es/table";
@@ -46,6 +56,8 @@ import Waterfall from "@/components/layout/Waterfall";
 import styles from "./Post.module.scss";
 import PostModal from "@/components/post/PostModal";
 import { formatDateTime } from "@/utils/date-formatter";
+import StatsPage from "@/components/stats/StatsPage";
+import useAuthStore from "@/store/useAuthStore";
 
 // 处理Post类型到PostItem的映射
 interface PostItem extends Post {}
@@ -74,9 +86,23 @@ interface Notification {
   isRead: boolean;
 }
 
+// 用户类型
+interface User {
+  userId: string;
+  username: string;
+  nickname: string;
+  avatar: string;
+  bio: string;
+  status: string;
+  role?: string;
+  createdAt: string;
+}
+
 const Post: React.FC = () => {
   const router = useRouter();
   const { type } = router.query;
+  const currentUser = useAuthStore((state) => state.user);
+  const isRootAdmin = currentUser?.role === "root_admin";
 
   // 从 URL 参数获取当前菜单类型，默认为 'publish'
   const [activeMenu, setActiveMenu] = useState<MenuType>("publish");
@@ -127,11 +153,73 @@ const Post: React.FC = () => {
   const [pageSize, setPageSize] = useState(10);
   const [currentDraftPage, setCurrentDraftPage] = useState(1);
   const [draftPageSize, setDraftPageSize] = useState(10);
+  const [searchType, setSearchType] = useState<"post" | "user">("post");
 
   // 在组件开始的useState部分添加新的状态变量
   const [editModalVisible, setEditModalVisible] = useState<boolean>(false);
   const [editRecord, setEditRecord] = useState<any | null>(null);
   const [editModalLoading, setEditModalLoading] = useState<boolean>(false);
+
+  // 用户管理相关状态
+  const [userSearchText, setUserSearchText] = useState("");
+  const [usersData, setUsersData] = useState<User[]>([]);
+  const [userLoading, setUserLoading] = useState(false);
+
+  // 模拟用户数据
+  const mockUsers: User[] = [
+    {
+      userId: "user001",
+      username: "zhangsan",
+      nickname: "张三",
+      avatar: "/images/avatar1.png",
+      bio: "热爱摄影和旅行的大学生",
+      status: "active",
+      role: "user",
+      createdAt: "2023-11-15T10:30:00Z",
+    },
+    {
+      userId: "user002",
+      username: "lisi",
+      nickname: "李四",
+      avatar: "/images/avatar2.png",
+      bio: "美食博主，擅长川菜",
+      status: "active",
+      role: "admin",
+      createdAt: "2023-12-20T14:25:00Z",
+    },
+    {
+      userId: "user003",
+      username: "wangwu",
+      nickname: "王五",
+      avatar: "/images/avatar3.png",
+      bio: "科技爱好者，分享最新数码产品评测",
+      status: "blocked",
+      role: "user",
+      createdAt: "2024-01-10T09:15:00Z",
+    },
+    {
+      userId: "user004",
+      username: "zhaoliu",
+      nickname: "赵六",
+      avatar: "/images/avatar4.png",
+      bio: "宠物达人，家有两只猫和一只狗",
+      status: "pending",
+      role: "user",
+      createdAt: "2024-02-05T16:40:00Z",
+    },
+  ];
+
+  // 组件挂载后初始化用户数据
+  useEffect(() => {
+    if (activeMenu === "users" && usersData.length === 0) {
+      // 模拟API加载过程
+      setUserLoading(true);
+      setTimeout(() => {
+        setUsersData(mockUsers);
+        setUserLoading(false);
+      }, 500);
+    }
+  }, [activeMenu, usersData.length]);
 
   // 获取笔记列表
   const fetchPosts = useCallback(
@@ -162,7 +250,9 @@ const Post: React.FC = () => {
                     .substr(2, 9)}`,
                 title: post.title,
                 content: post.content || "",
-                coverUrl: post.coverImage,
+                coverUrl: post.coverImage.startsWith("http")
+                  ? post.coverImage
+                  : `http://localhost:8080${post.coverImage}`,
                 type: post.type || "image",
                 author: post.user
                   ? {
@@ -187,7 +277,6 @@ const Post: React.FC = () => {
               console.log("格式化后的笔记数据:", formattedPosts);
             } else {
               console.error("API返回的数据格式不符合预期:", apiResponse);
-              message.error("获取数据格式异常");
             }
           } else {
             console.error("API返回的数据格式不符合预期:", res.data);
@@ -230,7 +319,9 @@ const Post: React.FC = () => {
                   .substr(2, 9)}`,
               title: draft.title,
               content: draft.content || "",
-              coverUrl: draft.coverImage,
+              coverUrl: draft.coverImage.startsWith("http")
+                ? draft.coverImage
+                : `http://localhost:8080${draft.coverImage}`,
               type: draft.type || "image",
               author: draft.user
                 ? {
@@ -279,6 +370,9 @@ const Post: React.FC = () => {
         "works",
         "profile",
         "notifications",
+        "admin-posts",
+        "users",
+        "stats",
       ];
       if (validMenus.includes(type as MenuType)) {
         setActiveMenu(type as MenuType);
@@ -393,6 +487,66 @@ const Post: React.FC = () => {
     setSearchText(value);
     setCurrentPage(1); // 重置页码
     // 此处可以添加搜索相关的API调用
+  };
+
+  // 管理员搜索笔记或用户
+  const handleAdminSearch = (value: string) => {
+    setSearchText(value);
+    setCurrentPage(1); // 重置页码
+
+    // 这里可以根据searchType的值来决定调用哪个API
+    // if (searchType === 'post') {
+    //   // 搜索笔记API
+    //   searchPosts(value);
+    // } else {
+    //   // 搜索用户API
+    //   searchUserPosts(value);
+    // }
+
+    // 暂时使用本地过滤
+    console.log(
+      `管理员${searchType === "post" ? "笔记" : "用户"}搜索: ${value}`
+    );
+  };
+
+  // 通过审核笔记
+  const handleApprovePost = async (id: string) => {
+    try {
+      message.loading("正在处理...", 0);
+      // 模拟API调用
+      await new Promise((resolve) => setTimeout(resolve, 1000));
+      // 实际实现时替换为真实的API调用
+      // await approvePost(id);
+
+      message.destroy();
+      message.success("笔记审核已通过");
+      // 重新加载笔记列表
+      fetchPosts(currentPage, pageSize);
+    } catch (error) {
+      console.error("审核操作失败:", error);
+      message.destroy();
+      message.error("操作失败，请重试");
+    }
+  };
+
+  // 拒绝审核笔记
+  const handleRejectPost = async (id: string) => {
+    try {
+      message.loading("正在处理...", 0);
+      // 模拟API调用
+      await new Promise((resolve) => setTimeout(resolve, 1000));
+      // 实际实现时替换为真实的API调用
+      // await rejectPost(id);
+
+      message.destroy();
+      message.success("已拒绝该笔记");
+      // 重新加载笔记列表
+      fetchPosts(currentPage, pageSize);
+    } catch (error) {
+      console.error("拒绝操作失败:", error);
+      message.destroy();
+      message.error("操作失败，请重试");
+    }
   };
 
   // 搜索草稿
@@ -780,16 +934,8 @@ const Post: React.FC = () => {
                   onChange: handleDraftPageChange,
                 }}
                 onRow={(record) => ({
-                  onClick: (e) => {
-                    // 如果点击的是操作按钮，不触发弹窗
-                    if (
-                      (e.target as HTMLElement).closest(".ant-btn") ||
-                      (e.target as HTMLElement).closest(".ant-popover-open")
-                    ) {
-                      return;
-                    }
-                    handleOpenPostModal(record);
-                  },
+                  onClick: () => handleOpenPostModal(record),
+                  style: { cursor: "pointer" },
                 })}
                 className={styles.clickableTable}
                 loading={loading}
@@ -892,16 +1038,8 @@ const Post: React.FC = () => {
                     onChange: handlePageChange,
                   }}
                   onRow={(record) => ({
-                    onClick: (e) => {
-                      // 如果点击的是操作按钮，不触发弹窗
-                      if (
-                        (e.target as HTMLElement).closest(".ant-btn") ||
-                        (e.target as HTMLElement).closest(".ant-popover-open")
-                      ) {
-                        return;
-                      }
-                      handleOpenPostModal(record);
-                    },
+                    onClick: () => handleOpenPostModal(record),
+                    style: { cursor: "pointer" },
                   })}
                   className={styles.clickableTable}
                   loading={loading}
@@ -909,9 +1047,6 @@ const Post: React.FC = () => {
               ) : (
                 // 全部笔记但没有数据时显示空状态
                 <div className={styles.emptyContent}>
-                  <div className={styles.emptyIcon}>
-                    <img src="/images/empty-works.png" alt="暂无笔记" />
-                  </div>
                   <p>没有找到相关笔记</p>
                 </div>
               )}
@@ -978,6 +1113,479 @@ const Post: React.FC = () => {
             <div className={styles.notificationContent}>
               {renderNotificationsContent()}
             </div>
+          </div>
+        );
+
+      // 管理员专用笔记管理页面
+      case "admin-posts":
+        // 后台管理笔记的表格列定义，增加了用户名称列
+        const adminPostColumns: ColumnsType<Post> = [
+          {
+            title: "ID",
+            dataIndex: "id",
+            key: "id",
+            width: 120,
+          },
+          {
+            title: "封面",
+            dataIndex: "coverUrl",
+            key: "cover",
+            width: 120,
+            render: (coverUrl: string) => (
+              <Image
+                src={coverUrl || "/images/default-cover.png"}
+                alt="帖子封面"
+                width={80}
+                height={80}
+                style={{ objectFit: "cover" }}
+                className={styles.postCover}
+              />
+            ),
+          },
+          {
+            title: "标题",
+            dataIndex: "title",
+            key: "title",
+            width: 180,
+          },
+          {
+            title: "作者",
+            dataIndex: "nickname",
+            key: "author",
+            width: 120,
+            render: (nickname: string, record: Post) => (
+              <div className={styles.authorInfo}>
+                <span>{record.nickname || record.username || "未知用户"}</span>
+              </div>
+            ),
+          },
+          {
+            title: "内容",
+            dataIndex: "content",
+            key: "content",
+            ellipsis: {
+              showTitle: false,
+            },
+            render: (content: string) => (
+              <Tooltip placement="topLeft" title={content}>
+                {content}
+              </Tooltip>
+            ),
+          },
+          {
+            title: "类型",
+            dataIndex: "type",
+            key: "type",
+            width: 80,
+            render: (type: string) => (
+              <Tag color={type === "video" ? "blue" : "green"}>
+                {type === "video" ? "视频" : "图文"}
+              </Tag>
+            ),
+          },
+          {
+            title: "状态",
+            dataIndex: "status",
+            key: "status",
+            width: 100,
+            render: (status: string) => {
+              let color = "";
+              let text = "";
+
+              switch (status) {
+                case "published":
+                  color = "green";
+                  text = "已发布";
+                  break;
+                case "reviewing":
+                  color = "orange";
+                  text = "审核中";
+                  break;
+                case "rejected":
+                  color = "red";
+                  text = "已拒绝";
+                  break;
+                case "draft":
+                  color = "default";
+                  text = "草稿";
+                  break;
+                default:
+                  color = "default";
+                  text = status;
+              }
+
+              return <Tag color={color}>{text}</Tag>;
+            },
+          },
+          {
+            title: "发布时间",
+            dataIndex: "createdAt",
+            key: "createdAt",
+            width: 160,
+            render: (createdAt: string) => formatDateTime(createdAt),
+          },
+          {
+            title: "操作",
+            key: "action",
+            width: 160,
+            render: (_: any, record: Post) => (
+              <Space size="small">
+                <Button
+                  type="text"
+                  icon={<EditOutlined />}
+                  onClick={() => handleEdit(record.id)}
+                  title="编辑"
+                />
+                <Button
+                  type="text"
+                  icon={<CheckOutlined />}
+                  onClick={() => handleApprovePost(record.id)}
+                  title="通过审核"
+                  style={{ color: "green" }}
+                />
+                <Button
+                  type="text"
+                  icon={<CloseOutlined />}
+                  onClick={() => handleRejectPost(record.id)}
+                  title="拒绝审核"
+                  style={{ color: "red" }}
+                />
+                <Popconfirm
+                  title="确定要删除这篇笔记吗？"
+                  onConfirm={() => handleDelete(record.id)}
+                  okText="确定"
+                  cancelText="取消"
+                >
+                  <Button
+                    type="text"
+                    danger
+                    icon={<DeleteOutlined />}
+                    title="删除"
+                  />
+                </Popconfirm>
+              </Space>
+            ),
+          },
+        ];
+
+        // 管理员专用笔记管理页面渲染
+        return (
+          <div className={styles.container}>
+            <div className={styles.header}>
+              <h1>后台笔记管理</h1>
+              <div className={styles.searchContainer}>
+                <Radio.Group
+                  value={searchType}
+                  onChange={(e) => setSearchType(e.target.value)}
+                  className={styles.searchTypeToggle}
+                >
+                  <Radio.Button value="post">搜索笔记</Radio.Button>
+                  <Radio.Button value="user">搜索用户</Radio.Button>
+                </Radio.Group>
+                <Input.Search
+                  placeholder={
+                    searchType === "post"
+                      ? "搜索笔记标题/内容"
+                      : "搜索用户名/昵称"
+                  }
+                  allowClear
+                  enterButton={<SearchOutlined />}
+                  onSearch={handleAdminSearch}
+                  style={{ width: 300 }}
+                />
+              </div>
+            </div>
+
+            <div className={styles.worksTabs}>
+              <div className={styles.tabsNav}>
+                <div
+                  className={`${styles.tabItem} ${
+                    activeWorksTab === "all" ? styles.active : ""
+                  }`}
+                  onClick={() => handleWorksTabChange("all")}
+                >
+                  全部笔记({totalPosts})
+                </div>
+                <div
+                  className={`${styles.tabItem} ${
+                    activeWorksTab === "published" ? styles.active : ""
+                  }`}
+                  onClick={() => handleWorksTabChange("published")}
+                >
+                  已发布
+                </div>
+                <div
+                  className={`${styles.tabItem} ${
+                    activeWorksTab === "reviewing" ? styles.active : ""
+                  }`}
+                  onClick={() => handleWorksTabChange("reviewing")}
+                >
+                  审核中
+                </div>
+                <div
+                  className={`${styles.tabItem} ${
+                    activeWorksTab === "rejected" ? styles.active : ""
+                  }`}
+                  onClick={() => handleWorksTabChange("rejected")}
+                >
+                  未通过
+                </div>
+              </div>
+            </div>
+
+            <div className={styles.tableContainer}>
+              {postsData.length > 0 ? (
+                <Table
+                  columns={adminPostColumns}
+                  dataSource={filteredPosts}
+                  rowKey="id"
+                  pagination={{
+                    current: currentPage,
+                    pageSize: pageSize,
+                    total: totalPosts,
+                    onChange: handlePageChange,
+                    showSizeChanger: true,
+                    pageSizeOptions: ["10", "20", "50", "100"],
+                  }}
+                  onRow={(record) => ({
+                    onClick: (e) => {
+                      // 如果点击的是操作按钮，不触发弹窗
+                      if (
+                        (e.target as HTMLElement).closest(".ant-btn") ||
+                        (e.target as HTMLElement).closest(".ant-popover-open")
+                      ) {
+                        return;
+                      }
+                      handleOpenPostModal(record);
+                    },
+                  })}
+                  className={styles.clickableTable}
+                  loading={loading}
+                />
+              ) : (
+                <div className={styles.emptyContent}>
+                  <p>暂无笔记数据</p>
+                </div>
+              )}
+            </div>
+
+            {/* 添加PostModal组件 */}
+            {selectedPost && (
+              <PostModal
+                post={selectedPost}
+                isOpen={isModalVisible}
+                onClose={handleClosePostModal}
+              />
+            )}
+          </div>
+        );
+
+      // 用户管理页面
+      case "users":
+        // 定义用户表格列
+        const userColumns = [
+          {
+            title: "ID",
+            dataIndex: "userId",
+            key: "userId",
+            width: 120,
+          },
+          {
+            title: "头像",
+            dataIndex: "avatar",
+            key: "avatar",
+            width: 80,
+            render: (avatar: string) => (
+              <Avatar
+                src={avatar || "/images/default-avatar.png"}
+                size={40}
+                icon={<UserOutlined />}
+              />
+            ),
+          },
+          {
+            title: "用户名",
+            dataIndex: "username",
+            key: "username",
+            width: 150,
+          },
+          {
+            title: "昵称",
+            dataIndex: "nickname",
+            key: "nickname",
+            width: 150,
+          },
+          {
+            title: "简介",
+            dataIndex: "bio",
+            key: "bio",
+            ellipsis: {
+              showTitle: false,
+            },
+            render: (bio: string) => (
+              <Tooltip placement="topLeft" title={bio}>
+                {bio || "-"}
+              </Tooltip>
+            ),
+          },
+          {
+            title: "注册时间",
+            dataIndex: "createdAt",
+            key: "createdAt",
+            width: 180,
+            render: (createdAt: string) => formatDateTime(createdAt),
+          },
+          {
+            title: "状态",
+            dataIndex: "status",
+            key: "status",
+            width: 80,
+            render: (status: string) => {
+              let color = "green";
+              let text = "正常";
+
+              if (status === "blocked") {
+                color = "red";
+                text = "已禁用";
+              } else if (status === "pending") {
+                color = "orange";
+                text = "待审核";
+              }
+
+              return <Tag color={color}>{text}</Tag>;
+            },
+          },
+          {
+            title: "角色",
+            dataIndex: "role",
+            key: "role",
+            width: 80,
+            render: (role: string) => {
+              if (role === "admin") {
+                return (
+                  <Tag color="gold" icon={<CrownOutlined />}>
+                    管理员
+                  </Tag>
+                );
+              } else if (role === "root_admin") {
+                return (
+                  <Tag color="volcano" icon={<CrownOutlined />}>
+                    超级管理员
+                  </Tag>
+                );
+              } else {
+                return <Tag color="default">普通用户</Tag>;
+              }
+            },
+          },
+          {
+            title: "操作",
+            key: "action",
+            width: 120,
+            render: (_: React.Key, record: User) => (
+              <Space size="small">
+                <Button
+                  type="link"
+                  size="small"
+                  style={{ padding: "0 8px" }}
+                  danger={record.status !== "blocked"}
+                  onClick={(e) => {
+                    e.stopPropagation(); // 阻止事件冒泡，避免触发行点击
+                    handleToggleUserStatus(record);
+                  }}
+                >
+                  {record.status === "blocked" ? "启用" : "禁用"}
+                </Button>
+
+                {isRootAdmin && (
+                  <Popconfirm
+                    title={`确定要将"${
+                      record.nickname || record.username
+                    }"设为管理员吗？`}
+                    description="管理员将拥有更多系统操作权限"
+                    onConfirm={(e) => {
+                      e?.stopPropagation(); // 防止事件冒泡
+                      handleSetAsAdmin(record);
+                    }}
+                    okText="确定"
+                    cancelText="取消"
+                    placement="topRight"
+                  >
+                    <Button
+                      type="link"
+                      size="small"
+                      style={{ padding: "0 8px" }}
+                      icon={<CrownOutlined />}
+                      onClick={(e) => e.stopPropagation()} // 阻止事件冒泡，避免触发行点击
+                    >
+                      设为管理员
+                    </Button>
+                  </Popconfirm>
+                )}
+              </Space>
+            ),
+          },
+        ];
+
+        return (
+          <div className={styles.container}>
+            <div className={styles.header}>
+              <h1>用户管理</h1>
+              <div className={styles.searchContainer}>
+                <Input.Search
+                  placeholder="搜索用户名/昵称/ID"
+                  allowClear
+                  enterButton={<SearchOutlined />}
+                  onSearch={handleUserSearch}
+                  style={{ width: 300 }}
+                />
+              </div>
+            </div>
+
+            <div className={styles.tableContainer}>
+              {usersData.length > 0 ? (
+                <Table
+                  columns={userColumns}
+                  dataSource={usersData}
+                  rowKey="userId"
+                  pagination={{
+                    pageSize: 10,
+                    showSizeChanger: true,
+                    pageSizeOptions: ["10", "20", "50"],
+                  }}
+                  onRow={(record) => ({
+                    onClick: () => handleViewUserProfile(record),
+                    style: { cursor: "pointer" },
+                  })}
+                  className={styles.userTable}
+                  loading={userLoading}
+                />
+              ) : (
+                <div className={styles.emptyContent}>
+                  <TeamOutlined
+                    style={{
+                      fontSize: "32px",
+                      color: "#ccc",
+                      marginBottom: "16px",
+                    }}
+                  />
+                  <p>暂无用户数据</p>
+                  <div className={styles.tipText}>
+                    {userSearchText
+                      ? "没有找到匹配的用户，请尝试其他搜索条件"
+                      : "用户数据加载中，请稍候"}
+                  </div>
+                </div>
+              )}
+            </div>
+          </div>
+        );
+
+      // 数据统计页面
+      case "stats":
+        return (
+          <div className={styles.container}>
+            <StatsPage />
           </div>
         );
 
@@ -1214,6 +1822,74 @@ const Post: React.FC = () => {
     );
   };
 
+  // 查看用户主页
+  const handleViewUserProfile = (user: User) => {
+    console.log("查看用户主页:", user);
+    message.info(`即将查看用户"${user.nickname || user.username}"的主页`);
+    // 这里跳转到用户主页
+    router.push(`/profile/${user.userId}`);
+  };
+
+  // 切换用户状态（禁用/解除禁用）
+  const handleToggleUserStatus = (user: User) => {
+    console.log("切换用户状态:", user);
+    setUserLoading(true);
+
+    // 模拟API调用
+    setTimeout(() => {
+      const newStatus = user.status === "blocked" ? "active" : "blocked";
+      const updatedUsers = usersData.map((u) =>
+        u.userId === user.userId ? { ...u, status: newStatus } : u
+      );
+
+      setUsersData(updatedUsers);
+      setUserLoading(false);
+      message.success(
+        `已${newStatus === "blocked" ? "禁用" : "解除禁用"}用户"${
+          user.nickname || user.username
+        }"`
+      );
+    }, 800);
+  };
+
+  // 设置用户为管理员
+  const handleSetAsAdmin = (user: User) => {
+    console.log("设置用户为管理员:", user);
+    setUserLoading(true);
+
+    // 模拟API调用 - 实际项目中需要调用真实API
+    // 例如: await setUserRole(user.userId, "admin");
+    setTimeout(() => {
+      // 更新本地用户数据，模拟API调用后的状态
+      const updatedUsers = usersData.map((u) =>
+        u.userId === user.userId ? { ...u, role: "admin" } : u
+      );
+      setUsersData(updatedUsers);
+
+      message.success(`已将用户"${user.nickname || user.username}"设为管理员`);
+      setUserLoading(false);
+    }, 800);
+  };
+
+  // 用户搜索函数
+  const handleUserSearch = (value: string) => {
+    setUserSearchText(value);
+    // 这里应该调用API进行搜索，目前使用本地过滤模拟
+    if (!value.trim()) {
+      setUsersData(mockUsers);
+      return;
+    }
+
+    const filteredUsers = mockUsers.filter(
+      (user) =>
+        user.username?.toLowerCase().includes(value.toLowerCase()) ||
+        user.nickname?.toLowerCase().includes(value.toLowerCase()) ||
+        user.userId?.toLowerCase().includes(value.toLowerCase())
+    );
+
+    setUsersData(filteredUsers);
+  };
+
   return (
     <>
       <Head>
@@ -1224,6 +1900,12 @@ const Post: React.FC = () => {
             ? "草稿箱"
             : activeMenu === "notifications"
             ? "通知中心"
+            : activeMenu === "admin-posts"
+            ? "后台笔记管理"
+            : activeMenu === "users"
+            ? "用户管理"
+            : activeMenu === "stats"
+            ? "数据统计"
             : "笔记管理"}{" "}
           - 小蓝书
         </title>

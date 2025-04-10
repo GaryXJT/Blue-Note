@@ -3,7 +3,6 @@
   z-index: 80;
   margin-bottom: 12px;
   background-color: var(--background-color);
-  border-bottom: 1px solid var(--border-color);
   transition: background-color 0.3s ease, border-color 0.3s ease;
 }
 
@@ -79,6 +78,8 @@
 
   .container {
     padding: 0 8px;
+    display: flex;
+    justify-content: center;
   }
 
   .list {
@@ -87,7 +88,37 @@
 
   .item {
     padding: 0 12px;
-    font-size: 13px;
+    font-size: 15px;
+    height: 26px;
+    line-height: 24px;
+    border-radius: 13px;
+    margin: 0 2px;
+  }
+
+  .floatingEllipse {
+    border-radius: 13px;
+  }
+}
+
+// 响应式设计
+@media (max-width: 696px) {
+  .categoryNav {
+    top: 48px;
+  }
+
+  .container {
+    padding: 0 8px;
+    display: flex;
+    justify-content: center;
+  }
+
+  .list {
+    height: 40px;
+  }
+
+  .item {
+    padding: 0 12px;
+    font-size: 12px;
     height: 26px;
     line-height: 24px;
     border-radius: 13px;

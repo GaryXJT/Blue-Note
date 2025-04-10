@@ -14,8 +14,8 @@ interface WaterfallProps {
 const COLUMN_WIDTHS = {
   5: 18, // 5列时每列占18%，考虑间距
   4: 22, // 4列时每列占22%
-  3: 30, // 3列时每列占30%
-  2: 45, // 2列时每列占45%
+  3: 31, // 3列时每列占30%
+  2: 48, // 2列时每列占45%
   1: 90, // 1列时占90%
 };
 
@@ -50,6 +50,9 @@ const Waterfall: React.FC<WaterfallProps> = ({
     } else if (windowWidth >= 696) {
       setColumns(3);
       setColumnHeights(new Array(3).fill(0));
+    } else {
+      setColumns(2);
+      setColumnHeights(new Array(2).fill(0));
     }
   };
 

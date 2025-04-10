@@ -142,7 +142,7 @@ export const createPost = (data: {
 
 // 获取帖子列表
 export const getPosts = (params?: {
-  page?: number;
+  cursor?: string;
   limit?: number;
   userId?: string;
   status?: string;
@@ -152,9 +152,8 @@ export const getPosts = (params?: {
   return request<
     AxiosResponse<
       ApiResponse<{
-        total: number;
         list: {
-          id?: string;
+          id: string;
           postId?: string;
           title: string;
           content: string;
@@ -162,6 +161,8 @@ export const getPosts = (params?: {
           tags?: string[];
           files?: string[];
           coverImage?: string;
+          width?: number;
+          height?: number;
           userId: string;
           username?: string;
           nickname?: string;
@@ -172,13 +173,14 @@ export const getPosts = (params?: {
           commentCount?: number;
           collectCount?: number;
           createdAt: string;
-          updatedAt: string;
+          updatedAt?: string;
           user?: {
             userId: string;
             nickname?: string;
             avatar?: string;
           };
         }[];
+        total: number;
       }>
     >
   >({
