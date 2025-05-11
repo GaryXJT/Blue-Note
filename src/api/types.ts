@@ -28,6 +28,8 @@ export interface Post {
   userId?: string;
   username?: string;
   nickname?: string;
+  likedByUser?: boolean;
+  followedByUser?: boolean;
 }
 
 // 分页请求参数

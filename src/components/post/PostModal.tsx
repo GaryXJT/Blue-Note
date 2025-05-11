@@ -8,8 +8,14 @@ import {
   HeartFilled,
   PlusOutlined,
   CheckOutlined,
+  UserAddOutlined,
+  UserOutlined,
 } from "@ant-design/icons";
 import styles from "./PostModal.module.scss";
+import { followAuthor, unfollowAuthor } from "@/api/services/posts";
+import { message } from "antd";
+import useAuthStore from "@/store/useAuthStore";
+import { useRouter } from "next/router";
 
 interface PostModalProps {
   post: Post;
@@ -29,9 +35,11 @@ const PostModal: React.FC<PostModalProps> = ({
   likesCount,
 }) => {
   const [currentIndex, setCurrentIndex] = useState(0);
-  const [isFollowing, setIsFollowing] = useState(false);
+  const [isFollowing, setIsFollowing] = useState(post.followedByUser || false);
   const images = post.files || [post.coverUrl];
   const displayLikes = likesCount !== undefined ? likesCount : post.likes;
+  const user = useAuthStore((state) => state.user);
+  const router = useRouter();
 
   const handlePrev = () => {
     setCurrentIndex((prev) => (prev === 0 ? images.length - 1 : prev - 1));
@@ -41,20 +49,46 @@ const PostModal: React.FC<PostModalProps> = ({
     setCurrentIndex((prev) => (prev === images.length - 1 ? 0 : prev + 1));
   };
 
-  const handleFollow = (e: React.MouseEvent) => {
+  const handleFollow = async (e: React.MouseEvent) => {
     e.stopPropagation();
-    setIsFollowing(!isFollowing);
-    // 这里可以添加调用后端API的逻辑
-    console.log(
-      `${isFollowing ? "取消关注" : "关注"} ${
-        post.author?.name || post.username || post.nickname || "未知用户"
-      }`
-    );
+
+    // 如果用户未登录，则提示登录
+    if (!user?.userId) {
+      message.error("请先登录");
+      return;
+    }
+
+    try {
+      if (isFollowing) {
+        // 如果已关注，则取消关注
+        await unfollowAuthor(post.id, user.userId);
+        setIsFollowing(false);
+      } else {
+        // 如果未关注，则添加关注
+        await followAuthor(post.id, user.userId);
+        setIsFollowing(true);
+      }
+    } catch (error) {
+      console.error(`${isFollowing ? "取消关注" : "关注"}失败:`, error);
+      message.error(`${isFollowing ? "取消关注" : "关注"}失败，请稍后再试`);
+    }
   };
 
   const handleLikeClick = (e: React.MouseEvent) => {
     if (onLike) {
       onLike(e);
+    }
+  };
+
+  const handleViewAuthorProfile = () => {
+    const authorId = post.userId || post.author?.id;
+    if (authorId) {
+      // 关闭当前模态框
+      onClose();
+      // 导航到作者的个人资料页
+      router.push(`/?profile=${authorId}`, undefined, { shallow: true });
+    } else {
+      message.error("无法获取作者信息");
     }
   };
 
@@ -114,15 +148,25 @@ const PostModal: React.FC<PostModalProps> = ({
               <h2>{post.title}</h2>
               <div className={styles.author}>
                 <img
-                  src={post.author?.avatar || "/images/default-avatar.png"}
+                  src={post.author?.avatar || "static/pic/default-avatar.jpg"}
                   alt={
                     post.author?.name ||
                     post.username ||
                     post.nickname ||
                     "未知用户"
                   }
+                  onClick={handleViewAuthorProfile}
+                  className={styles.authorAvatar}
+                  onError={(e) => {
+                    // 头像加载失败时设置默认头像
+                    (e.target as HTMLImageElement).src =
+                      "static/pic/default-avatar.jpg";
+                  }}
                 />
-                <span>
+                <span
+                  onClick={handleViewAuthorProfile}
+                  className={styles.authorName}
+                >
                   {post.author?.name ||
                     post.username ||
                     post.nickname ||
@@ -136,11 +180,11 @@ const PostModal: React.FC<PostModalProps> = ({
                 >
                   {isFollowing ? (
                     <>
-                      <CheckOutlined /> 已关注
+                      <UserOutlined /> 已关注
                     </>
                   ) : (
                     <>
-                      <PlusOutlined /> 关注
+                      <UserAddOutlined /> 关注
                     </>
                   )}
                 </button>

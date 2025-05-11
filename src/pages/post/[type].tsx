@@ -35,6 +35,8 @@ import {
   CloseOutlined,
   UserOutlined,
   CrownOutlined,
+  CloseCircleOutlined,
+  CheckCircleOutlined,
 } from "@ant-design/icons";
 import type { UploadFile, UploadProps } from "antd";
 import type { ColumnsType } from "antd/es/table";
@@ -47,6 +49,12 @@ import {
   getPostDetail,
   getDraftDetail,
 } from "@/api/services/posts"; // 导入API函数
+import {
+  getUsers, // 添加获取用户列表的API
+  setUserRole, // 添加导入
+  deleteUser, // 添加删除用户的API
+  reviewPost, // 导入审核笔记接口
+} from "@/api/services/admin";
 import type { MenuType } from "@/types"; // 导入MenuType类型
 import PostHeader from "@/components/post/PostHeader";
 import PublishPage from "@/components/publish/PublishPage";
@@ -58,6 +66,7 @@ import PostModal from "@/components/post/PostModal";
 import { formatDateTime } from "@/utils/date-formatter";
 import StatsPage from "@/components/stats/StatsPage";
 import useAuthStore from "@/store/useAuthStore";
+import { getNotifications } from "@/api/services/notifications";
 
 // 处理Post类型到PostItem的映射
 interface PostItem extends Post {}
@@ -71,14 +80,15 @@ interface UserFollowItem {
   isFollowing: boolean;
 }
 
-// 定义通知类型
+// 修改定义通知类型
 interface Notification {
   id: string;
   type: "like" | "follow" | "system";
-  senderId: string;
-  senderName: string;
+  senderId?: string;
+  senderName?: string;
   senderAvatar?: string;
   content: string;
+  title?: string;
   postId?: string;
   postTitle?: string;
   postCover?: string;
@@ -97,6 +107,9 @@ interface User {
   role?: string;
   createdAt: string;
 }
+
+// 修改通知类型定义
+type NotificationType = "all" | "like" | "follow" | "system";
 
 const Post: React.FC = () => {
   const router = useRouter();
@@ -131,17 +144,11 @@ const Post: React.FC = () => {
     "following"
   );
 
-  // 添加瀑布流相关状态
-  const [profilePosts, setProfilePosts] = useState<PostItem[]>([]);
-  const [isLoadingPosts, setIsLoadingPosts] = useState(false);
-  const [profilePostsPage, setProfilePostsPage] = useState(1);
-  const [userHasNoPosts, setUserHasNoPosts] = useState(false);
-
-  // 添加通知相关状态
-  const [activeNotificationTab, setActiveNotificationTab] = useState<
-    "like" | "follow" | "system"
-  >("like");
+  // 修改通知相关状态
+  const [activeNotificationTab, setActiveNotificationTab] =
+    useState<NotificationType>("all");
   const [notifications, setNotifications] = useState<Notification[]>([]);
+  const [notificationLoading, setNotificationLoading] = useState(false);
 
   // API数据状态
   const [postsData, setPostsData] = useState<Post[]>([]);
@@ -154,6 +161,12 @@ const Post: React.FC = () => {
   const [currentDraftPage, setCurrentDraftPage] = useState(1);
   const [draftPageSize, setDraftPageSize] = useState(10);
   const [searchType, setSearchType] = useState<"post" | "user">("post");
+  const [statusCounts, setStatusCounts] = useState({
+    all: 0,
+    approved: 0,
+    pending: 0,
+    rejected: 0,
+  });
 
   // 在组件开始的useState部分添加新的状态变量
   const [editModalVisible, setEditModalVisible] = useState<boolean>(false);
@@ -161,126 +174,159 @@ const Post: React.FC = () => {
   const [editModalLoading, setEditModalLoading] = useState<boolean>(false);
 
   // 用户管理相关状态
-  const [userSearchText, setUserSearchText] = useState("");
   const [usersData, setUsersData] = useState<User[]>([]);
   const [userLoading, setUserLoading] = useState(false);
+  const [userTotal, setUserTotal] = useState(0);
+  const [userCurrentPage, setUserCurrentPage] = useState(1);
+  const [userPageSize, setUserPageSize] = useState(10);
+  const [userSearchText, setUserSearchText] = useState("");
 
-  // 模拟用户数据
-  const mockUsers: User[] = [
-    {
-      userId: "user001",
-      username: "zhangsan",
-      nickname: "张三",
-      avatar: "/images/avatar1.png",
-      bio: "热爱摄影和旅行的大学生",
-      status: "active",
-      role: "user",
-      createdAt: "2023-11-15T10:30:00Z",
-    },
-    {
-      userId: "user002",
-      username: "lisi",
-      nickname: "李四",
-      avatar: "/images/avatar2.png",
-      bio: "美食博主，擅长川菜",
-      status: "active",
-      role: "admin",
-      createdAt: "2023-12-20T14:25:00Z",
-    },
-    {
-      userId: "user003",
-      username: "wangwu",
-      nickname: "王五",
-      avatar: "/images/avatar3.png",
-      bio: "科技爱好者，分享最新数码产品评测",
-      status: "blocked",
-      role: "user",
-      createdAt: "2024-01-10T09:15:00Z",
-    },
-    {
-      userId: "user004",
-      username: "zhaoliu",
-      nickname: "赵六",
-      avatar: "/images/avatar4.png",
-      bio: "宠物达人，家有两只猫和一只狗",
-      status: "pending",
-      role: "user",
-      createdAt: "2024-02-05T16:40:00Z",
-    },
-  ];
-
-  // 组件挂载后初始化用户数据
-  useEffect(() => {
-    if (activeMenu === "users" && usersData.length === 0) {
-      // 模拟API加载过程
+  // 添加获取用户列表的函数
+  const fetchUsers = useCallback(async (page = 1, limit = 10, search = "") => {
+    try {
       setUserLoading(true);
-      setTimeout(() => {
-        setUsersData(mockUsers);
-        setUserLoading(false);
-      }, 500);
+      const res = await getUsers({
+        page,
+        limit,
+        search,
+      });
+
+      if (res && res.data) {
+        const { list, total } = res.data.data;
+        setUsersData(list);
+        setUserTotal(total);
+      }
+    } catch (error) {
+      console.error("获取用户列表失败:", error);
+      message.error("获取用户列表失败");
+    } finally {
+      setUserLoading(false);
     }
-  }, [activeMenu, usersData.length]);
+  }, []);
+
+  // 在useEffect中添加用户列表的获取逻辑
+  useEffect(() => {
+    if (activeMenu === "users") {
+      fetchUsers(userCurrentPage, userPageSize, userSearchText);
+    }
+  }, [activeMenu, userCurrentPage, userPageSize, userSearchText, fetchUsers]);
 
   // 获取笔记列表
   const fetchPosts = useCallback(
     async (page = 1, limit = 10) => {
       try {
         setLoading(true);
-        const status = activeWorksTab !== "all" ? activeWorksTab : undefined;
-        const res = await getPosts({
+
+        // 构建请求参数
+        const params: any = {
           page,
           limit,
-          status,
-        });
+        };
 
-        // 根据API文档中的响应结构处理数据
+        // 根据不同的页面添加不同的参数
+        if (activeMenu === "works") {
+          // 笔记管理：只获取当前用户的帖子
+          params.userId = currentUser?.userId;
+
+          // 根据标签页设置状态筛选
+          if (activeWorksTab !== "all") {
+            switch (activeWorksTab) {
+              case "published":
+                params.status = "approved";
+                break;
+              case "reviewing":
+                params.status = "pending";
+                break;
+              case "rejected":
+                params.status = "rejected";
+                break;
+            }
+          }
+
+          // 添加搜索参数
+          if (searchText) {
+            params.search = searchText;
+            params.searchType = "content"; // 普通用户只能搜索内容
+          }
+        } else if (activeMenu === "admin-posts") {
+          // 后台笔记管理：获取全量数据，可以根据状态筛选
+          if (activeWorksTab !== "all") {
+            switch (activeWorksTab) {
+              case "published":
+                params.status = "approved";
+                break;
+              case "reviewing":
+                params.status = "pending";
+                break;
+              case "rejected":
+                params.status = "rejected";
+                break;
+            }
+          }
+
+          // 添加搜索参数
+          if (searchText) {
+            params.search = searchText;
+            params.searchType = searchType === "post" ? "content" : "author";
+          }
+        }
+
+        console.log("请求参数:", params);
+        const res = await getPosts(params);
+
+        // 处理响应数据
         if (res) {
           console.log("API响应数据:", res);
-          // API返回格式: res.data(ApiResponse) -> data(内部数据) -> data.list, data.total
           const apiResponse = res.data;
           if (apiResponse && apiResponse.data) {
             const apiData = apiResponse.data;
             if (apiData.list) {
               const formattedPosts = apiData.list.map((post: any) => ({
-                id:
-                  post.postId ||
-                  post.id ||
-                  `post-${Date.now()}-${Math.random()
-                    .toString(36)
-                    .substr(2, 9)}`,
+                id: post.postId || post.id,
                 title: post.title,
                 content: post.content || "",
-                coverUrl: post.coverImage.startsWith("http")
+                coverUrl: post.coverImage?.startsWith("http")
                   ? post.coverImage
-                  : `http://localhost:8080${post.coverImage}`,
+                  : post.coverImage
+                  ? `http://localhost:8080${post.coverImage}`
+                  : "/images/default-cover.png",
                 type: post.type || "image",
-                author: post.user
-                  ? {
-                      id: post.user.userId,
-                      name: post.user.nickname || "未知用户",
-                      avatar: post.user.avatar || "/images/default-avatar.png",
-                    }
-                  : undefined,
+                author: {
+                  id: post.userId,
+                  name: post.nickname || post.username || "未知用户",
+                  avatar: post.avatar || "/images/default-avatar.png",
+                },
                 userId: post.userId,
-                username: post.username || "",
+                username: post.username,
                 nickname:
                   post.nickname || (post.user ? post.user.nickname : "") || "",
                 likes: post.likes || post.likeCount || 0,
                 comments: post.comments || post.commentCount || 0,
-                status: "published", // 默认已发布状态
+                status: post.status || "approved",
                 createdAt: post.createdAt,
                 updatedAt: post.updatedAt || post.createdAt,
                 files: post.files || [],
               })) as Post[];
+
               setPostsData(formattedPosts);
               setTotalPosts(apiData.total || 0);
-              console.log("格式化后的笔记数据:", formattedPosts);
-            } else {
-              console.error("API返回的数据格式不符合预期:", apiResponse);
+
+              // 计算各状态笔记数量
+              const counts = {
+                all: formattedPosts.length,
+                approved: formattedPosts.filter(
+                  (post) => post.status === "approved"
+                ).length,
+                pending: formattedPosts.filter(
+                  (post) => post.status === "pending"
+                ).length,
+                rejected: formattedPosts.filter(
+                  (post) => post.status === "rejected"
+                ).length,
+              };
+
+              setStatusCounts(counts);
             }
-          } else {
-            console.error("API返回的数据格式不符合预期:", res.data);
-            message.error("获取数据格式异常");
           }
         }
       } catch (error) {
@@ -290,7 +336,7 @@ const Post: React.FC = () => {
         setLoading(false);
       }
     },
-    [activeWorksTab]
+    [activeMenu, currentUser?.userId, searchText, searchType]
   );
 
   // 获取草稿列表
@@ -355,7 +401,7 @@ const Post: React.FC = () => {
       }
     } catch (error) {
       console.error("获取草稿列表失败:", error);
-      message.error("获取草稿列表失败");
+      message.error("获取草稿列表失败，草稿列表或为空");
     } finally {
       setLoading(false);
     }
@@ -389,10 +435,12 @@ const Post: React.FC = () => {
       fetchPosts(currentPage, pageSize);
     } else if (activeMenu === "drafts") {
       fetchDrafts(currentDraftPage, draftPageSize);
+    } else if (activeMenu === "admin-posts") {
+      // 后台笔记管理页面加载全量数据
+      fetchPosts(currentPage, pageSize);
     }
   }, [
     activeMenu,
-    activeWorksTab,
     currentPage,
     pageSize,
     currentDraftPage,
@@ -400,6 +448,14 @@ const Post: React.FC = () => {
     fetchPosts,
     fetchDrafts,
   ]);
+
+  // 定义处理标签切换的函数
+  const handleWorksTabChange = (
+    tab: "all" | "published" | "reviewing" | "rejected"
+  ) => {
+    setActiveWorksTab(tab);
+    setCurrentPage(1); // 重置页码
+  };
 
   // 当发布完成时回到列表页面
   const handlePublishComplete = () => {
@@ -423,7 +479,7 @@ const Post: React.FC = () => {
   };
 
   // 编辑笔记
-  const handleEdit = async (id: string) => {
+  const handleEdit = async (id: string, editType: string) => {
     try {
       setEditModalLoading(true);
       // 根据帖子类型获取详细数据
@@ -445,7 +501,7 @@ const Post: React.FC = () => {
 
       if (postDetail) {
         console.log("获取到的帖子详情:", postDetail);
-        setEditRecord(postDetail);
+        setEditRecord({ ...postDetail, editType });
         setEditModalVisible(true);
       } else {
         message.error("获取帖子详情失败，请重试");
@@ -511,42 +567,92 @@ const Post: React.FC = () => {
 
   // 通过审核笔记
   const handleApprovePost = async (id: string) => {
-    try {
-      message.loading("正在处理...", 0);
-      // 模拟API调用
-      await new Promise((resolve) => setTimeout(resolve, 1000));
-      // 实际实现时替换为真实的API调用
-      // await approvePost(id);
+    Modal.confirm({
+      title: "审核通过",
+      icon: <CheckCircleOutlined style={{ color: "green" }} />,
+      content: (
+        <div>
+          <p>确定要通过这篇笔记的审核吗？</p>
+          <Input.TextArea
+            placeholder="审核通过原因（可选）"
+            rows={4}
+            id="approve-reason"
+          />
+        </div>
+      ),
+      onOk: async () => {
+        try {
+          const reason = (
+            document.getElementById("approve-reason") as HTMLTextAreaElement
+          )?.value;
+          message.loading("正在处理...", 0);
 
-      message.destroy();
-      message.success("笔记审核已通过");
-      // 重新加载笔记列表
-      fetchPosts(currentPage, pageSize);
-    } catch (error) {
-      console.error("审核操作失败:", error);
-      message.destroy();
-      message.error("操作失败，请重试");
-    }
+          await reviewPost(id, {
+            status: "approved",
+            reason: reason || undefined,
+          });
+
+          message.destroy();
+          message.success("笔记审核已通过");
+          // 重新加载笔记列表
+          fetchPosts(currentPage, pageSize);
+        } catch (error) {
+          console.error("审核操作失败:", error);
+          message.destroy();
+          message.error("操作失败，请重试");
+        }
+      },
+      okText: "确定",
+      cancelText: "取消",
+    });
   };
 
   // 拒绝审核笔记
   const handleRejectPost = async (id: string) => {
-    try {
-      message.loading("正在处理...", 0);
-      // 模拟API调用
-      await new Promise((resolve) => setTimeout(resolve, 1000));
-      // 实际实现时替换为真实的API调用
-      // await rejectPost(id);
+    Modal.confirm({
+      title: "拒绝审核",
+      icon: <CloseCircleOutlined style={{ color: "red" }} />,
+      content: (
+        <div>
+          <p>确定要拒绝这篇笔记的审核吗？</p>
+          <Input.TextArea
+            placeholder="拒绝原因（必填）"
+            rows={4}
+            id="reject-reason"
+          />
+        </div>
+      ),
+      onOk: async () => {
+        const reason = (
+          document.getElementById("reject-reason") as HTMLTextAreaElement
+        )?.value;
 
-      message.destroy();
-      message.success("已拒绝该笔记");
-      // 重新加载笔记列表
-      fetchPosts(currentPage, pageSize);
-    } catch (error) {
-      console.error("拒绝操作失败:", error);
-      message.destroy();
-      message.error("操作失败，请重试");
-    }
+        if (!reason) {
+          message.error("请填写拒绝原因");
+          return Promise.reject("请填写拒绝原因");
+        }
+
+        try {
+          message.loading("正在处理...", 0);
+
+          await reviewPost(id, {
+            status: "rejected",
+            reason: reason,
+          });
+
+          message.destroy();
+          message.success("已拒绝该笔记");
+          // 重新加载笔记列表
+          fetchPosts(currentPage, pageSize);
+        } catch (error) {
+          console.error("拒绝操作失败:", error);
+          message.destroy();
+          message.error("操作失败，请重试");
+        }
+      },
+      okText: "确定",
+      cancelText: "取消",
+    });
   };
 
   // 搜索草稿
@@ -613,6 +719,7 @@ const Post: React.FC = () => {
           alt="帖子封面"
           width={80}
           height={80}
+          preview={false}
           style={{ objectFit: "cover" }}
           className={styles.postCover}
         />
@@ -649,6 +756,40 @@ const Post: React.FC = () => {
       ),
     },
     {
+      title: "状态",
+      dataIndex: "status",
+      key: "status",
+      width: 100,
+      render: (status: string) => {
+        let color = "";
+        let text = "";
+
+        switch (status) {
+          case "approved":
+            color = "success";
+            text = "已通过";
+            break;
+          case "pending":
+            color = "processing";
+            text = "审核中";
+            break;
+          case "rejected":
+            color = "error";
+            text = "未通过";
+            break;
+          case "draft":
+            color = "default";
+            text = "草稿";
+            break;
+          default:
+            color = "default";
+            text = status || "未知";
+        }
+
+        return <Tag color={color}>{text}</Tag>;
+      },
+    },
+    {
       title: "发布时间",
       dataIndex: "createdAt",
       key: "createdAt",
@@ -671,7 +812,7 @@ const Post: React.FC = () => {
           <Button
             type="text"
             icon={<EditOutlined />}
-            onClick={() => handleEdit(record.id)}
+            onClick={() => handleEdit(record.id, "update")}
           />
           <Popconfirm
             title="确定要删除这篇笔记吗？"
@@ -705,6 +846,7 @@ const Post: React.FC = () => {
           alt="草稿封面"
           width={80}
           height={80}
+          preview={false}
           style={{ objectFit: "cover" }}
           className={styles.postCover}
         />
@@ -763,7 +905,7 @@ const Post: React.FC = () => {
           <Button
             type="text"
             icon={<EditOutlined />}
-            onClick={() => handleEdit(record.id)}
+            onClick={() => handleEdit(record.id, "draft")}
           />
           <Popconfirm
             title="确定要删除这篇草稿吗？"
@@ -822,6 +964,7 @@ const Post: React.FC = () => {
           } else if (activeTab === "image") {
             return (
               <PublishPage
+                type={"post"}
                 initialImages={uploadedFiles}
                 onBack={() => {
                   setIsEditing(false);
@@ -954,18 +1097,31 @@ const Post: React.FC = () => {
         );
 
       case "works":
-        const handleWorksTabChange = (
-          tab: "all" | "published" | "reviewing" | "rejected"
-        ) => {
-          setActiveWorksTab(tab);
-          setCurrentPage(1); // 重置页码
-
-          // 如果不是"全部笔记"标签，暂不加载数据
-          if (tab !== "all") {
-            // 仅设置状态，不调用接口
-            console.log(`选择了${tab}标签，该功能开发中...`);
+        // 根据当前选中的标签过滤数据
+        const getFilteredPostsByStatus = () => {
+          if (activeWorksTab === "all") {
+            return filteredPosts;
           }
+
+          // 根据标签对应的状态过滤
+          let statusFilter = "";
+          switch (activeWorksTab) {
+            case "published":
+              statusFilter = "approved";
+              break;
+            case "reviewing":
+              statusFilter = "pending";
+              break;
+            case "rejected":
+              statusFilter = "rejected";
+              break;
+          }
+
+          return filteredPosts.filter((post) => post.status === statusFilter);
         };
+
+        // 获取过滤后的数据
+        const filteredPostsByStatus = getFilteredPostsByStatus();
 
         return (
           <div className={styles.container}>
@@ -995,7 +1151,7 @@ const Post: React.FC = () => {
                   }`}
                   onClick={() => handleWorksTabChange("published")}
                 >
-                  已发布
+                  已发布({statusCounts.approved})
                 </div>
                 <div
                   className={`${styles.tabItem} ${
@@ -1003,7 +1159,7 @@ const Post: React.FC = () => {
                   }`}
                   onClick={() => handleWorksTabChange("reviewing")}
                 >
-                  审核中
+                  审核中({statusCounts.pending})
                 </div>
                 <div
                   className={`${styles.tabItem} ${
@@ -1011,30 +1167,24 @@ const Post: React.FC = () => {
                   }`}
                   onClick={() => handleWorksTabChange("rejected")}
                 >
-                  未通过
+                  未通过({statusCounts.rejected})
                 </div>
               </div>
             </div>
 
             <div className={styles.tableContainer}>
-              {activeWorksTab !== "all" ? (
-                // 如果不是"全部"标签，显示开发中提示
-                <div className={styles.emptyContent}>
-                  <p>该功能正在开发中，敬请期待</p>
-                  <div className={styles.tipText}>
-                    您可以在"全部笔记"标签下查看和管理所有笔记
-                  </div>
-                </div>
-              ) : filteredPosts.length > 0 ? (
-                // 全部笔记且有数据时显示表格
+              {filteredPostsByStatus.length > 0 ? (
                 <Table
                   columns={postColumns}
-                  dataSource={filteredPosts}
+                  dataSource={filteredPostsByStatus}
                   rowKey="id"
                   pagination={{
                     current: currentPage,
                     pageSize: pageSize,
-                    total: totalPosts,
+                    total:
+                      activeWorksTab === "all"
+                        ? totalPosts
+                        : filteredPostsByStatus.length,
                     onChange: handlePageChange,
                   }}
                   onRow={(record) => ({
@@ -1045,7 +1195,6 @@ const Post: React.FC = () => {
                   loading={loading}
                 />
               ) : (
-                // 全部笔记但没有数据时显示空状态
                 <div className={styles.emptyContent}>
                   <p>没有找到相关笔记</p>
                 </div>
@@ -1064,54 +1213,344 @@ const Post: React.FC = () => {
         );
 
       case "notifications":
+        // 通知表格列定义
+        const notificationColumns = [
+          {
+            dataIndex: "content",
+            key: "content",
+            render: (_, notification: Notification) => {
+              const NotificationItem = () => {
+                if (notification.type === "like") {
+                  return (
+                    <div className={styles.likeNotification}>
+                      <div className={styles.senderAvatar}>
+                        <Avatar
+                          src={
+                            notification.senderAvatar ||
+                            "/images/default-avatar.png"
+                          }
+                          size={40}
+                          icon={<HeartOutlined style={{ color: "#ff4d4f" }} />}
+                        />
+                      </div>
+                      <div className={styles.notificationInfo}>
+                        <div className={styles.notificationHeader}>
+                          <span className={styles.senderName}>
+                            {notification.senderName || "用户"}
+                          </span>
+                          <span className={styles.notificationTime}>
+                            {formatDateTime(notification.createdAt)}
+                          </span>
+                        </div>
+                        <div className={styles.notificationContent}>
+                          {notification.content}
+                        </div>
+                      </div>
+                    </div>
+                  );
+                } else if (notification.type === "follow") {
+                  return (
+                    <div className={styles.followNotification}>
+                      <div className={styles.senderAvatar}>
+                        <Avatar
+                          src={
+                            notification.senderAvatar ||
+                            "/images/default-avatar.png"
+                          }
+                          size={40}
+                          icon={
+                            <UserAddOutlined style={{ color: "#1890ff" }} />
+                          }
+                        />
+                      </div>
+                      <div className={styles.notificationInfo}>
+                        <div className={styles.notificationHeader}>
+                          <span className={styles.senderName}>
+                            {notification.senderName || "用户"}
+                          </span>
+                          <span className={styles.notificationTime}>
+                            {formatDateTime(notification.createdAt)}
+                          </span>
+                        </div>
+                        <div className={styles.notificationContent}>
+                          {notification.content}
+                        </div>
+                      </div>
+                    </div>
+                  );
+                } else {
+                  // 系统通知
+                  let iconContent;
+                  if (notification.title?.includes("审核通过")) {
+                    iconContent = (
+                      <CheckCircleOutlined style={{ color: "#52c41a" }} />
+                    );
+                  } else if (notification.title?.includes("审核未通过")) {
+                    iconContent = (
+                      <CloseCircleOutlined style={{ color: "#ff4d4f" }} />
+                    );
+                  } else {
+                    iconContent = (
+                      <NotificationOutlined style={{ color: "#1890ff" }} />
+                    );
+                  }
+
+                  return (
+                    <div className={styles.systemNotification}>
+                      <div className={styles.notificationIcon}>
+                        <Avatar
+                          icon={iconContent}
+                          style={{ backgroundColor: "#f0f0f0" }}
+                          size={40}
+                        />
+                      </div>
+                      <div className={styles.notificationInfo}>
+                        <div className={styles.notificationHeader}>
+                          <span className={styles.notificationTitle}>
+                            {notification.title || "系统通知"}
+                          </span>
+                          <span className={styles.notificationTime}>
+                            {formatDateTime(notification.createdAt)}
+                          </span>
+                        </div>
+                        <div className={styles.notificationContent}>
+                          {notification.content}
+                        </div>
+                        {notification.relatedId && (
+                          <div className={styles.notificationAction}>
+                            <Button type="link" size="small">
+                              查看详情
+                            </Button>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  );
+                }
+              };
+
+              return <NotificationItem />;
+            },
+          },
+        ];
+
+        // 过滤通知数据
+        const filteredNotifications =
+          activeNotificationTab === "all"
+            ? notifications
+            : notifications.filter(
+                (notification) => notification.type === activeNotificationTab
+              );
+
         return (
-          <div className={styles.notificationsContainer}>
-            <div className={styles.pageHeader}>
+          <div className={styles.container}>
+            <div className={styles.header}>
               <h1>通知中心</h1>
             </div>
 
-            <div className={styles.notificationTabs}>
-              <Tabs
-                activeKey={activeNotificationTab}
-                onChange={(key) =>
-                  handleNotificationTabChange(
-                    key as "like" | "follow" | "system"
+            <div className={styles.worksTabs}>
+              <div className={styles.tabsNav}>
+                <div
+                  className={`${styles.tabItem} ${
+                    activeNotificationTab === "all" ? styles.active : ""
+                  }`}
+                  onClick={() => setActiveNotificationTab("all")}
+                >
+                  所有通知({notifications.length})
+                </div>
+                <div
+                  className={`${styles.tabItem} ${
+                    activeNotificationTab === "like" ? styles.active : ""
+                  }`}
+                  onClick={() => setActiveNotificationTab("like")}
+                >
+                  点赞({notifications.filter((n) => n.type === "like").length})
+                </div>
+                <div
+                  className={`${styles.tabItem} ${
+                    activeNotificationTab === "follow" ? styles.active : ""
+                  }`}
+                  onClick={() => setActiveNotificationTab("follow")}
+                >
+                  关注({notifications.filter((n) => n.type === "follow").length}
                   )
-                }
-                items={[
-                  {
-                    key: "like",
-                    label: (
-                      <span>
-                        <HeartOutlined />
-                        点赞
-                      </span>
-                    ),
-                  },
-                  {
-                    key: "follow",
-                    label: (
-                      <span>
-                        <UserAddOutlined />
-                        关注
-                      </span>
-                    ),
-                  },
-                  {
-                    key: "system",
-                    label: (
-                      <span>
-                        <NotificationOutlined />
-                        其他
-                      </span>
-                    ),
-                  },
-                ]}
-              />
+                </div>
+                <div
+                  className={`${styles.tabItem} ${
+                    activeNotificationTab === "system" ? styles.active : ""
+                  }`}
+                  onClick={() => setActiveNotificationTab("system")}
+                >
+                  系统({notifications.filter((n) => n.type === "system").length}
+                  )
+                </div>
+              </div>
             </div>
 
             <div className={styles.notificationContent}>
-              {renderNotificationsContent()}
+              {notificationLoading ? (
+                <div className={styles.loadingContainer}>
+                  <Spin tip="加载中..." />
+                </div>
+              ) : filteredNotifications.length > 0 ? (
+                <div
+                  className={styles.notificationList}
+                  style={{
+                    height: "calc(100vh - 250px)",
+                    minHeight: "300px",
+                    overflowY:
+                      filteredNotifications.length > 5 ? "auto" : "hidden",
+                  }}
+                >
+                  {filteredNotifications.map((notification) => {
+                    const NotificationItemComponent = () => {
+                      if (notification.type === "like") {
+                        return (
+                          <div className={styles.likeNotification}>
+                            <div className={styles.senderAvatar}>
+                              <Avatar
+                                src={
+                                  notification.senderAvatar ||
+                                  "/images/default-avatar.png"
+                                }
+                                size={40}
+                                icon={
+                                  <HeartOutlined style={{ color: "#ff4d4f" }} />
+                                }
+                              />
+                            </div>
+                            <div className={styles.notificationInfo}>
+                              <div className={styles.notificationHeader}>
+                                <span className={styles.senderName}>
+                                  {notification.senderName || "用户"}
+                                </span>
+                                <span className={styles.notificationTime}>
+                                  {formatDateTime(notification.createdAt)}
+                                </span>
+                              </div>
+                              <div className={styles.notificationContent}>
+                                {notification.content}
+                              </div>
+                            </div>
+                          </div>
+                        );
+                      } else if (notification.type === "follow") {
+                        return (
+                          <div className={styles.followNotification}>
+                            <div className={styles.senderAvatar}>
+                              <Avatar
+                                src={
+                                  notification.senderAvatar ||
+                                  "/images/default-avatar.png"
+                                }
+                                size={40}
+                                icon={
+                                  <UserAddOutlined
+                                    style={{ color: "#1890ff" }}
+                                  />
+                                }
+                              />
+                            </div>
+                            <div className={styles.notificationInfo}>
+                              <div className={styles.notificationHeader}>
+                                <span className={styles.senderName}>
+                                  {notification.senderName || "用户"}
+                                </span>
+                                <span className={styles.notificationTime}>
+                                  {formatDateTime(notification.createdAt)}
+                                </span>
+                              </div>
+                              <div className={styles.notificationContent}>
+                                {notification.content}
+                              </div>
+                            </div>
+                          </div>
+                        );
+                      } else {
+                        // 系统通知
+                        let iconContent;
+                        if (notification.title?.includes("审核通过")) {
+                          iconContent = (
+                            <CheckCircleOutlined style={{ color: "#52c41a" }} />
+                          );
+                        } else if (notification.title?.includes("审核未通过")) {
+                          iconContent = (
+                            <CloseCircleOutlined style={{ color: "#ff4d4f" }} />
+                          );
+                        } else {
+                          iconContent = (
+                            <NotificationOutlined
+                              style={{ color: "#1890ff" }}
+                            />
+                          );
+                        }
+
+                        return (
+                          <div className={styles.systemNotification}>
+                            <div className={styles.notificationIcon}>
+                              <Avatar
+                                icon={iconContent}
+                                style={{ backgroundColor: "#f0f0f0" }}
+                                size={40}
+                              />
+                            </div>
+                            <div className={styles.notificationInfo}>
+                              <div className={styles.notificationHeader}>
+                                <span className={styles.notificationTitle}>
+                                  {notification.title || "系统通知"}
+                                </span>
+                                <span className={styles.notificationTime}>
+                                  {formatDateTime(notification.createdAt)}
+                                </span>
+                              </div>
+                              <div className={styles.notificationContent}>
+                                {notification.content}
+                              </div>
+                              {notification.relatedId && (
+                                <div className={styles.notificationAction}>
+                                  <Button type="link" size="small">
+                                    查看详情
+                                  </Button>
+                                </div>
+                              )}
+                            </div>
+                          </div>
+                        );
+                      }
+                    };
+
+                    return (
+                      <div
+                        key={notification.id}
+                        className={`${styles.notificationItem} ${
+                          notification.isRead
+                            ? styles.readNotification
+                            : styles.unreadNotification
+                        }`}
+                      >
+                        <NotificationItemComponent />
+                      </div>
+                    );
+                  })}
+                </div>
+              ) : (
+                <div
+                  className={styles.emptyContent}
+                  style={{ minHeight: "300px" }}
+                >
+                  <div className={styles.emptyText}>
+                    暂无
+                    {activeNotificationTab === "all"
+                      ? ""
+                      : activeNotificationTab === "like"
+                      ? "点赞"
+                      : activeNotificationTab === "follow"
+                      ? "关注"
+                      : "系统"}
+                    通知
+                  </div>
+                </div>
+              )}
             </div>
           </div>
         );
@@ -1137,6 +1576,7 @@ const Post: React.FC = () => {
                 alt="帖子封面"
                 width={80}
                 height={80}
+                preview={false}
                 style={{ objectFit: "cover" }}
                 className={styles.postCover}
               />
@@ -1193,16 +1633,16 @@ const Post: React.FC = () => {
               let text = "";
 
               switch (status) {
-                case "published":
-                  color = "green";
-                  text = "已发布";
+                case "approved":
+                  color = "success";
+                  text = "已通过";
                   break;
-                case "reviewing":
-                  color = "orange";
+                case "pending":
+                  color = "processing";
                   text = "审核中";
                   break;
                 case "rejected":
-                  color = "red";
+                  color = "error";
                   text = "已拒绝";
                   break;
                 case "draft":
@@ -1211,7 +1651,7 @@ const Post: React.FC = () => {
                   break;
                 default:
                   color = "default";
-                  text = status;
+                  text = status || "未知";
               }
 
               return <Tag color={color}>{text}</Tag>;
@@ -1230,27 +1670,29 @@ const Post: React.FC = () => {
             width: 160,
             render: (_: any, record: Post) => (
               <Space size="small">
-                <Button
-                  type="text"
-                  icon={<EditOutlined />}
-                  onClick={() => handleEdit(record.id)}
-                  title="编辑"
-                />
-                <Button
-                  type="text"
-                  icon={<CheckOutlined />}
-                  onClick={() => handleApprovePost(record.id)}
-                  title="通过审核"
-                  style={{ color: "green" }}
-                />
-                <Button
-                  type="text"
-                  icon={<CloseOutlined />}
-                  onClick={() => handleRejectPost(record.id)}
-                  title="拒绝审核"
-                  style={{ color: "red" }}
-                />
-                <Popconfirm
+                {record.status !== "approved" && record.status !== "draft" ? (
+                  <Button
+                    type="text"
+                    icon={<CheckOutlined />}
+                    onClick={() => handleApprovePost(record.id)}
+                    title="通过审核"
+                    style={{ color: "green" }}
+                  />
+                ) : (
+                  <div style={{ width: 32 }}></div> // 空元素占位
+                )}
+                {record.status !== "rejected" && record.status !== "draft" ? (
+                  <Button
+                    type="text"
+                    icon={<CloseOutlined />}
+                    onClick={() => handleRejectPost(record.id)}
+                    title="不通过审核"
+                    style={{ color: "red" }}
+                  />
+                ) : (
+                  <div style={{ width: 32 }}></div> // 空元素占位
+                )}
+                {/* <Popconfirm
                   title="确定要删除这篇笔记吗？"
                   onConfirm={() => handleDelete(record.id)}
                   okText="确定"
@@ -1262,7 +1704,7 @@ const Post: React.FC = () => {
                     icon={<DeleteOutlined />}
                     title="删除"
                   />
-                </Popconfirm>
+                </Popconfirm> */}
               </Space>
             ),
           },
@@ -1312,7 +1754,7 @@ const Post: React.FC = () => {
                   }`}
                   onClick={() => handleWorksTabChange("published")}
                 >
-                  已发布
+                  已发布({statusCounts.approved})
                 </div>
                 <div
                   className={`${styles.tabItem} ${
@@ -1320,7 +1762,7 @@ const Post: React.FC = () => {
                   }`}
                   onClick={() => handleWorksTabChange("reviewing")}
                 >
-                  审核中
+                  审核中({statusCounts.pending})
                 </div>
                 <div
                   className={`${styles.tabItem} ${
@@ -1328,7 +1770,7 @@ const Post: React.FC = () => {
                   }`}
                   onClick={() => handleWorksTabChange("rejected")}
                 >
-                  未通过
+                  未通过({statusCounts.rejected})
                 </div>
               </div>
             </div>
@@ -1337,7 +1779,21 @@ const Post: React.FC = () => {
               {postsData.length > 0 ? (
                 <Table
                   columns={adminPostColumns}
-                  dataSource={filteredPosts}
+                  dataSource={filteredPosts.filter((post) => {
+                    if (activeWorksTab === "all") return true;
+
+                    // 根据标签对应的状态过滤
+                    switch (activeWorksTab) {
+                      case "published":
+                        return post.status === "approved";
+                      case "reviewing":
+                        return post.status === "pending";
+                      case "rejected":
+                        return post.status === "rejected";
+                      default:
+                        return true;
+                    }
+                  })}
                   rowKey="id"
                   pagination={{
                     current: currentPage,
@@ -1416,6 +1872,27 @@ const Post: React.FC = () => {
             width: 150,
           },
           {
+            title: "角色",
+            dataIndex: "role",
+            key: "role",
+            width: 100,
+            render: (role: string) => {
+              const isAdmin = role === "admin";
+              return (
+                <Tag
+                  color={isAdmin ? "blue" : "default"}
+                  style={{
+                    backgroundColor: isAdmin ? "#e6f7ff" : "#f5f5f5",
+                    color: isAdmin ? "#1890ff" : "#666",
+                    border: isAdmin ? "1px solid #91d5ff" : "1px solid #d9d9d9",
+                  }}
+                >
+                  {isAdmin ? "管理员" : "普通用户"}
+                </Tag>
+              );
+            },
+          },
+          {
             title: "简介",
             dataIndex: "bio",
             key: "bio",
@@ -1447,76 +1924,59 @@ const Post: React.FC = () => {
               if (status === "blocked") {
                 color = "red";
                 text = "已禁用";
-              } else if (status === "pending") {
-                color = "orange";
-                text = "待审核";
               }
 
               return <Tag color={color}>{text}</Tag>;
             },
           },
           {
-            title: "角色",
-            dataIndex: "role",
-            key: "role",
-            width: 80,
-            render: (role: string) => {
-              if (role === "admin") {
-                return (
-                  <Tag color="gold" icon={<CrownOutlined />}>
-                    管理员
-                  </Tag>
-                );
-              } else if (role === "root_admin") {
-                return (
-                  <Tag color="volcano" icon={<CrownOutlined />}>
-                    超级管理员
-                  </Tag>
-                );
-              } else {
-                return <Tag color="default">普通用户</Tag>;
-              }
-            },
-          },
-          {
             title: "操作",
             key: "action",
-            width: 120,
+            width: 180,
             render: (_: React.Key, record: User) => (
               <Space size="small">
-                <Button
-                  type="link"
-                  size="small"
-                  style={{ padding: "0 8px" }}
-                  danger={record.status !== "blocked"}
-                  onClick={(e) => {
-                    e.stopPropagation(); // 阻止事件冒泡，避免触发行点击
-                    handleToggleUserStatus(record);
-                  }}
-                >
-                  {record.status === "blocked" ? "启用" : "禁用"}
-                </Button>
-
-                {isRootAdmin && (
+                {record.role !== "admin" && (
                   <Popconfirm
-                    title={`确定要将"${
+                    title={`确定要删除用户"${
                       record.nickname || record.username
-                    }"设为管理员吗？`}
-                    description="管理员将拥有更多系统操作权限"
-                    onConfirm={(e) => {
-                      e?.stopPropagation(); // 防止事件冒泡
-                      handleSetAsAdmin(record);
-                    }}
+                    }"吗？`}
+                    description="删除后该用户将无法登录系统"
+                    onConfirm={() => handleDeleteUser(record)}
                     okText="确定"
                     cancelText="取消"
                     placement="topRight"
                   >
                     <Button
-                      type="link"
-                      size="small"
+                      type="text"
+                      danger
+                      icon={<DeleteOutlined />}
                       style={{ padding: "0 8px" }}
+                    >
+                      删除
+                    </Button>
+                  </Popconfirm>
+                )}
+
+                {currentUser?.role === "admin" && record.role !== "admin" && (
+                  <Popconfirm
+                    title={`确定要将"${
+                      record.nickname || record.username
+                    }"设为管理员吗？`}
+                    description="管理员将拥有更多系统操作权限"
+                    onConfirm={() => handleSetAsAdmin(record)}
+                    okText="确定"
+                    cancelText="取消"
+                    placement="topRight"
+                  >
+                    <Button
+                      type="primary"
+                      size="small"
                       icon={<CrownOutlined />}
-                      onClick={(e) => e.stopPropagation()} // 阻止事件冒泡，避免触发行点击
+                      style={{
+                        backgroundColor: "#1890ff",
+                        borderColor: "#1890ff",
+                        color: "#fff",
+                      }}
                     >
                       设为管理员
                     </Button>
@@ -1549,14 +2009,13 @@ const Post: React.FC = () => {
                   dataSource={usersData}
                   rowKey="userId"
                   pagination={{
-                    pageSize: 10,
+                    current: userCurrentPage,
+                    pageSize: userPageSize,
+                    total: userTotal,
+                    onChange: handleUserPageChange,
                     showSizeChanger: true,
                     pageSizeOptions: ["10", "20", "50"],
                   }}
-                  onRow={(record) => ({
-                    onClick: () => handleViewUserProfile(record),
-                    style: { cursor: "pointer" },
-                  })}
                   className={styles.userTable}
                   loading={userLoading}
                 />
@@ -1593,6 +2052,55 @@ const Post: React.FC = () => {
         return <div>无效的菜单选项</div>;
     }
   };
+
+  // 修改fetchNotifications函数
+  const fetchNotifications = useCallback(async () => {
+    if (!currentUser?.userId) return;
+
+    try {
+      setNotificationLoading(true);
+      const res = await getNotifications({
+        userId: currentUser.userId,
+        limit: 100, // 获取较多通知，不做分页
+      });
+
+      if (res && res.data && res.data.list) {
+        const notificationData = res.data.list || [];
+
+        // 通知数据映射，确保类型匹配
+        const formattedNotifications: Notification[] = notificationData.map(
+          (notification) => ({
+            id: notification.id,
+            type: notification.type,
+            senderId: notification.senderId,
+            senderName: notification.senderName,
+            senderAvatar: notification.senderAvatar,
+            content: notification.content,
+            title: notification.title,
+            createdAt: notification.createdAt,
+            isRead: notification.isRead,
+            postId: notification.relatedId,
+            postTitle: notification.title,
+            postCover: notification.senderAvatar, // 暂时使用发送者头像作为帖子封面
+          })
+        );
+
+        setNotifications(formattedNotifications);
+      }
+    } catch (error) {
+      console.error("获取通知列表失败:", error);
+      message.error("获取通知列表失败");
+    } finally {
+      setNotificationLoading(false);
+    }
+  }, [currentUser?.userId]);
+
+  // 当进入通知中心时加载通知数据
+  useEffect(() => {
+    if (activeMenu === "notifications") {
+      fetchNotifications();
+    }
+  }, [activeMenu, fetchNotifications]);
 
   // 处理通知标签页切换
   const handleNotificationTabChange = (tab: "like" | "follow" | "system") => {
@@ -1709,185 +2217,54 @@ const Post: React.FC = () => {
     return false;
   };
 
-  // 渲染通知内容
-  const renderNotificationsContent = () => {
-    const filteredNotifications = notifications.filter(
-      (notification) => notification.type === activeNotificationTab
-    );
-
-    if (filteredNotifications.length === 0) {
-      return (
-        <div className={styles.emptyContent}>
-          <div className={styles.emptyIcon}>
-            <BellOutlined />
-          </div>
-          <div className={styles.emptyText}>
-            暂无
-            {activeNotificationTab === "like"
-              ? "点赞"
-              : activeNotificationTab === "follow"
-              ? "关注"
-              : "系统"}
-            通知
-          </div>
-        </div>
-      );
-    }
-
-    return (
-      <div className={styles.notificationList}>
-        {filteredNotifications.map((notification) => (
-          <div
-            key={notification.id}
-            className={`${styles.notificationItem} ${
-              notification.isRead ? styles.read : ""
-            }`}
-          >
-            {notification.type === "like" && (
-              <div className={styles.likeNotification}>
-                <div className={styles.senderAvatar}>
-                  <img
-                    src={notification.senderAvatar}
-                    alt={notification.senderName}
-                  />
-                </div>
-                <div className={styles.notificationInfo}>
-                  <span className={styles.senderName}>
-                    {notification.senderName}
-                  </span>
-                  <span className={styles.notificationContent}>
-                    {notification.content}
-                  </span>
-                  <span className={styles.notificationTime}>
-                    {notification.createdAt}
-                  </span>
-                </div>
-                <div className={styles.postPreview}>
-                  <div className={styles.postImage}>
-                    <img
-                      src={notification.postCover}
-                      alt={notification.postTitle}
-                    />
-                  </div>
-                  <div className={styles.postTitle}>
-                    {notification.postTitle}
-                  </div>
-                </div>
-              </div>
-            )}
-
-            {notification.type === "follow" && (
-              <div className={styles.followNotification}>
-                <div className={styles.senderAvatar}>
-                  <img
-                    src={notification.senderAvatar}
-                    alt={notification.senderName}
-                  />
-                </div>
-                <div className={styles.notificationInfo}>
-                  <span className={styles.senderName}>
-                    {notification.senderName}
-                  </span>
-                  <span className={styles.notificationContent}>
-                    {notification.content}
-                  </span>
-                  <span className={styles.notificationTime}>
-                    {notification.createdAt}
-                  </span>
-                </div>
-              </div>
-            )}
-
-            {notification.type === "system" && (
-              <div className={styles.systemNotification}>
-                <div className={styles.notificationIcon}>
-                  <NotificationOutlined />
-                </div>
-                <div className={styles.notificationInfo}>
-                  <span className={styles.senderName}>
-                    {notification.senderName}
-                  </span>
-                  <span className={styles.notificationContent}>
-                    {notification.content}
-                  </span>
-                  <span className={styles.notificationTime}>
-                    {notification.createdAt}
-                  </span>
-                </div>
-              </div>
-            )}
-          </div>
-        ))}
-      </div>
-    );
-  };
-
-  // 查看用户主页
-  const handleViewUserProfile = (user: User) => {
-    console.log("查看用户主页:", user);
-    message.info(`即将查看用户"${user.nickname || user.username}"的主页`);
-    // 这里跳转到用户主页
-    router.push(`/profile/${user.userId}`);
-  };
-
-  // 切换用户状态（禁用/解除禁用）
-  const handleToggleUserStatus = (user: User) => {
-    console.log("切换用户状态:", user);
-    setUserLoading(true);
-
-    // 模拟API调用
-    setTimeout(() => {
-      const newStatus = user.status === "blocked" ? "active" : "blocked";
-      const updatedUsers = usersData.map((u) =>
-        u.userId === user.userId ? { ...u, status: newStatus } : u
-      );
-
-      setUsersData(updatedUsers);
-      setUserLoading(false);
-      message.success(
-        `已${newStatus === "blocked" ? "禁用" : "解除禁用"}用户"${
-          user.nickname || user.username
-        }"`
-      );
-    }, 800);
-  };
-
   // 设置用户为管理员
-  const handleSetAsAdmin = (user: User) => {
-    console.log("设置用户为管理员:", user);
-    setUserLoading(true);
+  const handleSetAsAdmin = async (user: User) => {
+    try {
+      setUserLoading(true);
+      await setUserRole(user.userId, "admin");
 
-    // 模拟API调用 - 实际项目中需要调用真实API
-    // 例如: await setUserRole(user.userId, "admin");
-    setTimeout(() => {
-      // 更新本地用户数据，模拟API调用后的状态
+      // 更新本地用户数据
       const updatedUsers = usersData.map((u) =>
         u.userId === user.userId ? { ...u, role: "admin" } : u
       );
       setUsersData(updatedUsers);
 
       message.success(`已将用户"${user.nickname || user.username}"设为管理员`);
+    } catch (error) {
+      console.error("设置管理员失败:", error);
+      message.error("设置管理员失败，请重试");
+    } finally {
       setUserLoading(false);
-    }, 800);
+    }
   };
 
   // 用户搜索函数
   const handleUserSearch = (value: string) => {
     setUserSearchText(value);
-    // 这里应该调用API进行搜索，目前使用本地过滤模拟
-    if (!value.trim()) {
-      setUsersData(mockUsers);
-      return;
+    setUserCurrentPage(1); // 重置页码
+  };
+
+  // 添加用户分页处理函数
+  const handleUserPageChange = (page: number, pageSize?: number) => {
+    setUserCurrentPage(page);
+    if (pageSize) setUserPageSize(pageSize);
+  };
+
+  // 添加删除用户的处理函数
+  const handleDeleteUser = async (user: User) => {
+    try {
+      setUserLoading(true);
+      await deleteUser(user.userId);
+      message.success(`已删除用户"${user.nickname || user.username}"`);
+
+      // 重新获取用户列表数据
+      await fetchUsers(userCurrentPage, userPageSize, userSearchText);
+    } catch (error) {
+      console.error("删除用户失败:", error);
+      message.error("删除用户失败，请重试");
+    } finally {
+      setUserLoading(false);
     }
-
-    const filteredUsers = mockUsers.filter(
-      (user) =>
-        user.username?.toLowerCase().includes(value.toLowerCase()) ||
-        user.nickname?.toLowerCase().includes(value.toLowerCase()) ||
-        user.userId?.toLowerCase().includes(value.toLowerCase())
-    );
-
-    setUsersData(filteredUsers);
   };
 
   return (
@@ -1945,6 +2322,7 @@ const Post: React.FC = () => {
                 />
               ) : (
                 <PublishPage
+                  type={editRecord.editType}
                   initialImages={[]}
                   onBack={() => setEditModalVisible(false)}
                   onPublish={handlePublishComplete}

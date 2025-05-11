@@ -15,6 +15,7 @@ import styles from "./SideMenu.module.scss";
 import { MenuType } from "@/types";
 import { useRouter } from "next/router";
 import { message } from "antd";
+import useAuthStore from "@/store/useAuthStore";
 
 interface SideMenuProps {
   activeMenu: MenuType;
@@ -23,6 +24,8 @@ interface SideMenuProps {
 
 const SideMenu: React.FC<SideMenuProps> = ({ activeMenu, onMenuChange }) => {
   const router = useRouter();
+  const currentUser = useAuthStore((state) => state.user);
+  const isAdmin = currentUser?.role === "admin";
 
   // 菜单项配置
   const menuItems = [
@@ -105,37 +108,42 @@ const SideMenu: React.FC<SideMenuProps> = ({ activeMenu, onMenuChange }) => {
         onClick={({ key }) => handleMenuClick(key as MenuType)}
         items={menuItems}
       />
-      <div className={styles.divider} />
 
-      {/* 管理员功能提示文字 */}
-      <div className={styles.adminLabel}>管理员功能</div>
+      {/* 只有管理员才能看到以下内容 */}
+      {isAdmin && (
+        <>
+          <div className={styles.divider} />
+          {/* 管理员功能提示文字 */}
+          <div className={styles.adminLabel}>管理员功能</div>
 
-      {/* 管理员按钮区域 */}
-      <div className={styles.adminButtonsContainer}>
-        <Menu
-          className={styles.adminMenu}
-          mode="inline"
-          selectedKeys={[activeMenu]}
-          onClick={handleAdminMenuClick}
-          items={[
-            {
-              key: "admin-posts",
-              icon: <AppstoreOutlined />,
-              label: "后台笔记管理",
-            },
-            {
-              key: "users",
-              icon: <TeamOutlined />,
-              label: "用户管理",
-            },
-            {
-              key: "stats",
-              icon: <DatabaseOutlined />,
-              label: "数据统计",
-            },
-          ]}
-        />
-      </div>
+          {/* 管理员按钮区域 */}
+          <div className={styles.adminButtonsContainer}>
+            <Menu
+              className={styles.adminMenu}
+              mode="inline"
+              selectedKeys={[activeMenu]}
+              onClick={handleAdminMenuClick}
+              items={[
+                {
+                  key: "admin-posts",
+                  icon: <AppstoreOutlined />,
+                  label: "后台笔记管理",
+                },
+                {
+                  key: "users",
+                  icon: <TeamOutlined />,
+                  label: "用户管理",
+                },
+                {
+                  key: "stats",
+                  icon: <DatabaseOutlined />,
+                  label: "数据统计",
+                },
+              ]}
+            />
+          </div>
+        </>
+      )}
     </div>
   );
 };

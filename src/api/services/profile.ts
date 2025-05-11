@@ -2,6 +2,7 @@ import { request } from "../axios";
 import { UserInfo, User } from "@/types";
 import { AxiosResponse } from "axios";
 
+
 // 获取指定用户的个人资料
 export const getUserProfile = (userId: string) => {
   return request<AxiosResponse<UserInfo>>({

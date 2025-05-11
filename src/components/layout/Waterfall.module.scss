@@ -1,27 +1,14 @@
 @import "@/styles/variables.scss";
 
 .waterfall {
-  width: 100%;
   position: relative;
-  margin: 0 auto;
-  min-height: 600px;
-
-  &:empty {
-    &::before {
-      content: "";
-      position: absolute;
-      top: 0;
-      left: 0;
-      width: 100%;
-      height: 600px;
-      background-color: var(--secondary-color);
-      border-radius: 8px;
-
-      [data-theme="dark"] & {
-        background-color: var(--card-background);
-      }
-    }
-  }
+  width: 100%;
+  min-height: 400px;
+  transition: min-height 0.8s cubic-bezier(0.4, 0, 0.2, 1),
+    opacity 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+  will-change: min-height;
+  transform: translateZ(0); /* 启用GPU加速 */
+  overflow: hidden; /* 防止内容溢出 */
 }
 
 .error {
@@ -45,7 +32,87 @@
   min-height: 600px;
 }
 
-.content,
+.content {
+  display: flex;
+  gap: var(--gap);
+  justify-content: center;
+  padding: 0 12px;
+  width: 100%;
+  margin: 0 auto;
+  transition: opacity 0.5s cubic-bezier(0.4, 0, 0.2, 1),
+    transform 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+  min-height: 400px;
+  transform: translateZ(0); /* 启用GPU加速 */
+  will-change: transform, opacity;
+  backface-visibility: hidden;
+  animation: fadeIn 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* 添加初始渲染的平滑过渡效果 */
+.initialRender {
+  opacity: 0;
+}
+
+.filtering {
+  opacity: 0.6;
+  pointer-events: none;
+  transform: translateY(5px);
+  transition: opacity 0.5s cubic-bezier(0.4, 0, 0.2, 1),
+    transform 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.column {
+  flex: 0 0 var(--column-width);
+  width: var(--column-width);
+  margin-bottom: var(--gap);
+  display: flex;
+  flex-direction: column;
+  transform: translateZ(0); /* 启用GPU加速 */
+  will-change: transform;
+  transition: transform 0.5s cubic-bezier(0.4, 0, 0.2, 1),
+    opacity 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+  opacity: 1;
+}
+
+.column > div {
+  margin-bottom: var(--gap);
+  transition: transform 0.5s cubic-bezier(0.4, 0, 0.2, 1),
+    opacity 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+  will-change: transform, opacity;
+  backface-visibility: hidden;
+  transform: translateZ(0); /* 启用GPU加速 */
+  animation: fadeInCard 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+  animation-fill-mode: backwards;
+}
+
+/* 给每一行的卡片添加递增的动画延迟 */
+.column > div:nth-child(1) {
+  animation-delay: 0.05s;
+}
+.column > div:nth-child(2) {
+  animation-delay: 0.1s;
+}
+.column > div:nth-child(3) {
+  animation-delay: 0.15s;
+}
+.column > div:nth-child(4) {
+  animation-delay: 0.2s;
+}
+.column > div:nth-child(5) {
+  animation-delay: 0.25s;
+}
+
+@keyframes fadeInCard {
+  from {
+    opacity: 0;
+    transform: translateY(15px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
 .skeletonContent {
   display: flex;
   width: 100%;
@@ -53,6 +120,8 @@
   gap: var(--gap);
   justify-content: center;
   min-height: 600px;
+  padding: 0 12px;
+  animation: fadeIn 0.8s ease-in-out;
 
   .column {
     flex: 0 0 var(--column-width);
@@ -70,6 +139,7 @@
   justify-content: center;
   padding: 32px 0;
   color: var(--primary-color);
+  height: 60px;
 
   .spinner {
     width: 24px;
@@ -81,7 +151,7 @@
     margin-right: 8px;
 
     [data-theme="dark"] & {
-      border-width: 3px; // 深色模式下加粗边框以增强可见性
+      border-width: 3px;
     }
   }
 }
@@ -92,6 +162,26 @@
   }
   to {
     transform: rotate(360deg);
+  }
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes shimmer {
+  0% {
+    transform: translateX(0);
+  }
+  100% {
+    transform: translateX(300%);
   }
 }
 
@@ -128,5 +218,18 @@
     & > * {
       width: 100%;
     }
+  }
+}
+
+// 添加空状态样式
+.emptyState {
+  width: 100%;
+  text-align: center;
+  padding: 60px 0;
+  color: #999;
+
+  p {
+    margin: 8px 0;
+    font-size: 16px;
   }
 }

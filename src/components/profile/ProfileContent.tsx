@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { Tabs, Button, message } from "antd";
 import {
   UserOutlined,
@@ -30,7 +30,11 @@ interface ProfileContentProps {
   userHasNoPosts: boolean;
   profilePosts: any[];
   isLoadingPosts: boolean;
-  handleLoadMorePosts: () => void;
+  handleLoadMorePosts: (
+    cursor?: string,
+    isReset?: boolean,
+    tabKey?: string
+  ) => void;
   handleMenuChange: (menu: string) => void;
   onBackToHome?: () => void;
 }
@@ -70,9 +74,54 @@ const ProfileContent: React.FC<ProfileContentProps> = ({
   // 编辑资料弹窗状态
   const [isEditModalVisible, setIsEditModalVisible] = useState(false);
 
+  // 添加一个ref来跟踪组件是否已经完成初始加载
+  const isInitializedRef = useRef(false);
+
+  // 使用ref保存初始props，避免依赖项问题
+  const initialLoadMoreRef = useRef(handleLoadMorePosts);
+  const initialTabRef = useRef(activeProfileTab);
+
+  // 添加一个状态来控制内容切换时的动画
+  const [isTabChanging, setIsTabChanging] = useState(false);
+
   // 处理标签页切换
   const handleTabChange = (key: string) => {
+    // 如果点击的是当前标签页，不重复触发操作
+    if (key === activeProfileTab) {
+      console.log(`ProfileContent: 点击了当前标签页 ${key}，跳过操作`);
+      return;
+    }
+
+    console.log(`ProfileContent: 标签页从 ${activeProfileTab} 切换到 ${key}`);
+
+    // 设置切换标志，触发平滑过渡
+    setIsTabChanging(true);
+
+    // 设置新的活动标签页
     setActiveProfileTab(key);
+
+    // 更新zustand store中的lastUsedTab
+    useAuthStore.getState().setLastUsedTab(key);
+    console.log(`ProfileContent: 已更新store中的lastUsedTab为 ${key}`);
+
+    // 重置数据状态
+    console.log("ProfileContent: 重置数据状态并准备加载新数据");
+
+    // 使用setTimeout确保状态更新完成，同时避免多次调用
+    setTimeout(() => {
+      console.log(
+        `ProfileContent: 开始加载${key}标签页的数据 (直接使用key参数而非状态)`
+      );
+
+      // 关键修改：直接传递tabKey参数给handleLoadMorePosts，而不是依赖组件状态
+      // 这确保了我们使用的是最新的标签页值，而不是可能尚未更新的组件状态
+      handleLoadMorePosts(undefined, true, key);
+
+      // 3秒后重置切换标志，确保过渡动画有足够时间完成
+      setTimeout(() => {
+        setIsTabChanging(false);
+      }, 300);
+    }, 100);
   };
 
   // 根据 URL 中的 userId 和当前登录用户的 userId 判断是否是自己的资料页
@@ -299,6 +348,32 @@ const ProfileContent: React.FC<ProfileContentProps> = ({
     return age >= 0 ? age : null; // 避免显示负数年龄
   };
 
+  // 添加组件挂载时加载初始数据的effect
+  useEffect(() => {
+    // 如果已经初始化过，不再重复加载
+    if (isInitializedRef.current) {
+      return;
+    }
+
+    // 标记为已初始化
+    isInitializedRef.current = true;
+
+    // 组件挂载时，加载初始标签页数据
+    console.log(
+      "ProfileContent: 组件首次挂载，加载标签页数据:",
+      initialTabRef.current
+    );
+
+    // 延迟时间更短，减少用户等待
+    const timer = setTimeout(() => {
+      console.log("ProfileContent: 组件挂载后，开始加载初始数据");
+      // 使用ref中保存的函数，同时传递初始标签页值
+      initialLoadMoreRef.current(undefined, true, initialTabRef.current);
+    }, 100); // 减少延迟时间，让数据更快加载
+
+    return () => clearTimeout(timer);
+  }, []); // 保持空依赖数组
+
   return (
     <div className={styles.container}>
       {/* 用户信息部分 */}
@@ -311,6 +386,11 @@ const ProfileContent: React.FC<ProfileContentProps> = ({
               }v=${new Date().getTime()}`}
               alt="用户头像"
               className={styles.avatar}
+              onError={(e) => {
+                // 头像加载失败时设置默认头像
+                (e.target as HTMLImageElement).src =
+                  "static/pic/default-avatar.jpg";
+              }}
             />
           </div>
 
@@ -458,12 +538,13 @@ const ProfileContent: React.FC<ProfileContentProps> = ({
               key: "posts",
               label: "笔记",
               children: (
-                <div className={styles.notesSection}>
-                  {userHasNoPosts ? (
+                <div
+                  className={`${styles.notesSection} ${
+                    isTabChanging ? styles.isChanging : ""
+                  }`}
+                >
+                  {userHasNoPosts && !isLoadingPosts ? (
                     <div className={styles.emptyContent}>
-                      <div className={styles.emptyIcon}>
-                        <img src="/images/empty-posts.png" alt="暂无笔记" />
-                      </div>
                       <p>还没有发布任何笔记</p>
                       {isSelf && (
                         <button
@@ -475,11 +556,17 @@ const ProfileContent: React.FC<ProfileContentProps> = ({
                       )}
                     </div>
                   ) : (
-                    <div className={styles.profileWaterfallWrapper}>
+                    <div
+                      className={`${styles.profileWaterfallWrapper} ${
+                        isLoadingPosts ? styles.isLoading : ""
+                      }`}
+                    >
                       <Waterfall
+                        key={`profile-waterfall-${activeProfileTab}`}
                         posts={profilePosts}
                         loading={isLoadingPosts}
-                        onLoadMore={handleLoadMorePosts}
+                        onLoadMore={() => handleLoadMorePosts()}
+                        hasMore={true}
                       />
                     </div>
                   )}
@@ -487,26 +574,64 @@ const ProfileContent: React.FC<ProfileContentProps> = ({
               ),
             },
             {
-              key: "collections",
-              label: "收藏",
+              key: "likes",
+              label: "点赞",
               children: (
-                <div className={styles.emptyContent}>
-                  <div className={styles.emptyIcon}>
-                    <img src="/images/empty-collections.png" alt="暂无收藏" />
-                  </div>
-                  <p>还没有收藏任何笔记</p>
+                <div
+                  className={`${styles.notesSection} ${
+                    isTabChanging ? styles.isChanging : ""
+                  }`}
+                >
+                  {profilePosts.length === 0 && !isLoadingPosts ? (
+                    <div className={styles.emptyContent}>
+                      <p>还没有点赞任何笔记</p>
+                    </div>
+                  ) : (
+                    <div
+                      className={`${styles.profileWaterfallWrapper} ${
+                        isLoadingPosts ? styles.isLoading : ""
+                      }`}
+                    >
+                      <Waterfall
+                        key={`profile-waterfall-${activeProfileTab}`}
+                        posts={profilePosts}
+                        loading={isLoadingPosts}
+                        onLoadMore={() => handleLoadMorePosts()}
+                        hasMore={true}
+                      />
+                    </div>
+                  )}
                 </div>
               ),
             },
             {
-              key: "likes",
-              label: "点赞",
+              key: "follows",
+              label: "关注",
               children: (
-                <div className={styles.emptyContent}>
-                  <div className={styles.emptyIcon}>
-                    <img src="/images/empty-likes.png" alt="暂无点赞" />
-                  </div>
-                  <p>还没有点赞任何笔记</p>
+                <div
+                  className={`${styles.notesSection} ${
+                    isTabChanging ? styles.isChanging : ""
+                  }`}
+                >
+                  {profilePosts.length === 0 && !isLoadingPosts ? (
+                    <div className={styles.emptyContent}>
+                      <p>关注的用户还没有发布任何笔记</p>
+                    </div>
+                  ) : (
+                    <div
+                      className={`${styles.profileWaterfallWrapper} ${
+                        isLoadingPosts ? styles.isLoading : ""
+                      }`}
+                    >
+                      <Waterfall
+                        key={`profile-waterfall-${activeProfileTab}`}
+                        posts={profilePosts}
+                        loading={isLoadingPosts}
+                        onLoadMore={() => handleLoadMorePosts()}
+                        hasMore={true}
+                      />
+                    </div>
+                  )}
                 </div>
               ),
             },

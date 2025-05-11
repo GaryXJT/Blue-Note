@@ -562,190 +562,121 @@
 
 /* 通知页面样式 */
 .notificationsContainer {
-  padding: 24px;
+  width: 100%;
   background: #fff;
-  border-radius: 8px;
-  margin: 16px;
-  flex-grow: 1;
-  overflow: hidden;
+  border-radius: 4px;
+  padding: 20px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
   display: flex;
   flex-direction: column;
+  height: calc(100vh - 100px);
+}
 
-  .pageHeader {
-    margin-bottom: 24px;
+.tableScrollContainer {
+  flex: 1;
+  overflow: hidden;
+  margin-top: 16px;
+}
 
-    h1 {
-      font-size: 24px;
-      font-weight: 600;
-      color: #333;
-    }
-  }
+.notificationTable {
+  width: 100%;
 
-  .notificationTabs {
-    margin-bottom: 20px;
-
-    :global(.ant-tabs-tab) {
-      padding: 12px 0;
-      font-size: 16px;
-
-      .anticon {
-        margin-right: 8px;
-      }
-    }
-
-    :global(.ant-tabs-tab-active) {
-      font-weight: 600;
-    }
-  }
-
-  .notificationContent {
-    flex-grow: 1;
-    overflow-y: auto;
-  }
-
-  .notificationList {
-    .notificationItem {
-      padding: 16px;
+  :global {
+    .ant-table-tbody > tr > td {
+      padding: 12px 16px;
       border-bottom: 1px solid #f0f0f0;
-      transition: background-color 0.3s;
-
-      &:hover {
-        background-color: #f9f9f9;
-      }
-
-      &.read {
-        opacity: 0.7;
-      }
-    }
-
-    .likeNotification {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-
-      .senderAvatar {
-        width: 40px;
-        height: 40px;
-        border-radius: 50%;
-        overflow: hidden;
-        flex-shrink: 0;
-        margin-right: 12px;
-
-        img {
-          width: 100%;
-          height: 100%;
-          object-fit: cover;
-        }
-      }
-
-      .notificationInfo {
-        flex: 1;
-        display: flex;
-        flex-direction: column;
-        gap: 4px;
-      }
-
-      .postPreview {
-        display: flex;
-        align-items: center;
-        gap: 12px;
-
-        .postImage {
-          width: 60px;
-          height: 60px;
-          border-radius: 4px;
-          overflow: hidden;
-
-          img {
-            width: 100%;
-            height: 100%;
-            object-fit: cover;
-          }
-        }
-
-        .postTitle {
-          max-width: 200px;
-          overflow: hidden;
-          text-overflow: ellipsis;
-          white-space: nowrap;
-          font-size: 14px;
-          color: #333;
-        }
-      }
-    }
-
-    .followNotification {
-      display: flex;
-      align-items: center;
-      gap: 16px;
-
-      .senderAvatar {
-        width: 48px;
-        height: 48px;
-        border-radius: 50%;
-        overflow: hidden;
-
-        img {
-          width: 100%;
-          height: 100%;
-          object-fit: cover;
-        }
-      }
-
-      .notificationInfo {
-        flex: 1;
-        display: flex;
-        flex-direction: column;
-        gap: 4px;
-      }
-    }
-
-    .systemNotification {
-      display: flex;
-      align-items: flex-start;
-      gap: 16px;
-
-      .notificationIcon {
-        width: 40px;
-        height: 40px;
-        border-radius: 50%;
-        background-color: #f5f5f5;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        color: #ff4d4f;
-        font-size: 20px;
-      }
-
-      .notificationInfo {
-        flex: 1;
-        display: flex;
-        flex-direction: column;
-        gap: 4px;
-      }
-    }
-
-    .senderName {
-      font-weight: 600;
-      color: #333;
-      cursor: pointer;
-
-      &:hover {
-        color: #1890ff;
-      }
-    }
-
-    .notificationContent {
-      color: #666;
-      margin-left: 5px;
-    }
-
-    .notificationTime {
-      color: #999;
-      font-size: 12px;
-      margin-top: 4px;
     }
   }
+}
+
+.notificationList {
+  padding: 0 16px;
+}
+
+.notificationItem {
+  margin-bottom: 16px;
+  padding: 12px;
+  border-radius: 8px;
+  transition: all 0.3s;
+}
+
+.readNotification {
+  background-color: #f5f5f5;
+  opacity: 0.8;
+}
+
+.unreadNotification {
+  background-color: #fff;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+}
+
+.likeNotification,
+.followNotification,
+.systemNotification {
+  display: flex;
+  align-items: flex-start;
+}
+
+.senderAvatar,
+.notificationIcon {
+  margin-right: 12px;
+  flex-shrink: 0;
+}
+
+.notificationInfo {
+  flex: 1;
+  text-align: left;
+}
+
+.notificationHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 8px;
+}
+
+.senderName,
+.notificationTitle {
+  font-weight: 600;
+  font-size: 14px;
+  color: #333;
+}
+
+.notificationTime {
+  font-size: 12px;
+  color: #999;
+}
+
+.notificationContent {
+  font-size: 14px;
+  color: #666;
+  line-height: 1.5;
+  text-align: left;
+}
+
+.notificationAction {
+  margin-top: 8px;
+  text-align: left;
+}
+
+.emptyContent {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  color: #999;
+}
+
+.emptyText {
+  margin-top: 16px;
+  font-size: 14px;
+}
+
+.loadingContainer {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 300px;
 }
 
 // 用户表格样式

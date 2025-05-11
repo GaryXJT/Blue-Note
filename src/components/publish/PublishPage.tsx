@@ -9,6 +9,7 @@ import {
   createPost,
   saveDraft,
   updatePost,
+  deleteDraft,
 } from "@/api/services/posts";
 import { useRouter } from "next/router";
 import { extractImageUrl, createSecureFile } from "@/utils/upload-helper";
@@ -72,6 +73,7 @@ interface PublishPageProps {
   onBack: () => void;
   onPublish?: () => void;
   editData?: any; // 添加编辑模式的数据
+  type: "draft" | "post" | "update";
 }
 
 // 辅助函数：将 File[] 转换为 UploadFile[]
@@ -104,6 +106,7 @@ const PublishPage: React.FC<PublishPageProps> = ({
   onBack,
   onPublish,
   editData,
+  type,
 }) => {
   const router = useRouter();
   const [title, setTitle] = useState<string>(editData?.title || "");
@@ -354,18 +357,43 @@ const PublishPage: React.FC<PublishPageProps> = ({
         isDraft: false, // 发布而非保存为草稿
       };
 
-      console.log(editData ? "准备更新帖子:" : "准备创建帖子:", postData);
-
       let response;
-      if (editData) {
+      let publishedPostId = ""; // 用于存储发布成功后的帖子ID
+
+      // 根据不同的type值执行不同的逻辑
+      if (type === "update") {
         // 更新现有帖子
-        response = await updatePost(editData.id, postData);
+        console.log("准备更新帖子:", postData);
+        if (editData && editData.id) {
+          response = await updatePost(editData.id, postData);
+          console.log("帖子更新成功:", response);
+        } else {
+          throw new Error("缺少帖子ID，无法更新");
+        }
+      } else if (type === "draft") {
+        // 将草稿发布为正式帖子
+        console.log("准备将草稿发布为正式帖子:", postData);
+        response = await createPost(postData);
+        console.log("草稿发布为正式帖子成功:", response);
+
+        // 发布成功后，尝试删除原草稿
+        if (editData && editData.id) {
+          try {
+            console.log("准备删除原草稿:", editData.id);
+            await deleteDraft(editData.id);
+            console.log("原草稿删除成功");
+          } catch (deleteError) {
+            console.error("删除原草稿失败:", deleteError);
+            // 不中断流程，只记录错误
+            message.warning("笔记已发布，但删除草稿失败");
+          }
+        }
       } else {
         // 创建新帖子
+        console.log("准备创建新帖子:", postData);
         response = await createPost(postData);
+        console.log("帖子创建成功:", response);
       }
-
-      console.log(editData ? "帖子更新成功:" : "帖子创建成功:", response);
 
       // 发布完成
       setPublishProgress(100);
@@ -374,7 +402,14 @@ const PublishPage: React.FC<PublishPageProps> = ({
       setTimeout(() => {
         setIsPublishing(false);
         setShowPublishingModal(false);
-        message.success(editData ? "更新成功" : "发布成功");
+
+        if (type === "draft") {
+          message.success("草稿发布成功");
+        } else if (type === "update") {
+          message.success("更新成功");
+        } else {
+          message.success("发布成功");
+        }
 
         // 清空表单
         setTitle("");
@@ -389,9 +424,14 @@ const PublishPage: React.FC<PublishPageProps> = ({
         }
       }, 1000);
     } catch (error) {
-      console.error(editData ? "更新笔记失败:" : "发布笔记失败:", error);
+      console.error(
+        type === "update" || type === "draft"
+          ? "更新笔记失败:"
+          : "发布笔记失败:",
+        error
+      );
       message.error(
-        editData
+        type === "update" || type === "draft"
           ? "更新失败，请检查网络连接后重试"
           : "发布失败，请检查网络连接后重试"
       );

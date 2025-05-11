@@ -140,14 +140,14 @@ export const createPost = (data: {
   });
 };
 
-// 获取帖子列表
+// 获取帖子列表（页码分页）
 export const getPosts = (params?: {
-  cursor?: string;
+  page?: number;
   limit?: number;
+  search?: string;
+  searchType?: "all" | "author" | "content";
   userId?: string;
   status?: string;
-  type?: "image" | "video";
-  tag?: string;
 }) => {
   return request<
     AxiosResponse<
@@ -166,6 +166,7 @@ export const getPosts = (params?: {
           userId: string;
           username?: string;
           nickname?: string;
+          status?: string;
           avatar?: string;
           likes?: number;
           comments?: number;
@@ -185,6 +186,51 @@ export const getPosts = (params?: {
     >
   >({
     url: "/posts",
+    method: "GET",
+    params,
+  });
+};
+
+// 游标分页获取帖子列表
+export const getCursorPosts = async (params: {
+  cursor?: string;
+  limit?: number;
+  search?: string;
+  searchType?: "all" | "author" | "content";
+  type?: "video" | "image";
+  tag?: string;
+  filterUser?: string;
+  filterType?: "onlyCurrentUser" | "like" | "follow";
+  currentUserId?: string;
+}) => {
+  return request<
+    AxiosResponse<
+      ApiResponse<{
+        posts: {
+          id: string;
+          title: string;
+          content: string;
+          type: string;
+          tags?: string[];
+          files?: string[];
+          coverImage?: string;
+          userId: string;
+          username?: string;
+          nickname?: string;
+          avatar?: string;
+          status?: string;
+          likes: number;
+          comments: number;
+          createdAt: string;
+          likedByUser?: boolean;
+          followedByUser?: boolean;
+        }[];
+        nextCursor: string;
+        hasMore: boolean;
+      }>
+    >
+  >({
+    url: "/posts/cursor",
     method: "GET",
     params,
   });
@@ -226,53 +272,22 @@ export const deletePost = (postId: string) => {
 };
 
 // 点赞帖子
-export const likePost = (postId: string) => {
+export const likePost = (postId: string, userId: string) => {
   return request<AxiosResponse<{ success: boolean }>>({
     url: `/posts/${postId}/like`,
     method: "POST",
+    data: { postId, userId },
   });
 };
 
 // 取消点赞
-export const unlikePost = (postId: string) => {
+export const unlikePost = (postId: string, userId: string) => {
   return request<AxiosResponse<{ success: boolean }>>({
     url: `/posts/${postId}/like`,
     method: "DELETE",
+    data: { postId, userId },
   });
 };
-
-// 检查点赞状态
-export const checkLikeStatus = (postId: string) => {
-  return request<AxiosResponse<{ hasLiked: boolean }>>({
-    url: `/posts/${postId}/like`,
-    method: "GET",
-  });
-};
-
-// 收藏帖子
-export const collectPost = (postId: string) => {
-  return request<AxiosResponse<{ success: boolean }>>({
-    url: `/posts/${postId}/collect`,
-    method: "POST",
-  });
-};
-
-// 取消收藏
-export const uncollectPost = (postId: string) => {
-  return request<AxiosResponse<{ success: boolean }>>({
-    url: `/posts/${postId}/collect`,
-    method: "DELETE",
-  });
-};
-
-// 检查收藏状态
-export const checkCollectStatus = (postId: string) => {
-  return request<AxiosResponse<{ hasCollected: boolean }>>({
-    url: `/posts/${postId}/collect`,
-    method: "GET",
-  });
-};
-
 // 保存草稿
 export const saveDraft = (
   data: {
@@ -430,4 +445,22 @@ const extractFilePathFromUrl = (fileUrl: string): string => {
     // 如果解析失败，尝试移除前导斜杠
     return fileUrl.startsWith("/") ? fileUrl.substring(1) : fileUrl;
   }
+};
+
+// 添加关注作者
+export const followAuthor = (postId: string, userId: string) => {
+  return request<AxiosResponse<{ success: boolean }>>({
+    url: `/posts/${postId}/follow`,
+    method: "POST",
+    data: { postId, userId },
+  });
+};
+
+// 取消关注作者
+export const unfollowAuthor = (postId: string, userId: string) => {
+  return request<AxiosResponse<{ success: boolean }>>({
+    url: `/posts/${postId}/follow`,
+    method: "DELETE",
+    data: { postId, userId },
+  });
 };

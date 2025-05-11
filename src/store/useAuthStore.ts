@@ -7,25 +7,47 @@ interface AuthState {
   isLoggedIn: boolean;
   user: User | null;
   token: string | null;
+  hydrated: boolean; // 添加新属性跟踪水合状态
+  lastUsedTab: string; // 添加上次使用的标签页
 
   // 操作方法
   login: (userData: User, token: string) => void;
   logout: () => void;
   updateUser: (userData: Partial<User>) => void;
+  setHydrated: (state: boolean) => void; // 设置水合状态的方法
+  setLastUsedTab: (tab: string) => void; // 设置上次使用的标签页
 }
+
+// 添加调试日志，监控zustand persist的初始化
+const log = (config: any) => (set: any, get: any, api: any) => {
+  console.log("useAuthStore初始化");
+
+  // 记录中间件包装前的store
+  const initialState = config(
+    (...args: any) => {
+      console.log("状态更新:", ...args);
+      set(...args);
+    },
+    get,
+    api
+  );
+  return initialState;
+};
 
 // 创建持久化存储的身份验证状态
 const useAuthStore = create<AuthState>()(
   persist(
-    (set) => ({
+    log((set: Function) => ({
       // 初始状态
       isLoggedIn: false,
       user: null,
       token: null,
+      hydrated: false, // 初始状态为未水合
+      lastUsedTab: "posts", // 默认标签页
 
       // 登录操作 - 设置用户信息和token
-      login: (userData, token) => {
-        console.log("Setting token:", token); // 添加调试日志
+      login: (userData: User, token: string) => {
+        console.log("Setting token:", token, "user:", userData);
         localStorage.setItem("token", token);
         set({ isLoggedIn: true, user: userData, token });
       },
@@ -38,17 +60,27 @@ const useAuthStore = create<AuthState>()(
       },
 
       // 更新用户信息
-      updateUser: (userData) =>
-        set((state) => ({
+      updateUser: (userData: Partial<User>) =>
+        set((state: AuthState) => ({
           user: state.user ? { ...state.user, ...userData } : null,
         })),
-    }),
+
+      // 设置水合状态
+      setHydrated: (state: boolean) => set({ hydrated: state }),
+
+      // 设置上次使用的标签页
+      setLastUsedTab: (tab: string) => {
+        console.log("设置上次使用的标签页:", tab);
+        set({ lastUsedTab: tab });
+      },
+    })),
     {
       name: "auth-storage",
       // 只存储必要的用户信息
       partialize: (state) => ({
         isLoggedIn: state.isLoggedIn,
         token: state.token,
+        lastUsedTab: state.lastUsedTab, // 存储上次使用的标签页
         user: state.user
           ? {
               userId: state.user.userId,
@@ -59,6 +91,18 @@ const useAuthStore = create<AuthState>()(
             }
           : null,
       }),
+      onRehydrateStorage: () => (state) => {
+        // 当存储加载（从localStorage）完成时
+        console.log("Auth store rehydrated:", state);
+        if (state) {
+          state.setHydrated(true); // 设置水合状态为true
+          console.log("用户状态已从持久化存储恢复:", {
+            isLoggedIn: state.isLoggedIn,
+            userId: state.user?.userId,
+            username: state.user?.username,
+          });
+        }
+      },
     }
   )
 );

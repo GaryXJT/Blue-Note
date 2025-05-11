@@ -73,6 +73,8 @@ export interface Post {
   updatedAt: string;
   tags?: string[];
   category?: string;
+  likedByUser?: boolean;
+  followedByUser?: boolean;
 }
 
 // 评论类型

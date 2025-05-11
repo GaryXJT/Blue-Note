@@ -2,7 +2,7 @@ import React, { useState, useRef, useEffect } from "react";
 import styles from "./CategoryNav.module.scss";
 
 const categories = [
-  { id: "recommend", name: "推荐" },
+  { id: "all", name: "所有" },
   { id: "fashion", name: "穿搭" },
   { id: "beauty", name: "美食" },
   { id: "makeup", name: "彩妆" },
@@ -15,9 +15,12 @@ const categories = [
   { id: "health", name: "健康" },
 ];
 
-const CategoryNav: React.FC = () => {
-  const [activeCategory, setActiveCategory] = useState("recommend");
-  const [hoverCategory, setHoverCategory] = useState<string | null>(null);
+interface CategoryNavProps {
+  onCategoryChange?: (category: string) => void;
+}
+
+const CategoryNav: React.FC<CategoryNavProps> = ({ onCategoryChange }) => {
+  const [activeCategory, setActiveCategory] = useState("all");
   const navRef = useRef<HTMLUListElement>(null);
   const [floatingEllipseStyle, setFloatingEllipseStyle] = useState({
     width: 0,
@@ -27,21 +30,22 @@ const CategoryNav: React.FC = () => {
     opacity: 0,
   });
 
-  const handleCategoryClick = (categoryId: string) => {
-    setActiveCategory(categoryId);
-    // 这里可以添加其他逻辑，例如调用API获取相应类别的内容
+  const handleCategoryClick = (categoryName: string) => {
+    setActiveCategory(categoryName);
+    // 调用回调函数，通知父组件分类变化
+    if (onCategoryChange) {
+      onCategoryChange(categoryName);
+    }
   };
 
   const handleCategoryMouseEnter = (
     categoryId: string,
     event: React.MouseEvent<HTMLLIElement>
   ) => {
-    setHoverCategory(categoryId);
     updateEllipsePosition(event.currentTarget);
   };
 
   const handleCategoryMouseLeave = () => {
-    setHoverCategory(null);
     // 当鼠标离开时，找到当前激活的元素并更新椭圆位置
     if (navRef.current) {
       const activeElement = navRef.current.querySelector(
@@ -109,9 +113,9 @@ const CategoryNav: React.FC = () => {
             <li
               key={category.id}
               className={`${styles.item} ${
-                activeCategory === category.id ? styles.active : ""
+                activeCategory === category.name ? styles.active : ""
               }`}
-              onClick={() => handleCategoryClick(category.id)}
+              onClick={() => handleCategoryClick(category.name)}
               onMouseEnter={(e) => handleCategoryMouseEnter(category.id, e)}
               onMouseLeave={handleCategoryMouseLeave}
             >

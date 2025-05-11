@@ -441,16 +441,85 @@
     .ant-tabs-ink-bar {
       display: none !important; // 移除底部活动指示器
     }
+
+    // 添加标签面板样式，放在:global块内部，而不是外部
+    .ant-tabs-tabpane {
+      min-height: 400px;
+      transition: opacity 0.3s ease;
+    }
+
+    .ant-tabs-tabpane-hidden {
+      height: 0;
+      overflow: hidden;
+      min-height: 0 !important; // 覆盖上面的min-height设置
+      display: none !important; // 彻底隐藏隐藏的标签页
+    }
   }
 }
 
 .notesSection {
   width: 100%;
   padding: 16px 0 24px;
+  min-height: 400px;
+  max-height: 2000px;
+  overflow: hidden;
+  transition: all 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+  will-change: opacity, transform;
+  position: relative;
 }
 
 .profileWaterfallWrapper {
   width: 100%;
+  transition: opacity 0.5s cubic-bezier(0.4, 0, 0.2, 1),
+    height 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+  will-change: opacity, height;
+  min-height: 400px;
+
+  /* 添加入场动画 */
+  animation: fadeInUp 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.profileWaterfallWrapper:empty {
+  opacity: 0.6;
+  min-height: 400px;
+
+  /* 添加加载状态占位符 */
+  &::before {
+    content: "";
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 40px;
+    height: 40px;
+    border: 3px solid rgba(24, 144, 255, 0.2);
+    border-top-color: var(--primary-color);
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+  }
+}
+
+.profileWaterfallWrapper.isLoading {
+  opacity: 0.7;
+  position: relative;
+
+  /* 添加进度条效果 */
+  &::after {
+    content: "";
+    position: absolute;
+    top: 0;
+    left: 0;
+    height: 3px;
+    width: 30%;
+    background-color: var(--primary-color);
+    animation: loadingProgress 1.5s cubic-bezier(0.4, 0, 0.2, 1) infinite;
+  }
+}
+
+.notesSection.isChanging {
+  opacity: 0.6;
+  transform: translateY(10px);
+  pointer-events: none; /* 防止在切换过程中点击 */
 }
 
 .emptyContent {
@@ -665,9 +734,34 @@
 
 @keyframes spin {
   0% {
-    transform: rotate(0deg);
+    transform: translate(-50%, -50%) rotate(0deg);
   }
   100% {
-    transform: rotate(360deg);
+    transform: translate(-50%, -50%) rotate(360deg);
+  }
+}
+
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes loadingProgress {
+  0% {
+    left: -30%;
+    width: 30%;
+  }
+  50% {
+    width: 60%;
+  }
+  100% {
+    left: 100%;
+    width: 30%;
   }
 }
