@@ -60,3 +60,64 @@ export interface PostListParams extends PaginationParams {
 
 // 帖子列表响应
 export interface PostListResponse extends PaginationResponse<Post> {}
+
+// 通用API响应格式
+export interface ApiResponse<T> {
+  code: number;
+  message: string;
+  data: T;
+}
+
+export interface Comment {
+  id: string;
+  postId: string;
+  userId: string;
+  username: string;
+  nickname: string;
+  avatar: string;
+  content: string;
+  parentId?: string;
+  rootId?: string;
+  replyToId?: string;
+  replyToName?: string;
+  likes: number;
+  childrenCount: number;
+  level: number;
+  isAuthor: boolean;
+  isAdmin: boolean;
+  status: string;
+  createdAt: string;
+  updatedAt: string;
+  likedByUser: boolean;
+  children?: Comment[];
+}
+
+export interface CommentsResponse {
+  comments: Comment[];
+  total: number;
+  page: number;
+  pageSize: number;
+  hasMore: boolean;
+}
+
+export interface CommentPostResponse {
+  id: string;
+  postId: string;
+  userId: string;
+  username: string;
+  nickname: string;
+  avatar: string;
+  content: string;
+  parentId?: string;
+  rootId?: string;
+  replyToId?: string;
+  replyToName?: string;
+  likes: number;
+  childrenCount: number;
+  level: number;
+  isAuthor: boolean;
+  isAdmin: boolean;
+  status: string;
+  createdAt: string;
+  updatedAt: string;
+}
