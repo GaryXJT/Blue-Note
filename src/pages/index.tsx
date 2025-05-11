@@ -271,8 +271,8 @@ const Home: React.FC = () => {
           setNextCursor(undefined);
           setHasMore(true);
 
-          // 不再提前设置loading=true，而是让ProfileContent组件负责处理加载状态
-          // setLoading(true); - 移除这行，因为它导致页面一直处于加载状态
+          // 标记为加载中状态
+          setLoading(true);
 
           // 初始标签页设置为posts
           console.log("设置标签页为posts");

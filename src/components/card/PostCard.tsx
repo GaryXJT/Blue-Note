@@ -187,7 +187,11 @@ const PostCard: React.FC<PostCardProps> = memo(({ post, onHeightChange }) => {
     <>
       <div
         className={styles.card}
-        onClick={() => setIsModalOpen(true)}
+        onClick={() => {
+          // 先将弹窗通过Portal渲染到body中，确保不受卡片宽度限制
+          document.body.style.overflow = "hidden"; // 防止滚动
+          setIsModalOpen(true);
+        }}
         ref={cardRef}
       >
         <div
@@ -246,7 +250,10 @@ const PostCard: React.FC<PostCardProps> = memo(({ post, onHeightChange }) => {
       <PostModal
         post={post}
         isOpen={isModalOpen}
-        onClose={() => setIsModalOpen(false)}
+        onClose={() => {
+          document.body.style.overflow = ""; // 恢复滚动
+          setIsModalOpen(false);
+        }}
         isLiked={isLiked}
         onLike={handleLike}
         likesCount={likesCount}

@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { Post } from "@/api/types";
 import {
   CloseOutlined,
@@ -16,6 +16,7 @@ import { followAuthor, unfollowAuthor } from "@/api/services/posts";
 import { message } from "antd";
 import useAuthStore from "@/store/useAuthStore";
 import { useRouter } from "next/router";
+import { createPortal } from "react-dom";
 
 interface PostModalProps {
   post: Post;
@@ -36,16 +37,33 @@ const PostModal: React.FC<PostModalProps> = ({
 }) => {
   const [currentIndex, setCurrentIndex] = useState(0);
   const [isFollowing, setIsFollowing] = useState(post.followedByUser || false);
+  const [portalElement, setPortalElement] = useState<HTMLElement | null>(null);
   const images = post.files || [post.coverUrl];
   const displayLikes = likesCount !== undefined ? likesCount : post.likes;
   const user = useAuthStore((state) => state.user);
   const router = useRouter();
 
-  const handlePrev = () => {
+  // 确保Portal挂载到body上，避免被父元素的样式影响
+  useEffect(() => {
+    setPortalElement(document.body);
+    // 打开模态框时禁止滚动
+    if (isOpen) {
+      document.body.style.overflow = "hidden";
+    }
+
+    return () => {
+      // 关闭模态框时恢复滚动
+      document.body.style.overflow = "";
+    };
+  }, [isOpen]);
+
+  const handlePrev = (e: React.MouseEvent) => {
+    e.stopPropagation();
     setCurrentIndex((prev) => (prev === 0 ? images.length - 1 : prev - 1));
   };
 
-  const handleNext = () => {
+  const handleNext = (e: React.MouseEvent) => {
+    e.stopPropagation();
     setCurrentIndex((prev) => (prev === images.length - 1 ? 0 : prev + 1));
   };
 
@@ -80,7 +98,8 @@ const PostModal: React.FC<PostModalProps> = ({
     }
   };
 
-  const handleViewAuthorProfile = () => {
+  const handleViewAuthorProfile = (e: React.MouseEvent) => {
+    e.stopPropagation();
     const authorId = post.userId || post.author?.id;
     if (authorId) {
       // 关闭当前模态框
@@ -92,9 +111,10 @@ const PostModal: React.FC<PostModalProps> = ({
     }
   };
 
-  if (!isOpen) return null;
+  if (!isOpen || !portalElement) return null;
 
-  return (
+  // 使用Portal渲染到body，避免z-index和样式冲突问题
+  return createPortal(
     <div className={styles.overlay} onClick={onClose}>
       <div className={styles.modal} onClick={(e) => e.stopPropagation()}>
         <button className={styles.closeBtn} onClick={onClose}>
@@ -135,7 +155,10 @@ const PostModal: React.FC<PostModalProps> = ({
                       className={`${styles.dot} ${
                         index === currentIndex ? styles.active : ""
                       }`}
-                      onClick={() => setCurrentIndex(index)}
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setCurrentIndex(index);
+                      }}
                     />
                   ))}
                 </div>
@@ -216,7 +239,8 @@ const PostModal: React.FC<PostModalProps> = ({
           </div>
         </div>
       </div>
-    </div>
+    </div>,
+    portalElement
   );
 };
 
