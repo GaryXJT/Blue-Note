@@ -1,4 +1,4 @@
-// 这里是项目配置文件 
+// 这里是项目配置文件
 // 如果项目在本地运行 请将isProd设置为true 如果项目在生产环境运行 请将isProd设置为false 并输入你的后端地址
 
 // 环境变量
@@ -12,7 +12,7 @@ const config = {
     baseURL:
       process.env.NEXT_PUBLIC_API_BASE_URL ||
       (isProd
-        ? "https://your-production-api.com/api/v1" // 生产环境API地址
+        ? "https://kzomycfaghsw.sealoshzh.site/api/v1" // 生产环境API地址
         : "http://localhost:8080/api/v1"), // 开发环境API地址
     timeout: 10000, // 请求超时时间(ms)
     withCredentials: false, // 是否携带cookie
