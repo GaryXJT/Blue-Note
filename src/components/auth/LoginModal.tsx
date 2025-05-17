@@ -14,6 +14,7 @@ import useAuthStore from "../../store/useAuthStore";
 interface LoginModalProps {
   visible: boolean;
   onCancel: () => void;
+  onLoginSuccess?: () => void;
 }
 
 interface CaptchaData {
@@ -21,7 +22,11 @@ interface CaptchaData {
   captchaImage: string;
 }
 
-const LoginModal: React.FC<LoginModalProps> = ({ visible, onCancel }) => {
+const LoginModal: React.FC<LoginModalProps> = ({
+  visible,
+  onCancel,
+  onLoginSuccess,
+}) => {
   const [form] = Form.useForm();
   const [passwordForm] = Form.useForm();
   const router = useRouter();
@@ -134,6 +139,11 @@ const LoginModal: React.FC<LoginModalProps> = ({ visible, onCancel }) => {
         }
 
         onCancel(); // 关闭登录弹窗
+
+        // 调用登录成功回调函数
+        if (onLoginSuccess) {
+          onLoginSuccess();
+        }
       }
     } catch (error: any) {
       // 从错误对象中提取错误信息

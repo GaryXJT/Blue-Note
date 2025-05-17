@@ -62,6 +62,19 @@
       font-weight: 600;
     }
   }
+
+  // 登录按钮特殊样式
+  .loginNavItem {
+    color: #0093dd;
+
+    :global(.anticon) {
+      color: #0093dd;
+    }
+
+    span {
+      color: #0093dd;
+    }
+  }
 }
 
 .info {
@@ -222,6 +235,11 @@
     margin: 4px 0;
   }
 }
+
+.mobileMoreBtn {
+  display: none; // 默认在桌面端隐藏
+}
+
 @media screen and (min-width: 1728px) {
   .sidebar {
     width: calc(16px + calc((1728px - 7 * 32px) / 6 * 1));
@@ -289,6 +307,23 @@
         font-weight: normal;
       }
     }
+
+    // 移动端登录按钮样式
+    .loginNavItem {
+      :global(.anticon) {
+        color: #0093dd;
+      }
+
+      span {
+        color: #0093dd;
+        font-weight: 500;
+      }
+    }
+
+    // 移动端显示更多按钮
+    .mobileMoreBtn {
+      display: block;
+    }
   }
 
   .info,
@@ -298,7 +333,8 @@
 }
 
 /* 添加一个本地类名，再通过它修改下拉菜单样式 */
-.moreDropdown {
+.moreDropdown,
+.mobileMoreDropdown {
   margin-bottom: 10px;
 
   /* 样式下拉菜单组件，但保留本地类的作用域 */
@@ -345,6 +381,15 @@
       .anticon {
         color: #ff4d4f;
       }
+    }
+  }
+}
+
+// 移动端下拉菜单额外样式
+.mobileMoreDropdown {
+  :global {
+    .ant-dropdown-menu {
+      margin-bottom: 60px; // 确保不被底部导航栏遮挡
     }
   }
 }

@@ -217,7 +217,7 @@ export interface TagStats {
 // 通知类型定义
 export interface Notification {
   id: string;
-  type: "like" | "follow" | "system";
+  type: "like" | "follow" | "system" | "comment";
   senderId?: string;
   senderName?: string;
   senderAvatar?: string;
@@ -235,8 +235,7 @@ export interface Notification {
 }
 
 // 通知类型枚举
-export type NotificationType = "all" | "like" | "follow" | "system";
-
+export type NotificationType = "all" | "like" | "follow" | "system" | "comment";
 
 // 菜单类型（特定于此文件的类型，不在API类型中定义）
 export type MenuType =

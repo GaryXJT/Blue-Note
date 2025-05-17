@@ -9,13 +9,19 @@ export const getNotifications = (params?: {
   page?: number;
   limit?: number;
 }) => {
+  // 确保有userId参数
+  if (!params?.userId) {
+    console.error("获取通知需要userId参数");
+    return Promise.reject(new Error("获取通知需要userId参数"));
+  }
+
+  console.log("开始请求通知API, 参数:", params);
+
   return request<
-    AxiosResponse<
-      ApiResponse<{
-        notifications: Notification[];
-        total: number;
-      }>
-    >
+    AxiosResponse<{
+      list: [];
+      total: number;
+    }>
   >({
     url: "/notifications",
     method: "GET",

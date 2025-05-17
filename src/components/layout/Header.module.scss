@@ -210,3 +210,15 @@
     width: 300px;
   }
 }
+
+@media (max-width: 520px) {
+  .search {
+    width: 200px;
+  }
+}
+
+@media (max-width: 400px) {
+  .search {
+    width: 150px;
+  }
+}

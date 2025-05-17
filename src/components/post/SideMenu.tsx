@@ -1,5 +1,5 @@
-import React from "react";
-import { Menu, Button } from "antd";
+import React, { useState } from "react";
+import { Menu, Button, message } from "antd";
 import {
   HomeOutlined,
   UserOutlined,
@@ -14,8 +14,8 @@ import {
 import styles from "./SideMenu.module.scss";
 import { MenuType } from "@/api/types";
 import { useRouter } from "next/router";
-import { message } from "antd";
 import useAuthStore from "@/store/useAuthStore";
+import LoginModal from "@/components/auth/LoginModal";
 
 interface SideMenuProps {
   activeMenu: MenuType;
@@ -25,7 +25,10 @@ interface SideMenuProps {
 const SideMenu: React.FC<SideMenuProps> = ({ activeMenu, onMenuChange }) => {
   const router = useRouter();
   const currentUser = useAuthStore((state) => state.user);
+  const isLoggedIn = useAuthStore((state) => state.isLoggedIn);
   const isAdmin = currentUser?.role === "admin";
+  const [loginModalVisible, setLoginModalVisible] = useState(false);
+  const [pendingRoute, setPendingRoute] = useState<MenuType | null>(null);
 
   // 菜单项配置
   const menuItems = [
@@ -46,7 +49,63 @@ const SideMenu: React.FC<SideMenuProps> = ({ activeMenu, onMenuChange }) => {
     },
   ];
 
+  const checkAuth = (key: MenuType): boolean => {
+    // 如果用户已登录，直接返回true
+    if (isLoggedIn) return true;
+
+    // 未登录情况下需要鉴权的路由
+    const authRoutes: MenuType[] = [
+      "publish",
+      "notifications",
+      "drafts",
+      "works",
+      "admin-posts",
+      "users",
+      "stats",
+    ];
+
+    if (authRoutes.includes(key)) {
+      // 保存用户想要访问的路由
+      setPendingRoute(key);
+      // 显示登录框
+      setLoginModalVisible(true);
+
+      // 显示提示信息
+      let routeName = "";
+      switch (key) {
+        case "publish":
+          routeName = "发布笔记";
+          break;
+        case "notifications":
+          routeName = "通知中心";
+          break;
+        case "drafts":
+          routeName = "草稿箱";
+          break;
+        case "works":
+          routeName = "笔记管理";
+          break;
+        case "admin-posts":
+          routeName = "后台笔记管理";
+          break;
+        case "users":
+          routeName = "用户管理";
+          break;
+        case "stats":
+          routeName = "数据统计";
+          break;
+      }
+      message.warning(`请先登录后再访问${routeName}`);
+      return false;
+    }
+
+    return true;
+  };
+
   const handleMenuClick = (key: MenuType) => {
+    // 检查权限
+    if (!checkAuth(key)) return;
+
     onMenuChange(key);
     // 根据菜单类型改变 URL
     switch (key) {
@@ -70,8 +129,12 @@ const SideMenu: React.FC<SideMenuProps> = ({ activeMenu, onMenuChange }) => {
 
   // 处理管理员菜单点击
   const handleAdminMenuClick = ({ key }: { key: string }) => {
-    // 将key转换为MenuType并调用onMenuChange
+    // 将key转换为MenuType
     const menuKey = key as MenuType;
+
+    // 检查权限
+    if (!checkAuth(menuKey)) return;
+
     onMenuChange(menuKey);
 
     // 根据点击的菜单项执行不同的操作
@@ -88,6 +151,18 @@ const SideMenu: React.FC<SideMenuProps> = ({ activeMenu, onMenuChange }) => {
         console.log("进入数据统计");
         router.push("/post/stats");
         break;
+    }
+  };
+
+  // 登录成功后的回调
+  const handleLoginSuccess = () => {
+    setLoginModalVisible(false);
+
+    // 如果有待处理的路由，登录成功后跳转
+    if (pendingRoute) {
+      const route = pendingRoute;
+      setPendingRoute(null);
+      handleMenuClick(route);
     }
   };
 
@@ -144,6 +219,16 @@ const SideMenu: React.FC<SideMenuProps> = ({ activeMenu, onMenuChange }) => {
           </div>
         </>
       )}
+
+      {/* 登录弹窗 */}
+      <LoginModal
+        visible={loginModalVisible}
+        onCancel={() => {
+          setLoginModalVisible(false);
+          setPendingRoute(null);
+        }}
+        onLoginSuccess={handleLoginSuccess}
+      />
     </div>
   );
 };

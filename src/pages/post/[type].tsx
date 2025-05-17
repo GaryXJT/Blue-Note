@@ -37,6 +37,7 @@ import {
   CrownOutlined,
   CloseCircleOutlined,
   CheckCircleOutlined,
+  CommentOutlined,
 } from "@ant-design/icons";
 import type { UploadFile, UploadProps } from "antd";
 import type { ColumnsType } from "antd/es/table";
@@ -70,12 +71,68 @@ import { formatDateTime } from "@/utils/date-formatter";
 import StatsPage from "@/components/stats/StatsPage";
 import useAuthStore from "@/store/useAuthStore";
 import { getNotifications } from "@/api/services/notifications";
-
+import LoginModal from "@/components/auth/LoginModal";
 
 const Post: React.FC = () => {
   const router = useRouter();
   const { type } = router.query;
   const currentUser = useAuthStore((state) => state.user);
+  const isLoggedIn = useAuthStore((state) => state.isLoggedIn);
+  const [loginModalVisible, setLoginModalVisible] = useState(false);
+
+  // 路由守卫 - 检查用户是否已登录
+  useEffect(() => {
+    // 确保客户端渲染时执行
+    if (typeof window !== "undefined") {
+      // 需要鉴权的路由类型
+      const authRoutes: MenuType[] = [
+        "publish",
+        "drafts",
+        "works",
+        "notifications",
+        "admin-posts",
+        "users",
+        "stats",
+      ];
+
+      // 如果是需要鉴权的路由且用户未登录
+      if (type && authRoutes.includes(type as MenuType) && !isLoggedIn) {
+        // 显示提示信息
+        let routeName = "";
+        switch (type) {
+          case "publish":
+            routeName = "发布笔记";
+            break;
+          case "notifications":
+            routeName = "通知中心";
+            break;
+          case "drafts":
+            routeName = "草稿箱";
+            break;
+          case "works":
+            routeName = "笔记管理";
+            break;
+          case "admin-posts":
+            routeName = "后台笔记管理";
+            break;
+          case "users":
+            routeName = "用户管理";
+            break;
+          case "stats":
+            routeName = "数据统计";
+            break;
+        }
+
+        message.warning(`请先登录后再访问${routeName}`);
+
+        // 显示登录弹窗
+        setLoginModalVisible(true);
+
+        // 重定向到首页
+        router.replace("/");
+      }
+    }
+  }, [type, isLoggedIn, router]);
 
   // 从 URL 参数获取当前菜单类型，默认为 'publish'
   const [activeMenu, setActiveMenu] = useState<MenuType>("publish");
@@ -432,6 +489,15 @@ const Post: React.FC = () => {
     // 如果正在编辑模式，退出编辑模式
     if (isEditing && menu !== "publish") {
       setIsEditing(false);
+    }
+
+    // 如果切换到通知中心，加载通知数据
+    if (menu === "notifications" && currentUser?.userId) {
+      console.log("切换到通知中心，开始加载通知数据");
+      // 延迟执行以确保状态更新
+      setTimeout(() => {
+        fetchNotifications();
+      }, 100);
     }
   };
 
@@ -1178,127 +1244,6 @@ const Post: React.FC = () => {
         );
 
       case "notifications":
-        // 通知表格列定义
-        const notificationColumns = [
-          {
-            dataIndex: "content",
-            key: "content",
-            render: (_: unknown, notification: Notification) => {
-              const NotificationItem = () => {
-                if (notification.type === "like") {
-                  return (
-                    <div className={styles.likeNotification}>
-                      <div className={styles.senderAvatar}>
-                        <Avatar
-                          src={
-                            notification.senderAvatar ||
-                            "/images/default-avatar.png"
-                          }
-                          size={40}
-                          icon={<HeartOutlined style={{ color: "#ff4d4f" }} />}
-                        />
-                      </div>
-                      <div className={styles.notificationInfo}>
-                        <div className={styles.notificationHeader}>
-                          <span className={styles.senderName}>
-                            {notification.senderName || "用户"}
-                          </span>
-                          <span className={styles.notificationTime}>
-                            {formatDateTime(notification.createdAt)}
-                          </span>
-                        </div>
-                        <div className={styles.notificationContent}>
-                          {notification.content}
-                        </div>
-                      </div>
-                    </div>
-                  );
-                } else if (notification.type === "follow") {
-                  return (
-                    <div className={styles.followNotification}>
-                      <div className={styles.senderAvatar}>
-                        <Avatar
-                          src={
-                            notification.senderAvatar ||
-                            "/images/default-avatar.png"
-                          }
-                          size={40}
-                          icon={
-                            <UserAddOutlined style={{ color: "#1890ff" }} />
-                          }
-                        />
-                      </div>
-                      <div className={styles.notificationInfo}>
-                        <div className={styles.notificationHeader}>
-                          <span className={styles.senderName}>
-                            {notification.senderName || "用户"}
-                          </span>
-                          <span className={styles.notificationTime}>
-                            {formatDateTime(notification.createdAt)}
-                          </span>
-                        </div>
-                        <div className={styles.notificationContent}>
-                          {notification.content}
-                        </div>
-                      </div>
-                    </div>
-                  );
-                } else {
-                  // 系统通知
-                  let iconContent;
-                  if (notification.title?.includes("审核通过")) {
-                    iconContent = (
-                      <CheckCircleOutlined style={{ color: "#52c41a" }} />
-                    );
-                  } else if (notification.title?.includes("审核未通过")) {
-                    iconContent = (
-                      <CloseCircleOutlined style={{ color: "#ff4d4f" }} />
-                    );
-                  } else {
-                    iconContent = (
-                      <NotificationOutlined style={{ color: "#1890ff" }} />
-                    );
-                  }
-
-                  return (
-                    <div className={styles.systemNotification}>
-                      <div className={styles.notificationIcon}>
-                        <Avatar
-                          icon={iconContent}
-                          style={{ backgroundColor: "#f0f0f0" }}
-                          size={40}
-                        />
-                      </div>
-                      <div className={styles.notificationInfo}>
-                        <div className={styles.notificationHeader}>
-                          <span className={styles.notificationTitle}>
-                            {notification.title || "系统通知"}
-                          </span>
-                          <span className={styles.notificationTime}>
-                            {formatDateTime(notification.createdAt)}
-                          </span>
-                        </div>
-                        <div className={styles.notificationContent}>
-                          {notification.content}
-                        </div>
-                        {notification.relatedId && (
-                          <div className={styles.notificationAction}>
-                            <Button type="link" size="small">
-                              查看详情
-                            </Button>
-                          </div>
-                        )}
-                      </div>
-                    </div>
-                  );
-                }
-              };
-
-              return <NotificationItem />;
-            },
-          },
-        ];
-
         // 过滤通知数据
         const filteredNotifications =
           activeNotificationTab === "all"
@@ -1330,6 +1275,15 @@ const Post: React.FC = () => {
                   onClick={() => setActiveNotificationTab("like")}
                 >
                   点赞({notifications.filter((n) => n.type === "like").length})
+                </div>
+                <div
+                  className={`${styles.tabItem} ${
+                    activeNotificationTab === "comment" ? styles.active : ""
+                  }`}
+                  onClick={() => setActiveNotificationTab("comment")}
+                >
+                  评论(
+                  {notifications.filter((n) => n.type === "comment").length})
                 </div>
                 <div
                   className={`${styles.tabItem} ${
@@ -1367,16 +1321,24 @@ const Post: React.FC = () => {
                       filteredNotifications.length > 5 ? "auto" : "hidden",
                   }}
                 >
+                  {/* 通知列表渲染 */}
                   {filteredNotifications.map((notification: Notification) => {
-                    const NotificationItemComponent = () => {
-                      if (notification.type === "like") {
-                        return (
+                    return (
+                      <div
+                        key={notification.id}
+                        className={`${styles.notificationItem} ${
+                          notification.isRead
+                            ? styles.readNotification
+                            : styles.unreadNotification
+                        }`}
+                      >
+                        {notification.type === "like" ? (
                           <div className={styles.likeNotification}>
                             <div className={styles.senderAvatar}>
                               <Avatar
                                 src={
                                   notification.senderAvatar ||
-                                  "/images/default-avatar.png"
+                                  "/static/pic/default-avatar.jpg"
                                 }
                                 size={40}
                                 icon={
@@ -1398,9 +1360,37 @@ const Post: React.FC = () => {
                               </div>
                             </div>
                           </div>
-                        );
-                      } else if (notification.type === "follow") {
-                        return (
+                        ) : notification.type === "comment" ? (
+                          <div className={styles.likeNotification}>
+                            <div className={styles.senderAvatar}>
+                              <Avatar
+                                src={
+                                  notification.senderAvatar ||
+                                  "/static/pic/default-avatar.jpg"
+                                }
+                                size={40}
+                                icon={
+                                  <CommentOutlined
+                                    style={{ color: "#1890ff" }}
+                                  />
+                                }
+                              />
+                            </div>
+                            <div className={styles.notificationInfo}>
+                              <div className={styles.notificationHeader}>
+                                <span className={styles.senderName}>
+                                  {notification.senderName || "用户"}
+                                </span>
+                                <span className={styles.notificationTime}>
+                                  {formatDateTime(notification.createdAt)}
+                                </span>
+                              </div>
+                              <div className={styles.notificationContent}>
+                                {notification.content}
+                              </div>
+                            </div>
+                          </div>
+                        ) : notification.type === "follow" ? (
                           <div className={styles.followNotification}>
                             <div className={styles.senderAvatar}>
                               <Avatar
@@ -1430,31 +1420,27 @@ const Post: React.FC = () => {
                               </div>
                             </div>
                           </div>
-                        );
-                      } else {
-                        // 系统通知
-                        let iconContent;
-                        if (notification.title?.includes("审核通过")) {
-                          iconContent = (
-                            <CheckCircleOutlined style={{ color: "#52c41a" }} />
-                          );
-                        } else if (notification.title?.includes("审核未通过")) {
-                          iconContent = (
-                            <CloseCircleOutlined style={{ color: "#ff4d4f" }} />
-                          );
-                        } else {
-                          iconContent = (
-                            <NotificationOutlined
-                              style={{ color: "#1890ff" }}
-                            />
-                          );
-                        }
-
-                        return (
+                        ) : (
                           <div className={styles.systemNotification}>
                             <div className={styles.notificationIcon}>
                               <Avatar
-                                icon={iconContent}
+                                icon={
+                                  notification.title?.includes("审核通过") ? (
+                                    <CheckCircleOutlined
+                                      style={{ color: "#52c41a" }}
+                                    />
+                                  ) : notification.title?.includes(
+                                      "审核未通过"
+                                    ) ? (
+                                    <CloseCircleOutlined
+                                      style={{ color: "#ff4d4f" }}
+                                    />
+                                  ) : (
+                                    <NotificationOutlined
+                                      style={{ color: "#1890ff" }}
+                                    />
+                                  )
+                                }
                                 style={{ backgroundColor: "#f0f0f0" }}
                                 size={40}
                               />
@@ -1471,29 +1457,9 @@ const Post: React.FC = () => {
                               <div className={styles.notificationContent}>
                                 {notification.content}
                               </div>
-                              {notification.relatedId && (
-                                <div className={styles.notificationAction}>
-                                  <Button type="link" size="small">
-                                    查看详情
-                                  </Button>
-                                </div>
-                              )}
                             </div>
                           </div>
-                        );
-                      }
-                    };
-
-                    return (
-                      <div
-                        key={notification.id}
-                        className={`${styles.notificationItem} ${
-                          notification.isRead
-                            ? styles.readNotification
-                            : styles.unreadNotification
-                        }`}
-                      >
-                        <NotificationItemComponent />
+                        )}
                       </div>
                     );
                   })}
@@ -2024,39 +1990,63 @@ const Post: React.FC = () => {
 
     try {
       setNotificationLoading(true);
+      console.log("开始获取通知，用户ID:", currentUser.userId);
+
       const res = await getNotifications({
         userId: currentUser.userId,
-        limit: 100, // 获取较多通知，不做分页
       });
 
-      if (res && res.data && res.data.data) {
-        const notificationData = res.data.data.notifications || [];
+      console.log("通知API响应:", res);
 
-        // 通知数据映射，确保类型匹配
-        const formattedNotifications: Notification[] = notificationData.map(
-          (notification: any) => ({
-            id: notification.id,
-            type: notification.type as "like" | "follow" | "system",
-            senderId: notification.senderId,
-            senderName: notification.senderName,
-            senderAvatar: notification.senderAvatar,
-            content: notification.content,
-            title: notification.title,
-            createdAt: notification.createdAt,
-            isRead: notification.isRead,
-            postId: notification.relatedId,
-            postTitle: notification.title,
-            postCover: notification.senderAvatar, // 暂时使用发送者头像作为帖子封面
-            relatedId: notification.relatedId,
-            relatedType: notification.relatedType,
-          })
-        );
+      if (res && res.data) {
+        // 处理API响应格式
+        const responseData = res.data;
+        console.log("通知响应数据:", responseData);
 
-        setNotifications(formattedNotifications);
+        if (responseData && responseData.list) {
+          const notificationData = responseData.list || [];
+          console.log("原始通知数据:", notificationData);
+
+          // 通知数据映射，确保类型匹配
+          const formattedNotifications: Notification[] = notificationData.map(
+            (notification: any) => ({
+              id: notification.id,
+              type: notification.type as
+                | "like"
+                | "follow"
+                | "system"
+                | "comment",
+              senderId: notification.senderId,
+              senderName: notification.senderName,
+              senderAvatar: notification.senderAvatar,
+              content: notification.content,
+              title: notification.title,
+              createdAt: notification.createdAt,
+              isRead: notification.isRead || false,
+              postId: notification.relatedId,
+              postTitle: notification.title,
+              postCover: notification.senderAvatar, // 暂时使用发送者头像作为帖子封面
+              relatedId: notification.relatedId,
+              relatedType: notification.relatedType,
+            })
+          );
+
+          console.log("格式化后的通知数据:", formattedNotifications);
+          setNotifications(formattedNotifications);
+
+          if (formattedNotifications.length === 0) {
+            console.log("没有通知数据");
+          }
+        } else {
+          console.error("无效的通知响应格式:", responseData);
+        }
+      } else {
+        console.error("无效的API响应:", res);
+        message.error("获取通知失败: 无效的响应数据");
       }
     } catch (error) {
       console.error("获取通知列表失败:", error);
-      message.error("获取通知列表失败");
+      message.error("获取通知列表失败，请稍后再试");
     } finally {
       setNotificationLoading(false);
     }
@@ -2070,7 +2060,9 @@ const Post: React.FC = () => {
   }, [activeMenu, fetchNotifications]);
 
   // 处理通知标签页切换
-  const handleNotificationTabChange = (tab: "like" | "follow" | "system") => {
+  const handleNotificationTabChange = (
+    tab: "all" | "like" | "follow" | "system" | "comment"
+  ) => {
     setActiveNotificationTab(tab);
   };
 
@@ -2234,6 +2226,15 @@ const Post: React.FC = () => {
     }
   };
 
+  // 登录成功后回调
+  const handleLoginSuccess = () => {
+    setLoginModalVisible(false);
+    // 登录成功后，可以重定向到原来想要访问的页面
+    if (type && typeof type === "string") {
+      router.push(`/post/${type}`);
+    }
+  };
+
   return (
     <>
       <Head>
@@ -2300,6 +2301,13 @@ const Post: React.FC = () => {
           )
         )}
       </Modal>
+
+      {/* 登录弹窗 */}
+      <LoginModal
+        visible={loginModalVisible}
+        onCancel={() => setLoginModalVisible(false)}
+        onLoginSuccess={handleLoginSuccess}
+      />
     </>
   );
 };

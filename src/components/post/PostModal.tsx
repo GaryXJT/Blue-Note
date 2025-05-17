@@ -752,7 +752,16 @@ const PostModal: React.FC<PostModalProps> = ({
         </button>
 
         <div className={styles.content}>
-          <div className={styles.imageSection}>
+          <div
+            className={styles.imageSection}
+            style={{
+              // 使用当前图片作为背景
+              backgroundImage:
+                post.type === "video" ? "none" : `url(${mediaUrl})`,
+              backgroundSize: "cover",
+              backgroundPosition: "center",
+            }}
+          >
             <div className={styles.imageWrapper}>
               {post.type === "video" ? (
                 // 如果是视频类型，渲染视频元素

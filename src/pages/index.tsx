@@ -794,7 +794,7 @@ const Home: React.FC = () => {
             开发人：计2106 熊jt
           </p>
           <p style={{ textAlign: "right", marginTop: "16px" }}>
-            学号：2019xxxxx166
+            学号：20xx21xxx1xx
           </p>
           <p style={{ textAlign: "right", marginTop: "16px" }}>
             联系方式：466658435@qq.com
