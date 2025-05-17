@@ -777,7 +777,7 @@ const Home: React.FC = () => {
           </p>
           <ul style={{ paddingLeft: "20px" }}>
             <li>总开发时间：两个月</li>
-            <li>前后端累积代码量：过两万行</li>
+            <li>前后端累积代码量：近三万行</li>
           </ul>
           <p>
             <strong>系统功能：</strong>
