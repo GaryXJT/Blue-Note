@@ -213,7 +213,7 @@ const Sidebar: React.FC<SidebarProps> = ({ onViewProfile }) => {
           </div>
         ) : (
           <div
-            className={`${styles.navItem} ${styles.loginNavItem}`}
+            className={`${styles.navItem} ${styles.loginNavItem} ${styles.mobileItem}`}
             onClick={handleLoginClick}
             style={{ cursor: "pointer" }}
           >
@@ -231,7 +231,9 @@ const Sidebar: React.FC<SidebarProps> = ({ onViewProfile }) => {
           trigger={["click"]}
           overlayClassName={styles.mobileMoreDropdown}
         >
-          <div className={`${styles.navItem} ${styles.mobileMoreBtn}`}>
+          <div
+            className={`${styles.navItem} ${styles.mobileMoreBtn} ${styles.mobileItem}`}
+          >
             <div>
               <MenuOutlined style={{ fontSize: "22px" }} />
               <span>更多</span>

@@ -75,6 +75,11 @@
       color: #0093dd;
     }
   }
+
+  // 默认在PC端隐藏移动端专用项
+  .mobileItem {
+    display: none;
+  }
 }
 
 .info {
@@ -322,6 +327,11 @@
 
     // 移动端显示更多按钮
     .mobileMoreBtn {
+      display: block;
+    }
+
+    // 移动端显示专用元素
+    .mobileItem {
       display: block;
     }
   }
