@@ -142,7 +142,7 @@ const PostModal: React.FC<PostModalProps> = ({
   likesCount,
 }) => {
   const [currentIndex, setCurrentIndex] = useState(0);
-  const [isFollowing, setIsFollowing] = useState(post.followedByUser || false);
+  const [isFollowing, setIsFollowing] = useState(Boolean(post.followedByUser));
   const [portalElement, setPortalElement] = useState<HTMLElement | null>(null);
   const [comments, setComments] = useState<Comment[]>([]);
   const [commentContent, setCommentContent] = useState("");
@@ -159,7 +159,7 @@ const PostModal: React.FC<PostModalProps> = ({
   } | null>(null);
   const commentInputRef = useRef<HTMLTextAreaElement>(null);
 
-  const images = post.files || [post.coverUrl];
+  const images = post.files || [post.coverUrl || ""];
   const displayLikes = likesCount !== undefined ? likesCount : post.likes;
   const user = useAuthStore((state) => state.user);
   const router = useRouter();
@@ -265,7 +265,7 @@ const PostModal: React.FC<PostModalProps> = ({
     }
   };
 
-  // 保留原来的分页加载方法，以备需要
+  // 修改处理分页评论数据的函数
   const fetchComments = async (page = 1) => {
     if (!post.id || isLoadingComments) return;
 
@@ -290,7 +290,7 @@ const PostModal: React.FC<PostModalProps> = ({
         }
 
         setTotalComments(commentsData.total);
-        setHasMoreComments(commentsData.hasMore);
+        setHasMoreComments(Boolean(commentsData.hasMore));
         setCommentsPage(page);
       } else {
         message.error(responseData.message || "获取评论失败");
@@ -723,6 +723,24 @@ const PostModal: React.FC<PostModalProps> = ({
     }
   };
 
+  // 确保安全地访问和渲染媒体内容
+  const getMediaUrl = (index: number): string => {
+    if (!images || index < 0 || index >= images.length) {
+      return "";
+    }
+
+    const mediaUrl = images[index];
+    if (typeof mediaUrl !== "string") {
+      return "";
+    }
+
+    return mediaUrl.startsWith("http")
+      ? mediaUrl
+      : `http://localhost:8080${mediaUrl}`;
+  };
+
+  const mediaUrl = getMediaUrl(currentIndex);
+
   if (!isOpen || !portalElement) return null;
 
   // 使用Portal渲染到body，避免z-index和样式冲突问题
@@ -739,13 +757,7 @@ const PostModal: React.FC<PostModalProps> = ({
               {post.type === "video" ? (
                 // 如果是视频类型，渲染视频元素
                 <video
-                  src={
-                    images &&
-                    images[currentIndex] &&
-                    (images[currentIndex].startsWith("http")
-                      ? images[currentIndex]
-                      : `http://localhost:8080${images[currentIndex]}`)
-                  }
+                  src={mediaUrl}
                   className={styles.mainVideo}
                   controls
                   autoPlay
@@ -753,13 +765,7 @@ const PostModal: React.FC<PostModalProps> = ({
               ) : (
                 // 如果是图片类型，渲染图片元素
                 <img
-                  src={
-                    images &&
-                    images[currentIndex] &&
-                    (images[currentIndex].startsWith("http")
-                      ? images[currentIndex]
-                      : `http://localhost:8080${images[currentIndex]}`)
-                  }
+                  src={mediaUrl}
                   alt={post.title}
                   className={styles.mainImage}
                 />

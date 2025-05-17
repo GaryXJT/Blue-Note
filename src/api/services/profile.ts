@@ -1,5 +1,5 @@
 import { request } from "../axios";
-import { UserInfo, User } from "@/types";
+import { UserInfo, User } from "@/api/types";
 import { AxiosResponse } from "axios";
 
 

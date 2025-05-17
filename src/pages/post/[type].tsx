@@ -40,7 +40,12 @@ import {
 } from "@ant-design/icons";
 import type { UploadFile, UploadProps } from "antd";
 import type { ColumnsType } from "antd/es/table";
-import type { Post } from "@/types"; // 从 @/types 中导入 Post 类型
+import type {
+  Post,
+  Notification,
+  NotificationType,
+  MenuType,
+} from "@/api/types"; // 从 @/api/types 中导入所需类型
 import {
   getPosts,
   deletePost,
@@ -55,12 +60,10 @@ import {
   deleteUser, // 添加删除用户的API
   reviewPost, // 导入审核笔记接口
 } from "@/api/services/admin";
-import type { MenuType } from "@/types"; // 导入MenuType类型
 import PostHeader from "@/components/post/PostHeader";
 import PublishPage from "@/components/publish/PublishPage";
 import PublishVideoPage from "@/components/publish/PublishVideoPage";
 import SideMenu from "@/components/post/SideMenu";
-import Waterfall from "@/components/layout/Waterfall";
 import styles from "./Post.module.scss";
 import PostModal from "@/components/post/PostModal";
 import { formatDateTime } from "@/utils/date-formatter";
@@ -68,54 +71,11 @@ import StatsPage from "@/components/stats/StatsPage";
 import useAuthStore from "@/store/useAuthStore";
 import { getNotifications } from "@/api/services/notifications";
 
-// 处理Post类型到PostItem的映射
-interface PostItem extends Post {}
-
-// 添加用户关注/粉丝数据模型
-interface UserFollowItem {
-  id: string;
-  avatar: string;
-  nickname: string;
-  description: string;
-  isFollowing: boolean;
-}
-
-// 修改定义通知类型
-interface Notification {
-  id: string;
-  type: "like" | "follow" | "system";
-  senderId?: string;
-  senderName?: string;
-  senderAvatar?: string;
-  content: string;
-  title?: string;
-  postId?: string;
-  postTitle?: string;
-  postCover?: string;
-  createdAt: string;
-  isRead: boolean;
-}
-
-// 用户类型
-interface User {
-  userId: string;
-  username: string;
-  nickname: string;
-  avatar: string;
-  bio: string;
-  status: string;
-  role?: string;
-  createdAt: string;
-}
-
-// 修改通知类型定义
-type NotificationType = "all" | "like" | "follow" | "system";
 
 const Post: React.FC = () => {
   const router = useRouter();
   const { type } = router.query;
   const currentUser = useAuthStore((state) => state.user);
-  const isRootAdmin = currentUser?.role === "root_admin";
 
   // 从 URL 参数获取当前菜单类型，默认为 'publish'
   const [activeMenu, setActiveMenu] = useState<MenuType>("publish");
@@ -127,13 +87,10 @@ const Post: React.FC = () => {
   const [activeWorksTab, setActiveWorksTab] = useState<
     "all" | "published" | "reviewing" | "rejected"
   >("all");
-  const [activeProfileTab, setActiveProfileTab] = useState<
-    "all" | "stats" | "followers"
-  >("all");
 
   // 添加Modal相关状态
   const [isModalVisible, setIsModalVisible] = useState(false);
-  const [selectedPost, setSelectedPost] = useState<PostItem | null>(null);
+  const [selectedPost, setSelectedPost] = useState<Post | null>(null);
 
   // 添加搜索关键词状态
   const [searchText, setSearchText] = useState("");
@@ -174,7 +131,7 @@ const Post: React.FC = () => {
   const [editModalLoading, setEditModalLoading] = useState<boolean>(false);
 
   // 用户管理相关状态
-  const [usersData, setUsersData] = useState<User[]>([]);
+  const [usersData, setUsersData] = useState<any[]>([]);
   const [userLoading, setUserLoading] = useState(false);
   const [userTotal, setUserTotal] = useState(0);
   const [userCurrentPage, setUserCurrentPage] = useState(1);
@@ -923,7 +880,7 @@ const Post: React.FC = () => {
   // 打开PostModal弹窗
   const handleOpenPostModal = (record: Post) => {
     // 将Post转换为PostItem格式
-    const postItem: PostItem = {
+    const postItem: Post = {
       ...record,
       // 确保必填字段存在
       author: record.author || {
@@ -1226,7 +1183,7 @@ const Post: React.FC = () => {
           {
             dataIndex: "content",
             key: "content",
-            render: (_, notification: Notification) => {
+            render: (_: unknown, notification: Notification) => {
               const NotificationItem = () => {
                 if (notification.type === "like") {
                   return (
@@ -1410,7 +1367,7 @@ const Post: React.FC = () => {
                       filteredNotifications.length > 5 ? "auto" : "hidden",
                   }}
                 >
-                  {filteredNotifications.map((notification) => {
+                  {filteredNotifications.map((notification: Notification) => {
                     const NotificationItemComponent = () => {
                       if (notification.type === "like") {
                         return (
@@ -1941,7 +1898,7 @@ const Post: React.FC = () => {
             title: "操作",
             key: "action",
             width: 180,
-            render: (_: React.Key, record: User) => (
+            render: (_: React.Key, record: any) => (
               <Space size="small">
                 {record.role !== "admin" && (
                   <Popconfirm
@@ -2072,14 +2029,14 @@ const Post: React.FC = () => {
         limit: 100, // 获取较多通知，不做分页
       });
 
-      if (res && res.data && res.data.list) {
-        const notificationData = res.data.list || [];
+      if (res && res.data && res.data.data) {
+        const notificationData = res.data.data.notifications || [];
 
         // 通知数据映射，确保类型匹配
         const formattedNotifications: Notification[] = notificationData.map(
-          (notification) => ({
+          (notification: any) => ({
             id: notification.id,
-            type: notification.type,
+            type: notification.type as "like" | "follow" | "system",
             senderId: notification.senderId,
             senderName: notification.senderName,
             senderAvatar: notification.senderAvatar,
@@ -2090,6 +2047,8 @@ const Post: React.FC = () => {
             postId: notification.relatedId,
             postTitle: notification.title,
             postCover: notification.senderAvatar, // 暂时使用发送者头像作为帖子封面
+            relatedId: notification.relatedId,
+            relatedType: notification.relatedType,
           })
         );
 
@@ -2226,7 +2185,7 @@ const Post: React.FC = () => {
   };
 
   // 设置用户为管理员
-  const handleSetAsAdmin = async (user: User) => {
+  const handleSetAsAdmin = async (user: any) => {
     try {
       setUserLoading(true);
       await setUserRole(user.userId, "admin");
@@ -2259,7 +2218,7 @@ const Post: React.FC = () => {
   };
 
   // 添加删除用户的处理函数
-  const handleDeleteUser = async (user: User) => {
+  const handleDeleteUser = async (user: any) => {
     try {
       setUserLoading(true);
       await deleteUser(user.userId);

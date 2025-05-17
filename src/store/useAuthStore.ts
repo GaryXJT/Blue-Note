@@ -1,6 +1,7 @@
 import { create } from "zustand";
 import { persist } from "zustand/middleware";
-import { User } from "@/types";
+import { User } from "@/api/types";
+import config from "@/config";
 
 // 身份验证状态接口
 interface AuthState {
@@ -48,14 +49,14 @@ const useAuthStore = create<AuthState>()(
       // 登录操作 - 设置用户信息和token
       login: (userData: User, token: string) => {
         console.log("Setting token:", token, "user:", userData);
-        localStorage.setItem("token", token);
+        localStorage.setItem(config.cache.tokenKey, token);
         set({ isLoggedIn: true, user: userData, token });
       },
 
       // 登出操作 - 清除用户状态
       logout: () => {
         // 从 localStorage 移除并更新状态
-        localStorage.removeItem("token");
+        localStorage.removeItem(config.cache.tokenKey);
         set({ isLoggedIn: false, user: null, token: null });
       },
 
@@ -75,7 +76,7 @@ const useAuthStore = create<AuthState>()(
       },
     })),
     {
-      name: "auth-storage",
+      name: config.cache.userInfoKey, // 使用配置文件中的用户信息存储键名
       // 只存储必要的用户信息
       partialize: (state) => ({
         isLoggedIn: state.isLoggedIn,

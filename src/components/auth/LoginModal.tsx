@@ -117,7 +117,7 @@ const LoginModal: React.FC<LoginModalProps> = ({ visible, onCancel }) => {
           {
             userId: userId,
             username: response.data.data.username,
-            role: response.data.data.role,
+            role: response.data.data.role as "user" | "admin",
           },
           response.data.data.token
         );

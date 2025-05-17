@@ -1,6 +1,7 @@
 import { request } from "../axios";
 import { AxiosResponse } from "axios";
 import { ApiResponse } from "../axios";
+import { Notification } from "../types";
 
 // 获取通知列表
 export const getNotifications = (params?: {
@@ -10,24 +11,10 @@ export const getNotifications = (params?: {
 }) => {
   return request<
     AxiosResponse<
-      {
-        list: {
-          id: string;
-          userId: string;
-          type: "like" | "follow" | "system";
-          title: string;
-          content: string;
-          isRead: boolean;
-          createdAt: string;
-          updatedAt: string;
-          relatedId?: string;
-          relatedType?: string;
-          senderId?: string;
-          senderName?: string;
-          senderAvatar?: string;
-        }[];
+      ApiResponse<{
+        notifications: Notification[];
         total: number;
-      }
+      }>
     >
   >({
     url: "/notifications",

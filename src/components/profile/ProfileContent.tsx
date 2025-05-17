@@ -20,7 +20,7 @@ import Waterfall from "../layout/Waterfall";
 import useAuthStore from "@/store/useAuthStore";
 import { useRouter } from "next/router";
 import EditProfileModal from "./EditProfileModal";
-import { UserInfo } from "@/types";
+import { UserInfo } from "@/api/types";
 import { profileAPI } from "@/api/services"; // 导入profile API
 
 interface ProfileContentProps {

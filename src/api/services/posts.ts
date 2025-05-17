@@ -1,5 +1,5 @@
 import { request } from "../axios";
-import { Post } from "../../types";
+import { Post } from "../types";
 import { AxiosResponse } from "axios";
 import { ApiResponse } from "../axios";
 

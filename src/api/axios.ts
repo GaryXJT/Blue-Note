@@ -4,6 +4,7 @@ import axios, {
   AxiosResponse,
   InternalAxiosRequestConfig,
 } from "axios";
+import config from "@/config";
 
 // 创建自定义错误类
 export class ApiError extends Error {
@@ -36,11 +37,9 @@ export interface ApiResponse<T = any> {
 
 // 创建Axios实例
 const instance: AxiosInstance = axios.create({
-  baseURL:
-    process.env.NEXT_PUBLIC_API_BASE_URL ||
-    // "https://gxzkgaibncip.sealoshzh.site/api/v1", // API基础URL
-    "http://localhost:8080/api/v1", // API基础URL
-  timeout: 10000, // 请求超时时间
+  baseURL: config.api.baseURL, // 使用配置文件中的API基础URL
+  timeout: config.api.timeout, // 使用配置文件中的超时时间
+  withCredentials: config.api.withCredentials, // 使用配置文件中的withCredentials设置
   headers: {
     "Content-Type": "application/json",
   },
@@ -48,14 +47,14 @@ const instance: AxiosInstance = axios.create({
 
 // 请求拦截器
 instance.interceptors.request.use(
-  (config: InternalAxiosRequestConfig<any>) => {
+  (axiosConfig: InternalAxiosRequestConfig<any>) => {
     // 获取token（如果有的话）
-    const token = localStorage.getItem("token");
+    const token = localStorage.getItem(config.cache.tokenKey); // 使用配置文件中的tokenKey
     if (token) {
-      config.headers = config.headers || {};
-      config.headers.Authorization = `Bearer ${token}`;
+      axiosConfig.headers = axiosConfig.headers || {};
+      axiosConfig.headers.Authorization = `Bearer ${token}`;
     }
-    return config;
+    return axiosConfig;
   },
   (error) => {
     return Promise.reject(error);

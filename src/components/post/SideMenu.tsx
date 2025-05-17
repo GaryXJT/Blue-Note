@@ -12,7 +12,7 @@ import {
   DatabaseOutlined,
 } from "@ant-design/icons";
 import styles from "./SideMenu.module.scss";
-import { MenuType } from "@/types";
+import { MenuType } from "@/api/types";
 import { useRouter } from "next/router";
 import { message } from "antd";
 import useAuthStore from "@/store/useAuthStore";

@@ -1,5 +1,3 @@
-import request from "../request";
-
 // 获取总览数据
 export const getOverviewStats = (params?: any) => {
   // 实际开发中替换为真实API

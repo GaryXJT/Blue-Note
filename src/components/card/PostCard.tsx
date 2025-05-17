@@ -246,8 +246,8 @@ const PostCard: React.FC<PostCardProps> = memo(({ post, onHeightChange }) => {
               <div className={styles.info}>
                 <div className={styles.avatar}>
                   <img
-                    src={post.author.avatar}
-                    alt={post.author.name}
+                    src={post.author?.avatar || "static/pic/default-avatar.jpg"}
+                    alt={post.author?.name || "用户"}
                     loading="lazy"
                     onError={(e) => {
                       // 头像加载失败时设置默认头像
@@ -256,7 +256,9 @@ const PostCard: React.FC<PostCardProps> = memo(({ post, onHeightChange }) => {
                     }}
                   />
                 </div>
-                <span className={styles.name}>{post.author.name}</span>
+                <span className={styles.name}>
+                  {post.author?.name || "用户"}
+                </span>
               </div>
               <div
                 className={`${styles.likes} ${isLiked ? styles.liked : ""}`}
