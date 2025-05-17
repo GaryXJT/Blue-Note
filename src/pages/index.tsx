@@ -761,7 +761,9 @@ const Home: React.FC = () => {
         centered
       >
         <div style={{ fontSize: "16px", lineHeight: "1.8" }}>
-          <p>这是我的设计作品，一个类小红书的社交平台。</p>
+          <p>
+            这是我在南京工业大学本科期间的毕业设计作品，一个类小红书的社交平台。
+          </p>
           <p>
             <strong>技术栈：</strong>
           </p>
@@ -775,7 +777,7 @@ const Home: React.FC = () => {
           </p>
           <ul style={{ paddingLeft: "20px" }}>
             <li>总开发时间：两个月</li>
-            <li>累积代码量：过两万行</li>
+            <li>前后端累积代码量：过两万行</li>
           </ul>
           <p>
             <strong>系统功能：</strong>
@@ -786,10 +788,16 @@ const Home: React.FC = () => {
             <li>特色功能：星火大模型驱动的标签系统</li>
           </ul>
           <p style={{ color: "#ff4d4f", marginTop: "16px" }}>
-            注：本系统开源可供学习，配有启动文档，禁止商用
+            注：本系统开源可供学习，配有启动配置文档，禁止商用
           </p>
           <p style={{ textAlign: "right", marginTop: "16px" }}>
-            开发人：南京工业大学计2106熊jt
+            开发人：计2106 熊jt
+          </p>
+          <p style={{ textAlign: "right", marginTop: "16px" }}>
+            学号：2019xxxxx166
+          </p>
+          <p style={{ textAlign: "right", marginTop: "16px" }}>
+            联系方式：466658435@qq.com
           </p>
         </div>
       </Modal>
