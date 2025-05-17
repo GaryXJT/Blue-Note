@@ -9,7 +9,7 @@ import ProfileContent from "@/components/profile/ProfileContent";
 import styles from "@/styles/Home.module.scss";
 import useAuthStore from "@/store/useAuthStore";
 import { getCursorPosts } from "@/api/services/posts";
-import { message } from "antd";
+import { message, Modal } from "antd";
 
 // 扩展window类型，添加_lastLoadingKey属性
 declare global {
@@ -127,6 +127,7 @@ const Home: React.FC = () => {
         isHydrated,
         currentTab,
         loadingKey,
+        selectedCategory, // 添加选中的分类
       });
 
       // 标记初始加载已完成(对于非重置操作)
@@ -134,9 +135,15 @@ const Home: React.FC = () => {
         isInitialLoadRef.current = true;
       }
 
-      // 如果是重置操作，确保首先清空当前数据
-      if (isReset && showProfile) {
-        console.log(`强制重置数据状态，切换到 ${currentTab} 标签页`);
+      // 如果是重置操作，先立即清空当前数据，确保不会显示旧数据
+      if (isReset) {
+        console.log(
+          `立即清空数据状态，${
+            showProfile
+              ? `切换到 ${currentTab} 标签页`
+              : `切换到 ${selectedCategory} 分类`
+          }`
+        );
         setPosts([]);
         setNextCursor(undefined);
       }
@@ -175,6 +182,12 @@ const Home: React.FC = () => {
           type: selectedType as "video" | "image" | undefined,
           tag: selectedTag,
         };
+
+        // 添加dataClass参数 - 如果选中的分类不是"所有"，则传递该参数
+        if (selectedCategory && selectedCategory !== "所有") {
+          apiParams.dataClass = selectedCategory;
+          console.log(`添加分类筛选: dataClass=${selectedCategory}`);
+        }
 
         // 使用实际的登录状态和用户ID
         if (actualIsLoggedIn && actualUserId) {
@@ -215,6 +228,13 @@ const Home: React.FC = () => {
             console.log("⚠️ API返回空数据，设置hasMore=false");
             setHasMore(false);
             setLoading(false);
+
+            // 确保在返回空数据时清空posts数组 - 修复分类切换但仍显示旧数据的问题
+            if (isReset) {
+              console.log("重置操作: 清空现有数据");
+              setPosts([]);
+            }
+
             return;
           }
 
@@ -261,6 +281,12 @@ const Home: React.FC = () => {
           // 如果响应异常，也将hasMore设置为false
           console.log("❌ 响应异常，设置hasMore=false");
           setHasMore(false);
+
+          // 如果是重置操作，则清空现有数据
+          if (isReset) {
+            console.log("重置操作: 清空现有数据");
+            setPosts([]);
+          }
         }
       } catch (error) {
         console.error("❌ 获取帖子失败:", error);
@@ -288,6 +314,7 @@ const Home: React.FC = () => {
       isLoggedIn,
       user,
       isHydrated,
+      selectedCategory,
     ]
   );
 
@@ -389,13 +416,120 @@ const Home: React.FC = () => {
 
   // 处理分类变化
   const handleCategoryChange = (categoryName: string) => {
-    setSelectedCategory(categoryName);
-    // 重置数据状态
+    console.log("分类变化:", categoryName);
+
+    // 如果分类没有变化，不做任何处理
+    if (selectedCategory === categoryName) {
+      console.log("分类未变化，跳过处理");
+      return;
+    }
+
+    // 立即清空现有数据，避免旧数据显示
     setPosts([]);
+
+    // 更新选中的分类
+    setSelectedCategory(categoryName);
+
+    // 重置相关状态
     setNextCursor(undefined);
     setHasMore(true);
-    // 重新加载数据
-    loadPosts(undefined, true);
+
+    // 设置加载状态
+    setLoading(true);
+
+    // 重置key，强制重新渲染瀑布流
+    setKey((prev) => prev + 1);
+
+    // 延迟一点调用API，确保状态更新
+    setTimeout(() => {
+      // 直接传递新的categoryName值，而不依赖于state中的selectedCategory
+      console.log("准备使用新分类加载数据:", categoryName);
+
+      // 创建一个包含当前分类参数的loadPosts函数调用
+      const loadPostsWithCategory = async () => {
+        try {
+          // 获取当前查看的用户ID (如果在个人资料页)
+          const profileUserId = router.query.profile as string;
+
+          // 检查localStorage中的token，确保登录状态一致
+          const storedToken = localStorage.getItem("token");
+          const storeState = useAuthStore.getState();
+
+          // 额外的安全检查 - 确保zustand状态与localStorage一致
+          const actualIsLoggedIn = storedToken && storeState.isLoggedIn;
+          const actualUserId = storeState.user?.userId;
+
+          // 构建API请求参数
+          const apiParams: any = {
+            cursor: undefined, // 重置操作使用undefined
+            limit: 2,
+            search: searchText,
+            searchType: searchType === "post" ? "content" : "author",
+            type: selectedType as "video" | "image" | undefined,
+            tag: selectedTag,
+          };
+
+          // 添加dataClass参数 - 使用传入的新categoryName
+          if (categoryName && categoryName !== "所有") {
+            apiParams.dataClass = categoryName;
+            console.log(`添加分类筛选: dataClass=${categoryName}`);
+          }
+
+          // 使用实际的登录状态和用户ID
+          if (actualIsLoggedIn && actualUserId) {
+            apiParams.currentUserId = actualUserId;
+          } else if (isLoggedIn && user?.userId) {
+            apiParams.currentUserId = user.userId;
+          }
+
+          // 发送API请求
+          console.log("🚀 发送API请求，参数:", apiParams);
+          const response = await getCursorPosts(apiParams);
+
+          // 处理响应...与loadPosts函数中的逻辑相同
+          if (response && response.data && response.data.data) {
+            const postsData = response.data.data.posts || [];
+
+            if (postsData.length === 0) {
+              console.log("⚠️ API返回空数据，设置hasMore=false");
+              setHasMore(false);
+              setLoading(false);
+              setPosts([]);
+              return;
+            }
+
+            // 处理帖子数据格式
+            const formattedPosts = postsData.map(formatPost);
+
+            // 使用新数据替换
+            setPosts(formattedPosts);
+
+            // 更新分页状态
+            const apiHasMore = response.data.data.hasMore === true;
+            setHasMore(apiHasMore);
+
+            if (apiHasMore && response.data.data.nextCursor) {
+              setNextCursor(response.data.data.nextCursor);
+            } else if (!apiHasMore) {
+              setNextCursor(undefined);
+            }
+          } else {
+            setHasMore(false);
+            setPosts([]);
+          }
+        } catch (error) {
+          console.error("❌ 获取帖子失败:", error);
+          message.error("获取帖子失败，请稍后再试");
+          setHasMore(false);
+        } finally {
+          setLoading(false);
+          console.log("已更新分类为:", categoryName, "并重新加载数据");
+        }
+      };
+
+      // 执行加载
+      loadPostsWithCategory();
+    }, 50);
   };
 
   // 当个人资料标签页变化时，重置帖子数据并重新加载
@@ -469,6 +603,136 @@ const Home: React.FC = () => {
     }
   };
 
+  // 添加公告弹窗状态
+  const [announcementVisible, setAnnouncementVisible] = useState(true);
+
+  // 处理公告确认
+  const handleAnnouncementConfirm = () => {
+    setAnnouncementVisible(false);
+  };
+
+  // 添加搜索处理函数
+  const handleSearch = (searchText: string) => {
+    console.log("首页处理搜索:", searchText);
+
+    // 立即清空现有数据
+    setPosts([]);
+
+    // 更新搜索文本状态
+    setSearchText(searchText);
+
+    // 重置分类到"所有"
+    if (selectedCategory !== "所有") {
+      // 只更新状态，不触发分类回调
+      setSelectedCategory("所有");
+
+      // 不再直接操作DOM，现在通过props传递selectedCategory给CategoryNav组件
+    }
+
+    // 重置其他查询状态
+    setNextCursor(undefined);
+    setHasMore(true);
+
+    // 设置加载状态
+    setLoading(true);
+
+    // 重置key，强制重新渲染瀑布流
+    setKey((prev) => prev + 1);
+
+    // 执行搜索API请求
+    const executeSearch = async () => {
+      try {
+        // 获取当前查看的用户ID (如果在个人资料页)
+        const profileUserId = router.query.profile as string;
+
+        // 检查localStorage中的token，确保登录状态一致
+        const storedToken = localStorage.getItem("token");
+        const storeState = useAuthStore.getState();
+
+        // 额外的安全检查 - 确保zustand状态与localStorage一致
+        const actualIsLoggedIn = storedToken && storeState.isLoggedIn;
+        const actualUserId = storeState.user?.userId;
+
+        // 构建API请求参数
+        const apiParams: any = {
+          cursor: undefined, // 重置操作使用undefined
+          limit: 2,
+          search: searchText, // 使用搜索文本
+          searchType: searchType === "post" ? "content" : "author",
+          type: selectedType as "video" | "image" | undefined,
+          tag: selectedTag,
+        };
+
+        // dataClass置空 - 不传递分类参数
+
+        // 使用实际的登录状态和用户ID
+        if (actualIsLoggedIn && actualUserId) {
+          apiParams.currentUserId = actualUserId;
+        } else if (isLoggedIn && user?.userId) {
+          apiParams.currentUserId = user.userId;
+        }
+
+        console.log("🔍 发送搜索API请求，参数:", apiParams);
+        const response = await getCursorPosts(apiParams);
+
+        // 处理响应...与loadPosts函数中的逻辑相同
+        if (response && response.data && response.data.data) {
+          const postsData = response.data.data.posts || [];
+
+          if (postsData.length === 0) {
+            console.log("⚠️ API返回空数据，设置hasMore=false");
+            setHasMore(false);
+            setLoading(false);
+            setPosts([]);
+            return;
+          }
+
+          // 处理帖子数据格式
+          const formattedPosts = postsData.map(formatPost);
+
+          // 使用新数据替换
+          setPosts(formattedPosts);
+
+          // 更新分页状态
+          const apiHasMore = response.data.data.hasMore === true;
+          setHasMore(apiHasMore);
+
+          if (apiHasMore && response.data.data.nextCursor) {
+            setNextCursor(response.data.data.nextCursor);
+          } else if (!apiHasMore) {
+            setNextCursor(undefined);
+          }
+        } else {
+          setHasMore(false);
+          setPosts([]);
+        }
+      } catch (error) {
+        console.error("❌ 搜索失败:", error);
+        message.error("搜索失败，请稍后再试");
+        setHasMore(false);
+      } finally {
+        setLoading(false);
+        console.log("搜索完成:", searchText);
+      }
+    };
+
+    // 执行搜索
+    executeSearch();
+  };
+
+  // 当URL中的search参数变化时，自动触发搜索
+  useEffect(() => {
+    // 从URL获取search参数
+    const searchParam = router.query.search as string;
+
+    // 如果URL中有search参数，且与当前状态不同，则触发搜索
+    if (searchParam && searchParam !== searchText) {
+      setSearchText(searchParam);
+      console.log("URL搜索参数变化，触发搜索:", searchParam);
+      handleSearch(searchParam);
+    }
+  }, [router.query.search]);
+
   return (
     <>
       <Head>
@@ -485,8 +749,53 @@ const Home: React.FC = () => {
         />
       </Head>
 
+      {/* 添加公告弹窗 */}
+      <Modal
+        title="欢迎进入小蓝书"
+        open={announcementVisible}
+        onOk={handleAnnouncementConfirm}
+        okText="我知道了"
+        cancelButtonProps={{ style: { display: "none" } }}
+        closable={false}
+        maskClosable={false}
+        centered
+      >
+        <div style={{ fontSize: "16px", lineHeight: "1.8" }}>
+          <p>这是我的设计作品，一个类小红书的社交平台。</p>
+          <p>
+            <strong>技术栈：</strong>
+          </p>
+          <ul style={{ paddingLeft: "20px" }}>
+            <li>前端：Next.js 框架</li>
+            <li>后端：Gin 框架</li>
+            <li>数据库：MongoDB 和 Redis</li>
+          </ul>
+          <p>
+            <strong>开发信息：</strong>
+          </p>
+          <ul style={{ paddingLeft: "20px" }}>
+            <li>总开发时间：两个月</li>
+            <li>累积代码量：过两万行</li>
+          </ul>
+          <p>
+            <strong>系统功能：</strong>
+          </p>
+          <ul style={{ paddingLeft: "20px" }}>
+            <li>基础社交功能：登录注册、发帖、评论、点赞、关注</li>
+            <li>管理功能：贴文管理、用户管理、数据管理</li>
+            <li>特色功能：星火大模型驱动的标签系统</li>
+          </ul>
+          <p style={{ color: "#ff4d4f", marginTop: "16px" }}>
+            注：本系统开源可供学习，配有启动文档，禁止商用
+          </p>
+          <p style={{ textAlign: "right", marginTop: "16px" }}>
+            开发人：南京工业大学计2106熊jt
+          </p>
+        </div>
+      </Modal>
+
       <div className={styles.container}>
-        <Header />
+        <Header onSearch={handleSearch} />
 
         <main className={styles.main}>
           <div className={styles.content}>
@@ -523,7 +832,10 @@ const Home: React.FC = () => {
                   />
                 ) : (
                   <>
-                    <CategoryNav onCategoryChange={handleCategoryChange} />
+                    <CategoryNav
+                      onCategoryChange={handleCategoryChange}
+                      selectedCategory={selectedCategory}
+                    />
                     <Waterfall
                       key={key} // 使用key强制组件重新渲染
                       posts={posts}

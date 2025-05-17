@@ -17,10 +17,17 @@ const categories = [
 
 interface CategoryNavProps {
   onCategoryChange?: (category: string) => void;
+  selectedCategory?: string;
 }
 
-const CategoryNav: React.FC<CategoryNavProps> = ({ onCategoryChange }) => {
-  const [activeCategory, setActiveCategory] = useState("all");
+const CategoryNav: React.FC<CategoryNavProps> = ({
+  onCategoryChange,
+  selectedCategory: externalSelectedCategory,
+}) => {
+  const [internalActiveCategory, setInternalActiveCategory] = useState("所有");
+
+  const activeCategory = externalSelectedCategory || internalActiveCategory;
+
   const navRef = useRef<HTMLUListElement>(null);
   const [floatingEllipseStyle, setFloatingEllipseStyle] = useState({
     width: 0,
@@ -31,8 +38,11 @@ const CategoryNav: React.FC<CategoryNavProps> = ({ onCategoryChange }) => {
   });
 
   const handleCategoryClick = (categoryName: string) => {
-    setActiveCategory(categoryName);
+    // 更新当前活动分类
+    setInternalActiveCategory(categoryName);
+
     // 调用回调函数，通知父组件分类变化
+    // 当用户点击分类时，将触发API请求，传递dataClass参数
     if (onCategoryChange) {
       onCategoryChange(categoryName);
     }

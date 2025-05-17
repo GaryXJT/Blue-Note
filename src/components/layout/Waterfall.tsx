@@ -236,25 +236,20 @@ const Waterfall: React.FC<WaterfallProps> = ({
 
     // 标记开始筛选
     setIsFiltering(true);
-    console.log("Waterfall: 开始筛选帖子，总数:", posts.length);
+    console.log(
+      "Waterfall: 处理接收到的帖子，总数:",
+      posts.length,
+      "选中分类:",
+      selectedCategory
+    );
 
     // 重置已加载更多的标志
     hasLoadedMoreRef.current = false;
 
-    // 如果在个人资料页，不进行分类筛选，直接显示所有帖子
-    if (isProfilePage) {
-      setFilteredPosts(posts);
-    }
-    // 首页才根据分类进行筛选
-    else if (!selectedCategory || selectedCategory === "所有") {
-      setFilteredPosts(posts);
-    } else {
-      // 筛选包含所选分类标签的帖子
-      const filtered = posts.filter(
-        (post) => post.tags && post.tags.includes(selectedCategory)
-      );
-      setFilteredPosts(filtered);
-    }
+    // 不再进行前端筛选，直接使用API返回的数据
+    // API已经根据dataClass参数筛选过数据
+    setFilteredPosts(posts);
+    console.log("直接使用API返回的数据，数量:", posts.length);
 
     // 使用较短的延迟，因为我们在后面会使用requestAnimationFrame
     const timer = setTimeout(() => {
@@ -265,7 +260,7 @@ const Waterfall: React.FC<WaterfallProps> = ({
     }, 100);
 
     return () => clearTimeout(timer);
-  }, [posts, selectedCategory, columns, isProfilePage]);
+  }, [posts, columns]);
 
   // 计算列数
   const calculateColumns = useCallback(() => {
@@ -595,7 +590,7 @@ const Waterfall: React.FC<WaterfallProps> = ({
     if (filteredPosts.length === 0) {
       return (
         <div className={styles.emptyState}>
-          {selectedCategory ? (
+          {selectedCategory && selectedCategory !== "所有" ? (
             <>
               <p>暂无{selectedCategory}相关的内容</p>
               <p>试试其他分类吧</p>
@@ -774,7 +769,7 @@ const Waterfall: React.FC<WaterfallProps> = ({
       )}
 
       <div ref={loadingRef} className={styles.loading}>
-        {(loading || hasMore) && !isFiltering && (
+        {(loading || hasMore) && !isFiltering && filteredPosts.length > 0 && (
           <>
             <div className={styles.spinner} />
             <span>{loading ? "加载中..." : ""}</span>

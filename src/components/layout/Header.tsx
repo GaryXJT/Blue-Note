@@ -1,20 +1,47 @@
-import React from "react";
+import React, { useState } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import styles from "./Header.module.scss";
-import {
-  SearchOutlined,
-  MoonOutlined,
-  SunOutlined,
-} from "@ant-design/icons";
+import { SearchOutlined, MoonOutlined, SunOutlined } from "@ant-design/icons";
 import { Switch } from "antd";
 import useThemeStore from "@/store/useThemeStore";
+import { useRouter } from "next/router";
 
-const Header: React.FC = () => {
+interface HeaderProps {
+  onSearch?: (searchText: string) => void;
+}
+
+const Header: React.FC<HeaderProps> = ({ onSearch }) => {
   const { mode, toggleMode } = useThemeStore();
+  const [searchText, setSearchText] = useState("");
+  const router = useRouter();
 
   const handleThemeChange = () => {
     toggleMode();
+  };
+
+  const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setSearchText(e.target.value);
+  };
+
+  const handleSearch = () => {
+    if (searchText.trim()) {
+      console.log("执行搜索：", searchText);
+
+      // 如果传入了搜索回调函数，则调用
+      if (onSearch) {
+        onSearch(searchText.trim());
+      } else {
+        // 否则使用路由跳转到带有搜索参数的首页
+        router.push(`/?search=${encodeURIComponent(searchText.trim())}`);
+      }
+    }
+  };
+
+  const handleKeyPress = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === "Enter") {
+      handleSearch();
+    }
   };
 
   return (
@@ -28,8 +55,11 @@ const Header: React.FC = () => {
             type="text"
             className={styles.searchInput}
             placeholder="搜索感兴趣的内容"
+            value={searchText}
+            onChange={handleSearchChange}
+            onKeyPress={handleKeyPress}
           />
-          <button className={styles.searchButton}>
+          <button className={styles.searchButton} onClick={handleSearch}>
             <SearchOutlined />
           </button>
         </div>
