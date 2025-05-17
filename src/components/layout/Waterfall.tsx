@@ -10,6 +10,19 @@ import PostCard, { PostCardSkeleton } from "../card/PostCard";
 import styles from "./Waterfall.module.scss";
 import { Post } from "@/api/types";
 import { Skeleton } from "antd";
+import { useRouter } from "next/router";
+
+// 添加一个简单的节流函数
+function throttle(func: Function, delay: number) {
+  let lastCall = 0;
+  return function (...args: any[]) {
+    const now = Date.now();
+    if (now - lastCall >= delay) {
+      lastCall = now;
+      func(...args);
+    }
+  };
+}
 
 interface WaterfallProps {
   posts: Post[];
@@ -18,20 +31,6 @@ interface WaterfallProps {
   hasMore?: boolean; // 添加是否有更多数据的标志
   selectedCategory?: string; // 添加选中的分类
 }
-
-// 给Window添加一个自定义的属性
-declare global {
-  interface Window {
-    __WATERFALL_DEBUG?: boolean;
-  }
-}
-
-// 调试日志函数
-const debugLog = (...args: any[]) => {
-  if (typeof window !== "undefined" && window.__WATERFALL_DEBUG) {
-    console.log(...args);
-  }
-};
 
 // 不同列数下的列宽百分比
 const COLUMN_WIDTHS = {
@@ -48,9 +47,11 @@ const Waterfall: React.FC<WaterfallProps> = ({
   posts,
   loading,
   onLoadMore,
-  hasMore, // 默认为true
+  hasMore = true, // 默认为true
   selectedCategory = "", // 默认为空字符串
 }) => {
+  const router = useRouter();
+  const isProfilePage = !!router.query.profile; // 判断是否在个人资料页
   const containerRef = useRef<HTMLDivElement>(null);
   const [columns, setColumns] = useState(getInitialColumns()); // 使用函数获取初始列数
   const [columnHeights, setColumnHeights] = useState<number[]>(
@@ -71,6 +72,90 @@ const Waterfall: React.FC<WaterfallProps> = ({
   const hasLoadedMoreRef = useRef<boolean>(false); // 添加一个ref来跟踪是否已经触发了加载更多
   const isFirstRenderRef = useRef(true); // 跟踪是否是首次渲染
   const prevPostsCountRef = useRef<number>(0);
+
+  // 简化滚动检测和加载逻辑
+  // 移除所有复杂的检测，使用最简单直接的方式
+  useEffect(() => {
+    // 简单直接的滚动检测函数
+    const handleScroll = () => {
+      // 如果正在加载或没有更多数据，直接返回
+      if (loading || !hasMore) {
+        return;
+      }
+
+      // 计算滚动位置
+      const scrollTop = window.scrollY || document.documentElement.scrollTop;
+      const windowHeight = window.innerHeight;
+      const documentHeight = document.documentElement.scrollHeight;
+
+      // 获取瀑布流容器位置信息
+      const containerRect = containerRef.current?.getBoundingClientRect();
+      const containerBottom = containerRect ? containerRect.bottom : 0;
+
+      // 检测是否在个人资料页
+      const isInProfilePage =
+        router.query.profile || router.pathname.includes("/profile");
+
+      // 根据是否在个人资料页使用不同的触发条件
+      let shouldTriggerLoad = false;
+
+      if (isInProfilePage) {
+        // 在个人资料页面，当瀑布流底部进入可视区域且距离视窗底部不到300px时触发
+        shouldTriggerLoad =
+          containerBottom > 0 && containerBottom - windowHeight < 300;
+      } else {
+        // 在首页或其他页面，使用原来的逻辑
+        shouldTriggerLoad = documentHeight - scrollTop - windowHeight < 500;
+      }
+
+      if (shouldTriggerLoad) {
+        console.log("滚动接近底部，触发加载", {
+          scrollTop,
+          windowHeight,
+          documentHeight,
+          containerBottom,
+          distance: documentHeight - scrollTop - windowHeight,
+          isProfilePage: isInProfilePage,
+        });
+
+        // 直接调用onLoadMore
+        onLoadMore();
+      }
+    };
+
+    // 添加滚动事件监听器
+    window.addEventListener("scroll", handleScroll);
+
+    // 组件挂载时检查一次
+    setTimeout(handleScroll, 500);
+
+    // 清理函数
+    return () => {
+      window.removeEventListener("scroll", handleScroll);
+    };
+  }, [loading, hasMore, onLoadMore, router.query.profile, router.pathname]);
+
+  // 当posts变化时，也检查一次是否需要加载更多
+  useEffect(() => {
+    // 如果内容高度不够填满页面，主动加载更多
+    if (!loading && hasMore && posts.length > 0) {
+      const documentHeight = document.documentElement.scrollHeight;
+      const windowHeight = window.innerHeight;
+
+      if (documentHeight <= windowHeight) {
+        console.log("内容不足填满页面，主动加载更多", {
+          documentHeight,
+          windowHeight,
+          posts: posts.length,
+        });
+
+        // 直接调用onLoadMore
+        setTimeout(() => {
+          onLoadMore();
+        }, 300);
+      }
+    }
+  }, [posts, loading, hasMore, onLoadMore]);
 
   // 获取初始列数的函数
   function getInitialColumns() {
@@ -109,46 +194,36 @@ const Waterfall: React.FC<WaterfallProps> = ({
       return;
     }
 
-    // 排序后的帖子副本
-    const postsToDistribute = [...postsToLayout].sort((a, b) =>
-      a.id.localeCompare(b.id)
-    );
+    console.log("Waterfall: 执行初始布局分配");
 
     // 新布局和高度数组
     const newLayout: Post[][] = Array.from({ length: columnsCount }, () => []);
     const heights = new Array(columnsCount).fill(0);
 
-    // 首先检查是否所有的帖子都有缓存的高度
-    const allHaveCachedHeight = postsToDistribute.every((post) =>
-      itemHeights.current.has(post.id)
+    // 对帖子进行排序，保证一致的初始布局
+    const postsToDistribute = [...postsToLayout].sort((a, b) =>
+      a.id.localeCompare(b.id)
     );
 
+    // 分配所有帖子
     postsToDistribute.forEach((post) => {
-      if (allHaveCachedHeight) {
-        // 获取帖子的缓存高度
-        const postHeight = itemHeights.current.get(post.id) || 350 + GAP;
+      // 始终寻找最短的列
+      const minHeight = Math.min(...heights);
+      const shortestColumn = heights.indexOf(minHeight);
 
-        // 寻找最短的列
-        const minHeight = Math.min(...heights);
-        const shortestColumn = heights.indexOf(minHeight);
+      // 分配到最短的列
+      newLayout[shortestColumn].push(post);
 
-        // 分配到最短的列
-        newLayout[shortestColumn].push(post);
-        heights[shortestColumn] += postHeight;
-      } else {
-        // 使用按高度排序的方法，而不是用ID，这样更加均匀地排列
-        const columnIndex = heights.indexOf(Math.min(...heights));
-        newLayout[columnIndex].push(post);
-
-        // 更新列高度
-        let itemHeight = getItemHeight(post);
-        heights[columnIndex] += itemHeight;
-      }
+      // 更新列高度
+      const postHeight = itemHeights.current.get(post.id) || 350 + GAP;
+      heights[shortestColumn] += postHeight;
     });
 
     // 使用批量更新
     setLayout(newLayout);
     setColumnHeights(heights);
+
+    console.log("Waterfall: 初始布局分配完成");
   };
 
   // 筛选帖子
@@ -161,16 +236,20 @@ const Waterfall: React.FC<WaterfallProps> = ({
 
     // 标记开始筛选
     setIsFiltering(true);
-    debugLog("Waterfall: 开始筛选帖子，总数:", posts.length);
+    console.log("Waterfall: 开始筛选帖子，总数:", posts.length);
 
     // 重置已加载更多的标志
     hasLoadedMoreRef.current = false;
 
-    // 如果选择类别为空或"所有"，显示全部帖子
-    if (!selectedCategory || selectedCategory === "所有") {
+    // 如果在个人资料页，不进行分类筛选，直接显示所有帖子
+    if (isProfilePage) {
+      setFilteredPosts(posts);
+    }
+    // 首页才根据分类进行筛选
+    else if (!selectedCategory || selectedCategory === "所有") {
       setFilteredPosts(posts);
     } else {
-      // 否则，筛选包含所选分类标签的帖子
+      // 筛选包含所选分类标签的帖子
       const filtered = posts.filter(
         (post) => post.tags && post.tags.includes(selectedCategory)
       );
@@ -186,7 +265,7 @@ const Waterfall: React.FC<WaterfallProps> = ({
     }, 100);
 
     return () => clearTimeout(timer);
-  }, [posts, selectedCategory, columns]);
+  }, [posts, selectedCategory, columns, isProfilePage]);
 
   // 计算列数
   const calculateColumns = useCallback(() => {
@@ -206,7 +285,7 @@ const Waterfall: React.FC<WaterfallProps> = ({
 
     // 只有当列数真正变化时才更新状态
     if (newColumns !== columns) {
-      debugLog(`Waterfall: 列数变化 ${columns} -> ${newColumns}`);
+      console.log(`Waterfall: 列数变化 ${columns} -> ${newColumns}`);
       setColumns(newColumns);
     }
   }, [columns]);
@@ -232,10 +311,10 @@ const Waterfall: React.FC<WaterfallProps> = ({
     return 350 + GAP; // 默认高度
   };
 
-  // 分配项目到最短的列 - 修改为使用内部函数
+  // 分配项目到最短的列 - 只追加新内容，避免闪烁
   const distributeItems = useCallback(() => {
     if (!filteredPosts.length || columns === 0 || isFiltering) {
-      debugLog("Waterfall: 跳过布局分配，条件不满足", {
+      console.log("Waterfall: 跳过布局分配，条件不满足", {
         postCount: filteredPosts.length,
         columns,
         isFiltering,
@@ -243,93 +322,226 @@ const Waterfall: React.FC<WaterfallProps> = ({
       return;
     }
 
-    // 添加日志便于调试
-    debugLog("Waterfall: 开始分配布局，帖子数:", filteredPosts.length);
+    console.log(
+      `Waterfall: 分配新帖子到瀑布流布局(${
+        isProfilePage ? "个人资料页" : "首页"
+      }), 当前列数:`,
+      columns
+    );
 
-    // 调用内部布局函数
-    distributeItemsInternal(filteredPosts, columns);
+    // 先确保布局列数与当前列数匹配
+    let newLayout: Post[][] = [];
 
-    debugLog("Waterfall: 布局分配完成");
-  }, [filteredPosts, columns, isFiltering]);
-
-  // 处理卡片高度变化
-  const handlePostCardHeightChange = (postId: string, height: number) => {
-    const prevHeight = itemHeights.current.get(postId);
-    // 只有当高度真正变化时才更新和触发重排
-    // 增加阈值为10px减少微小高度变化造成的重排
-    if (!prevHeight || Math.abs(prevHeight - height) > 10) {
-      debugLog(
-        `Waterfall: 卡片 ${postId} 高度变化: ${prevHeight} -> ${height}`
+    // 处理布局列数不匹配的情况
+    if (layout.length !== columns) {
+      console.log(
+        `布局列数(${layout.length})与当前列数(${columns})不匹配，调整布局`
       );
-      // 保存新的高度
-      itemHeights.current.set(postId, height + GAP);
-      // 标记需要重新布局，但不立即触发，通过防抖延迟
-      if (!isFiltering) {
-        if (resizeTimerRef.current) {
-          clearTimeout(resizeTimerRef.current);
-        }
-        resizeTimerRef.current = setTimeout(() => {
-          setNeedsReflow(true);
-        }, 500); // 增加到500ms延迟，减少频繁重排
+
+      // 保存所有现有帖子
+      const existingPosts: Post[] = [];
+      layout.forEach((column) => {
+        column.forEach((post) => {
+          existingPosts.push(post);
+        });
+      });
+
+      // 创建新的布局数组
+      newLayout = Array.from({ length: columns }, () => []);
+
+      // 重新分配所有现有帖子
+      const heights = new Array(columns).fill(0);
+      existingPosts.forEach((post) => {
+        // 找出最短的列
+        const minHeight = Math.min(...heights);
+        const shortestColumnIndex = heights.indexOf(minHeight);
+
+        // 添加到最短列
+        newLayout[shortestColumnIndex].push(post);
+
+        // 更新列高度
+        const postHeight = itemHeights.current.get(post.id) || 350 + GAP;
+        heights[shortestColumnIndex] += postHeight;
+      });
+
+      console.log("现有帖子重新分配完成");
+    } else {
+      // 如果列数匹配，直接使用现有布局
+      newLayout = layout.map((column) => [...column]);
+    }
+
+    // 找出现有布局中未包含的新帖子
+    const existingPostIds = new Set<string>();
+    newLayout.forEach((column) => {
+      column.forEach((post) => {
+        existingPostIds.add(post.id);
+      });
+    });
+
+    // 过滤出新帖子
+    const newPosts = filteredPosts.filter(
+      (post) => !existingPostIds.has(post.id)
+    );
+
+    if (newPosts.length === 0) {
+      console.log("没有新帖子需要添加");
+
+      // 更新布局和高度（如果有变化）
+      if (layout.length !== columns) {
+        // 计算新的列高度
+        const newHeights = new Array(columns).fill(0);
+        newLayout.forEach((column, colIndex) => {
+          column.forEach((post) => {
+            const postHeight = itemHeights.current.get(post.id) || 350 + GAP;
+            newHeights[colIndex] += postHeight;
+          });
+        });
+
+        // 更新状态
+        setLayout(newLayout);
+        setColumnHeights(newHeights);
+        console.log("布局已更新，列数调整为:", columns);
       }
-    }
-  };
 
-  // 首次加载时显示骨架屏
+      return;
+    }
+
+    console.log(`发现 ${newPosts.length} 个新帖子需要添加`);
+
+    // 计算当前每列的高度
+    const heights = new Array(columns).fill(0);
+    newLayout.forEach((column, index) => {
+      column.forEach((post) => {
+        const postHeight = itemHeights.current.get(post.id) || 350 + GAP;
+        heights[index] += postHeight;
+      });
+    });
+
+    console.log("当前各列高度:", heights);
+
+    // 分配新帖子到最短的列
+    newPosts.forEach((post) => {
+      // 找出当前最短的列
+      const minHeight = Math.min(...heights);
+      const shortestColumnIndex = heights.indexOf(minHeight);
+
+      console.log(
+        `将帖子 ${post.id} 分配到第 ${
+          shortestColumnIndex + 1
+        } 列，当前高度: ${minHeight}`
+      );
+
+      // 将帖子添加到最短的列
+      newLayout[shortestColumnIndex].push(post);
+
+      // 更新列高度
+      const postHeight = itemHeights.current.get(post.id) || 350 + GAP;
+      heights[shortestColumnIndex] += postHeight;
+    });
+
+    // 设置新的布局和高度
+    setLayout(newLayout);
+    setColumnHeights(heights);
+
+    console.log("Waterfall: 新帖子添加完成", {
+      columns,
+      heights,
+      layoutCounts: newLayout.map((col) => col.length),
+    });
+  }, [filteredPosts, columns, isFiltering, layout, isProfilePage]);
+
+  // 使用useEffect而不是useLayoutEffect，避免重排导致的闪烁
   useEffect(() => {
-    // 增加一个计时器，如果加载时间过长，也显示骨架屏
-    let loadingTimer: NodeJS.Timeout | null = null;
-
-    if (loading && posts.length === 0) {
-      loadingTimer = setTimeout(() => {
-        setInitialLoading(true);
-      }, 200);
-    } else if (posts.length > 0) {
-      // 如果有数据，等待一小段时间再隐藏骨架屏，确保平滑过渡
-      setTimeout(() => {
-        setInitialLoading(false);
-      }, 300);
-    } else if (!loading) {
-      setInitialLoading(false);
+    if (filteredPosts.length > 0 && !isFiltering) {
+      distributeItems();
     }
+  }, [filteredPosts, distributeItems, isFiltering]);
 
-    return () => {
-      if (loadingTimer) clearTimeout(loadingTimer);
-    };
-  }, [posts.length, loading]);
+  // 当高度变化需要重新布局时
+  useEffect(() => {
+    if (needsReflow && !isFiltering && filteredPosts.length > 0) {
+      console.log("Waterfall: 高度变化，但不执行全局重排，只更新高度");
 
-  // 监听窗口大小变化的优化版本
+      // 只更新高度信息，不重新分配
+      const updatedHeights = new Array(columns).fill(0);
+
+      layout.forEach((column, colIndex) => {
+        column.forEach((post) => {
+          const postHeight = itemHeights.current.get(post.id) || 350 + GAP;
+          updatedHeights[colIndex] += postHeight;
+        });
+      });
+
+      setColumnHeights(updatedHeights);
+      setNeedsReflow(false);
+    }
+  }, [needsReflow, isFiltering, filteredPosts.length, layout, columns]);
+
+  // 列数变化时，重新分配所有内容（这是不可避免的）
+  useEffect(() => {
+    // 列数变化是少见操作，此时必须重新分配所有内容
+    if (filteredPosts.length > 0 && layout.length !== columns) {
+      console.log("Waterfall: 列数变化，必须重新分配所有内容");
+
+      // 完全重新分配所有内容
+      const newLayout: Post[][] = Array.from({ length: columns }, () => []);
+      const heights = new Array(columns).fill(0);
+
+      // 获取所有现有帖子，保持原有顺序
+      const allPosts: Post[] = [];
+      layout.forEach((column) => {
+        column.forEach((post) => {
+          allPosts.push(post);
+        });
+      });
+
+      // 可能有新添加的帖子还未分配
+      filteredPosts.forEach((post) => {
+        if (!allPosts.some((p) => p.id === post.id)) {
+          allPosts.push(post);
+        }
+      });
+
+      // 按ID排序保证一致性
+      allPosts.sort((a, b) => a.id.localeCompare(b.id));
+
+      // 重新分配所有帖子
+      allPosts.forEach((post) => {
+        const minHeight = Math.min(...heights);
+        const shortestColumnIndex = heights.indexOf(minHeight);
+
+        newLayout[shortestColumnIndex].push(post);
+
+        const postHeight = itemHeights.current.get(post.id) || 350 + GAP;
+        heights[shortestColumnIndex] += postHeight;
+      });
+
+      // 设置新布局
+      setLayout(newLayout);
+      setColumnHeights(heights);
+    }
+  }, [columns, filteredPosts, layout]);
+
+  // 监听窗口大小变化
   useEffect(() => {
     calculateColumns(); // 初始计算
 
-    // 使用截流函数处理调整大小事件
+    // 使用简单节流处理窗口大小变化
     let resizeTimeout: NodeJS.Timeout | null = null;
-    let lastResizeTime = 0;
-    const RESIZE_THROTTLE = 200; // 200ms截流
 
     const handleResize = () => {
-      const now = Date.now();
-
-      // 清除之前的定时器
       if (resizeTimeout) {
         clearTimeout(resizeTimeout);
-        resizeTimeout = null;
       }
 
-      // 如果距离上次resize时间不足阈值，延迟处理
-      if (now - lastResizeTime < RESIZE_THROTTLE) {
-        resizeTimeout = setTimeout(() => {
-          lastResizeTime = Date.now();
-          calculateColumns();
-        }, RESIZE_THROTTLE);
-      } else {
-        // 否则立即处理
-        lastResizeTime = now;
+      resizeTimeout = setTimeout(() => {
         calculateColumns();
-      }
+        console.log("Waterfall: 窗口大小变化，重新计算列数");
+      }, 200);
     };
 
     window.addEventListener("resize", handleResize);
+
     return () => {
       window.removeEventListener("resize", handleResize);
       if (resizeTimeout) {
@@ -337,110 +549,6 @@ const Waterfall: React.FC<WaterfallProps> = ({
       }
     };
   }, [calculateColumns]);
-
-  // 当列数或筛选后的帖子变化时，重新计算布局
-  useEffect(() => {
-    if (isFiltering) {
-      debugLog("Waterfall: 正在筛选，跳过布局计算");
-      return; // 如果正在筛选中，不重新计算布局
-    }
-
-    if (filteredPosts.length === 0) {
-      debugLog("Waterfall: 没有帖子，跳过布局计算");
-      return; // 没有帖子不需要计算布局
-    }
-
-    // 如果不是首次渲染，则使用正常的布局更新流程
-    if (!isFirstRenderRef.current) {
-      debugLog("Waterfall: 触发布局计算 - 列数或帖子变化");
-
-      // 使用requestAnimationFrame确保在下一帧渲染前计算完成
-      requestAnimationFrame(() => {
-        distributeItems();
-      });
-    }
-  }, [columns, filteredPosts, distributeItems, isFiltering]);
-
-  // 当高度变化需要重新布局时
-  useEffect(() => {
-    if (needsReflow && !isFiltering && filteredPosts.length > 0) {
-      debugLog("Waterfall: 高度变化，需要重排");
-
-      // 使用更长的防抖延迟，减少频繁重排
-      const timer = setTimeout(() => {
-        distributeItems();
-        setNeedsReflow(false);
-      }, 500); // 增加延迟到500ms，减少抽搐
-
-      return () => clearTimeout(timer);
-    }
-  }, [needsReflow, isFiltering, distributeItems, filteredPosts.length]);
-
-  // 设置无限滚动
-  useEffect(() => {
-    // 清除之前的观察者
-    if (observerRef.current) {
-      observerRef.current.disconnect();
-      observerRef.current = null;
-    }
-
-    // 如果没有更多数据或者正在加载，不设置观察者
-    if (!loadingRef.current || !hasMore || loading) return;
-
-    // 添加一个标记变量，用于防止初次加载时触发
-    let isInitialIntersection = true;
-    let throttleTimer: NodeJS.Timeout | null = null;
-
-    observerRef.current = new IntersectionObserver(
-      (entries) => {
-        // 初次加载不触发loadMore，仅标记已观察到
-        if (isInitialIntersection) {
-          debugLog("Waterfall: 忽略初次交叉触发");
-          isInitialIntersection = false;
-          return;
-        }
-
-        if (entries[0].isIntersecting && !loading && !isFiltering && hasMore) {
-          // 使用节流控制，防止频繁触发
-          if (!throttleTimer) {
-            throttleTimer = setTimeout(() => {
-              // 只有在非筛选状态、非加载状态且还有更多数据时才触发加载更多
-              // 立即断开观察者连接，避免重复触发
-              if (observerRef.current) {
-                observerRef.current.disconnect();
-              }
-              debugLog("Waterfall: 触发加载更多");
-              onLoadMore();
-              throttleTimer = null;
-            }, 300);
-          }
-        }
-      },
-      {
-        threshold: 0.1,
-        rootMargin: "300px 0px", // 提前300px触发加载
-      }
-    );
-
-    observerRef.current.observe(loadingRef.current);
-
-    return () => {
-      if (observerRef.current) {
-        observerRef.current.disconnect();
-      }
-      if (throttleTimer) {
-        clearTimeout(throttleTimer);
-      }
-    };
-    // 只在这些值变化时重新设置观察者，避免不必要的重置
-  }, [loading, hasMore, isFiltering, onLoadMore]);
-
-  // 当hasMore变化时，重置加载状态
-  useEffect(() => {
-    if (!hasMore) {
-      hasLoadedMoreRef.current = true; // 如果没有更多数据，标记为已经加载过
-    }
-  }, [hasMore]);
 
   // 使用记忆化的列宽，避免不必要的计算
   const columnWidth = useMemo(() => {
@@ -544,7 +652,7 @@ const Waterfall: React.FC<WaterfallProps> = ({
 
   // 添加一个函数重置所有缓存
   const resetAllCaches = useCallback(() => {
-    debugLog("Waterfall: 重置所有缓存");
+    console.log("Waterfall: 重置所有缓存");
     itemHeights.current.clear();
     itemRefs.current.clear();
     hasLoadedMoreRef.current = false;
@@ -574,6 +682,47 @@ const Waterfall: React.FC<WaterfallProps> = ({
       itemRefs.current.clear();
     };
   }, []);
+
+  // 处理卡片高度变化
+  const handlePostCardHeightChange = (postId: string, height: number) => {
+    const prevHeight = itemHeights.current.get(postId);
+    // 只有当高度真正变化时才更新和触发重排
+    // 增加阈值为10px减少微小高度变化造成的重排
+    if (!prevHeight || Math.abs(prevHeight - height) > 10) {
+      console.log(
+        `Waterfall: 卡片 ${postId} 高度变化: ${prevHeight} -> ${height}`
+      );
+      // 保存新的高度
+      itemHeights.current.set(postId, height + GAP);
+      // 标记需要重新布局，立即触发重新布局
+      if (!isFiltering) {
+        setNeedsReflow(true);
+      }
+    }
+  };
+
+  // 首次加载时显示骨架屏
+  useEffect(() => {
+    // 增加一个计时器，如果加载时间过长，也显示骨架屏
+    let loadingTimer: NodeJS.Timeout | null = null;
+
+    if (loading && posts.length === 0) {
+      loadingTimer = setTimeout(() => {
+        setInitialLoading(true);
+      }, 200);
+    } else if (posts.length > 0) {
+      // 如果有数据，等待一小段时间再隐藏骨架屏，确保平滑过渡
+      setTimeout(() => {
+        setInitialLoading(false);
+      }, 300);
+    } else if (!loading) {
+      setInitialLoading(false);
+    }
+
+    return () => {
+      if (loadingTimer) clearTimeout(loadingTimer);
+    };
+  }, [posts.length, loading]);
 
   return (
     <div
@@ -625,10 +774,10 @@ const Waterfall: React.FC<WaterfallProps> = ({
       )}
 
       <div ref={loadingRef} className={styles.loading}>
-        {loading && !isFiltering && hasMore && (
+        {(loading || hasMore) && !isFiltering && (
           <>
             <div className={styles.spinner} />
-            <span>加载中...</span>
+            <span>{loading ? "加载中..." : ""}</span>
           </>
         )}
       </div>

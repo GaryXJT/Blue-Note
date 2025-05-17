@@ -89,8 +89,19 @@ const Home: React.FC = () => {
   // 加载更多数据 - 使用useCallback包装以避免不必要的重新创建
   const loadPosts = useCallback(
     async (cursor?: string, isReset: boolean = false, tabKey?: string) => {
-      // 如果没有更多数据且不是重置操作，直接返回
-      if (loading || (!hasMore && !isReset)) return;
+      console.log("👉 loadPosts直接被调用:", { cursor, isReset, tabKey });
+
+      // 如果正在加载中且不是重置操作，直接返回
+      if (loading && !isReset) {
+        console.log("已经在加载中，跳过请求");
+        return;
+      }
+
+      // 如果已经没有更多数据且不是重置操作，直接返回
+      if (!hasMore && !isReset && !cursor) {
+        console.log("没有更多数据，跳过请求");
+        return;
+      }
 
       // 添加标志防止重复调用
       const loadingKey = `${tabKey || activeProfileTab}-${cursor}-${isReset}`;
@@ -104,10 +115,12 @@ const Home: React.FC = () => {
       const currentTab = tabKey || activeProfileTab;
 
       // 添加调试日志
-      console.log("loadPosts called:", {
+      console.log("⭐ 开始加载数据:", {
         cursor,
         isReset,
         tabKey, // 新增：显示传入的标签页参数
+        hasMore,
+        nextCursor,
         isInitialLoad: !isInitialLoadRef.current,
         isLoggedIn,
         userId: user?.userId,
@@ -121,16 +134,27 @@ const Home: React.FC = () => {
         isInitialLoadRef.current = true;
       }
 
+      // 如果是重置操作，确保首先清空当前数据
+      if (isReset && showProfile) {
+        console.log(`强制重置数据状态，切换到 ${currentTab} 标签页`);
+        setPosts([]);
+        setNextCursor(undefined);
+      }
+
       // 如果zustand状态还未加载完成且用户未登录，等待加载
       if (!isHydrated && isLoggedIn === false) {
         console.log("zustand状态未完全加载，延迟执行");
         // 等待一小段时间后重试
-        setTimeout(() => loadPosts(cursor, isReset), 200);
+        setTimeout(() => loadPosts(cursor, isReset, currentTab), 200);
         return;
       }
 
+      // 设置加载状态
       setLoading(true);
+
       try {
+        console.log("🔍 准备发起API请求");
+
         // 获取当前查看的用户ID (如果在个人资料页)
         const profileUserId = router.query.profile as string;
 
@@ -142,20 +166,10 @@ const Home: React.FC = () => {
         const actualIsLoggedIn = storedToken && storeState.isLoggedIn;
         const actualUserId = storeState.user?.userId;
 
-        // 打印实际状态用于调试
-        console.log("实际认证状态:", {
-          hasToken: !!storedToken,
-          storeLoggedIn: storeState.isLoggedIn,
-          storeUserId: storeState.user?.userId,
-          componentIsLoggedIn: isLoggedIn,
-          componentUserId: user?.userId,
-          isHydrated,
-        });
-
         // 构建API请求参数
         const apiParams: any = {
           cursor: isReset ? undefined : cursor || nextCursor,
-          limit: 10,
+          limit: 2, // 增加每页加载数量，减少加载频率
           search: searchText,
           searchType: searchType === "post" ? "content" : "author",
           type: selectedType as "video" | "image" | undefined,
@@ -187,21 +201,18 @@ const Home: React.FC = () => {
             apiParams.filterType = "follow";
             console.log("应用筛选: 关注用户的帖子");
           }
-
-          // 添加额外日志确认使用的标签页值
-          console.log(
-            `确认使用的标签页值: ${currentTab}, API参数filterType: ${apiParams.filterType}`
-          );
         }
 
-        console.log("API请求参数:", apiParams);
+        console.log("🚀 发送API请求，参数:", apiParams);
         const response = await getCursorPosts(apiParams);
+        console.log("✅ API响应:", response?.data?.data);
 
         if (response && response.data && response.data.data) {
           const postsData = response.data.data.posts || [];
 
           // 如果没有获取到数据，说明没有更多数据了
           if (postsData.length === 0) {
+            console.log("⚠️ API返回空数据，设置hasMore=false");
             setHasMore(false);
             setLoading(false);
             return;
@@ -210,28 +221,57 @@ const Home: React.FC = () => {
           // 处理帖子数据格式
           const formattedPosts = postsData.map(formatPost);
 
-          // 添加到现有帖子列表
-          setPosts((prev) =>
-            isReset ? formattedPosts : [...prev, ...formattedPosts]
-          );
+          // 添加到现有帖子列表 - 确保重置操作时清空现有数据
+          if (isReset) {
+            console.log("重置操作: 使用全新数据替换现有数据");
+            setPosts(formattedPosts);
+          } else {
+            console.log("追加操作: 添加新数据到现有数据");
+            setPosts((prev) => [...prev, ...formattedPosts]);
+          }
 
           // 直接使用API返回的hasMore字段
-          setHasMore(response.data.data.hasMore);
+          const apiHasMore = response.data.data.hasMore === true;
+          console.log("✅ API返回的hasMore值:", apiHasMore);
+
+          // 更新hasMore状态
+          setHasMore(apiHasMore);
 
           // 设置下一次请求的游标
-          if (response.data.data.hasMore && response.data.data.nextCursor) {
+          if (apiHasMore && response.data.data.nextCursor) {
+            console.log("⏭️ 设置下一页游标:", response.data.data.nextCursor);
             setNextCursor(response.data.data.nextCursor);
+          } else {
+            console.log("没有更多数据或没有提供下一页游标");
+            if (!apiHasMore) {
+              setNextCursor(undefined);
+            }
           }
+
+          // 输出当前获取的数据状态
+          console.log("📊 数据加载完成:", {
+            total: isReset
+              ? formattedPosts.length
+              : (prev: any[]) => prev.length + formattedPosts.length,
+            newItems: formattedPosts.length,
+            hasMore: apiHasMore,
+            nextCursor: response.data.data.nextCursor,
+          });
         } else {
           // 如果响应异常，也将hasMore设置为false
+          console.log("❌ 响应异常，设置hasMore=false");
           setHasMore(false);
         }
       } catch (error) {
-        console.error("Failed to fetch posts:", error);
+        console.error("❌ 获取帖子失败:", error);
         message.error("获取帖子失败，请稍后再试");
         setHasMore(false); // 出错时也设置为没有更多数据
       } finally {
-        setLoading(false);
+        // 延迟100ms再设置loading=false，避免UI闪烁
+        setTimeout(() => {
+          setLoading(false);
+          console.log("🏁 加载状态结束，可以继续加载更多");
+        }, 100);
       }
     },
     [
@@ -270,8 +310,6 @@ const Home: React.FC = () => {
           setPosts([]);
           setNextCursor(undefined);
           setHasMore(true);
-
-          // 标记为加载中状态
           setLoading(true);
 
           // 初始标签页设置为posts
@@ -279,6 +317,12 @@ const Home: React.FC = () => {
           setActiveProfileTab("posts");
           prevTabRef.current = "posts"; // 防止触发额外请求
           useAuthStore.getState().setLastUsedTab("posts");
+
+          // 使用短延时确保状态已更新
+          setTimeout(() => {
+            console.log("从首页进入个人资料页，主动触发数据加载");
+            loadPosts(undefined, true, "posts");
+          }, 100);
         }
 
         // 更新显示状态（必须在清空数据后更新）
@@ -291,6 +335,7 @@ const Home: React.FC = () => {
           setNextCursor(undefined);
           setHasMore(true);
           prevTabRef.current = "";
+          setLoading(true);
 
           // 确保DOM更新后再重新渲染瀑布流并加载数据
           setTimeout(() => {
@@ -381,22 +426,20 @@ const Home: React.FC = () => {
     prevTabRef.current = activeProfileTab;
 
     // 确保zustand store中的值与当前标签页一致
-    // 这里不需要更新store，因为ProfileContent的handleTabChange已经更新了
     console.log(`index.tsx: 检测到标签页更新为 ${activeProfileTab}`);
 
     // 每次标签页变化都重置数据并重新加载
+    // 强制立即清空数据，确保UI立即更新
     setPosts([]);
     setNextCursor(undefined);
     setHasMore(true);
+    // 强制设置loading状态，避免显示空数据
+    setLoading(true);
 
-    // 使用setTimeout增加延迟，确保状态更新完成
-    const timer = setTimeout(() => {
-      // 重新加载帖子数据，显式传递当前标签页值
-      console.log(`index.tsx: 执行标签页(${activeProfileTab})变化后的数据加载`);
-      loadPosts(undefined, true, activeProfileTab);
-    }, 200);
-
-    return () => clearTimeout(timer);
+    // 立即请求新标签页的数据，不要使用太长的延迟
+    console.log(`index.tsx: 立即加载${activeProfileTab}标签页数据`);
+    // 使用更短的延时，确保状态更新但不等待太久
+    loadPosts(undefined, true, activeProfileTab);
   }, [activeProfileTab, showProfile, loadPosts]);
 
   // 处理查看个人资料
@@ -486,10 +529,10 @@ const Home: React.FC = () => {
                       posts={posts}
                       loading={loading}
                       onLoadMore={() => {
-                        // 确保不在页面刚加载时就触发加载更多
-                        if (isInitialLoadRef.current) {
-                          loadPosts();
-                        }
+                        // 确保每次调用都会执行loadPosts，不再检查isInitialLoadRef
+                        console.log("⚡ 首页Waterfall触发loadMore");
+                        // 直接调用loadPosts函数加载下一页
+                        loadPosts(nextCursor, false);
                       }}
                       hasMore={hasMore}
                       selectedCategory={selectedCategory}

@@ -1188,8 +1188,16 @@ const Post: React.FC = () => {
                     onChange: handlePageChange,
                   }}
                   onRow={(record) => ({
-                    onClick: () => handleOpenPostModal(record),
-                    style: { cursor: "pointer" },
+                    onClick: (e) => {
+                      // 如果点击的是操作按钮，不触发弹窗
+                      if (
+                        (e.target as HTMLElement).closest(".ant-btn") ||
+                        (e.target as HTMLElement).closest(".ant-popover-open")
+                      ) {
+                        return;
+                      }
+                      handleOpenPostModal(record);
+                    },
                   })}
                   className={styles.clickableTable}
                   loading={loading}

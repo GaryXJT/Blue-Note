@@ -97,31 +97,23 @@ const ProfileContent: React.FC<ProfileContentProps> = ({
     // 设置切换标志，触发平滑过渡
     setIsTabChanging(true);
 
-    // 设置新的活动标签页
-    setActiveProfileTab(key);
-
     // 更新zustand store中的lastUsedTab
     useAuthStore.getState().setLastUsedTab(key);
     console.log(`ProfileContent: 已更新store中的lastUsedTab为 ${key}`);
 
-    // 重置数据状态
-    console.log("ProfileContent: 重置数据状态并准备加载新数据");
+    // 重要：先设置新的活动标签页，确保接下来的数据加载使用正确的标签
+    setActiveProfileTab(key);
 
-    // 使用setTimeout确保状态更新完成，同时避免多次调用
+    // 重置数据状态并立即加载新数据
+    console.log(`ProfileContent: 准备加载${key}标签页的数据`);
+
+    // 直接触发数据加载，传递isReset=true确保清空现有数据
+    handleLoadMorePosts(undefined, true, key);
+
+    // 设置一个短暂延迟后重置切换标志，确保过渡动画完成
     setTimeout(() => {
-      console.log(
-        `ProfileContent: 开始加载${key}标签页的数据 (直接使用key参数而非状态)`
-      );
-
-      // 关键修改：直接传递tabKey参数给handleLoadMorePosts，而不是依赖组件状态
-      // 这确保了我们使用的是最新的标签页值，而不是可能尚未更新的组件状态
-      handleLoadMorePosts(undefined, true, key);
-
-      // 3秒后重置切换标志，确保过渡动画有足够时间完成
-      setTimeout(() => {
-        setIsTabChanging(false);
-      }, 300);
-    }, 100);
+      setIsTabChanging(false);
+    }, 300);
   };
 
   // 根据 URL 中的 userId 和当前登录用户的 userId 判断是否是自己的资料页
@@ -358,21 +350,27 @@ const ProfileContent: React.FC<ProfileContentProps> = ({
     // 标记为已初始化
     isInitializedRef.current = true;
 
+    // 检查是否已经有帖子数据
+    if (profilePosts.length > 0) {
+      console.log("ProfileContent: 已有帖子数据，跳过初始加载");
+      return;
+    }
+
     // 组件挂载时，加载初始标签页数据
     console.log(
       "ProfileContent: 组件首次挂载，加载标签页数据:",
       initialTabRef.current
     );
 
-    // 延迟时间更短，减少用户等待
+    // 只需等待很短时间确保组件完全挂载
     const timer = setTimeout(() => {
       console.log("ProfileContent: 组件挂载后，开始加载初始数据");
-      // 使用ref中保存的函数，同时传递初始标签页值
+      // 调用加载函数，显式传递重置标志和当前标签页
       initialLoadMoreRef.current(undefined, true, initialTabRef.current);
-    }, 100); // 减少延迟时间，让数据更快加载
+    }, 50); // 减少延迟时间，加快初始加载
 
     return () => clearTimeout(timer);
-  }, []); // 保持空依赖数组
+  }, [profilePosts.length]); // 添加profilePosts.length作为依赖项
 
   return (
     <div className={styles.container}>
@@ -560,12 +558,25 @@ const ProfileContent: React.FC<ProfileContentProps> = ({
                       className={`${styles.profileWaterfallWrapper} ${
                         isLoadingPosts ? styles.isLoading : ""
                       }`}
+                      style={{ minHeight: "200px" }} // 确保容器有足够高度
                     >
                       <Waterfall
                         key={`profile-waterfall-${activeProfileTab}`}
                         posts={profilePosts}
                         loading={isLoadingPosts}
-                        onLoadMore={() => handleLoadMorePosts()}
+                        onLoadMore={() => {
+                          console.log(
+                            "⚡ 个人资料页Waterfall触发loadMore",
+                            activeProfileTab
+                          );
+
+                          // 确保传递正确的标签页参数
+                          handleLoadMorePosts(
+                            undefined,
+                            false,
+                            activeProfileTab
+                          );
+                        }}
                         hasMore={true}
                       />
                     </div>
@@ -591,12 +602,25 @@ const ProfileContent: React.FC<ProfileContentProps> = ({
                       className={`${styles.profileWaterfallWrapper} ${
                         isLoadingPosts ? styles.isLoading : ""
                       }`}
+                      style={{ minHeight: "200px" }} // 确保容器有足够高度
                     >
                       <Waterfall
                         key={`profile-waterfall-${activeProfileTab}`}
                         posts={profilePosts}
                         loading={isLoadingPosts}
-                        onLoadMore={() => handleLoadMorePosts()}
+                        onLoadMore={() => {
+                          console.log(
+                            "⚡ 个人资料页Waterfall触发loadMore",
+                            activeProfileTab
+                          );
+
+                          // 确保传递正确的标签页参数
+                          handleLoadMorePosts(
+                            undefined,
+                            false,
+                            activeProfileTab
+                          );
+                        }}
                         hasMore={true}
                       />
                     </div>
@@ -622,12 +646,25 @@ const ProfileContent: React.FC<ProfileContentProps> = ({
                       className={`${styles.profileWaterfallWrapper} ${
                         isLoadingPosts ? styles.isLoading : ""
                       }`}
+                      style={{ minHeight: "200px" }} // 确保容器有足够高度
                     >
                       <Waterfall
                         key={`profile-waterfall-${activeProfileTab}`}
                         posts={profilePosts}
                         loading={isLoadingPosts}
-                        onLoadMore={() => handleLoadMorePosts()}
+                        onLoadMore={() => {
+                          console.log(
+                            "⚡ 个人资料页Waterfall触发loadMore",
+                            activeProfileTab
+                          );
+
+                          // 确保传递正确的标签页参数
+                          handleLoadMorePosts(
+                            undefined,
+                            false,
+                            activeProfileTab
+                          );
+                        }}
                         hasMore={true}
                       />
                     </div>
