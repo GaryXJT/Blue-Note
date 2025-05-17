@@ -13,6 +13,7 @@ const categories = [
   { id: "game", name: "游戏" },
   { id: "travel", name: "旅行" },
   { id: "health", name: "健康" },
+  { id: "other", name: "其他" },
 ];
 
 interface CategoryNavProps {

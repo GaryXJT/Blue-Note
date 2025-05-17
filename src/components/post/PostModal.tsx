@@ -736,27 +736,49 @@ const PostModal: React.FC<PostModalProps> = ({
         <div className={styles.content}>
           <div className={styles.imageSection}>
             <div className={styles.imageWrapper}>
-              <img
-                src={
-                  images[currentIndex]!.startsWith("http")
-                    ? images[currentIndex]
-                    : `http://localhost:8080${images[currentIndex]}`
-                }
-                alt={`${post.title} - 图片 ${currentIndex + 1}`}
-                className={styles.mainImage}
-              />
+              {post.type === "video" ? (
+                // 如果是视频类型，渲染视频元素
+                <video
+                  src={
+                    images &&
+                    images[currentIndex] &&
+                    (images[currentIndex].startsWith("http")
+                      ? images[currentIndex]
+                      : `http://localhost:8080${images[currentIndex]}`)
+                  }
+                  className={styles.mainVideo}
+                  controls
+                  autoPlay
+                />
+              ) : (
+                // 如果是图片类型，渲染图片元素
+                <img
+                  src={
+                    images &&
+                    images[currentIndex] &&
+                    (images[currentIndex].startsWith("http")
+                      ? images[currentIndex]
+                      : `http://localhost:8080${images[currentIndex]}`)
+                  }
+                  alt={post.title}
+                  className={styles.mainImage}
+                />
+              )}
             </div>
+
             {images.length > 1 && (
               <>
                 <button
                   className={`${styles.navBtn} ${styles.prevBtn}`}
                   onClick={handlePrev}
+                  disabled={currentIndex === 0}
                 >
                   <LeftOutlined />
                 </button>
                 <button
                   className={`${styles.navBtn} ${styles.nextBtn}`}
                   onClick={handleNext}
+                  disabled={currentIndex === images.length - 1}
                 >
                   <RightOutlined />
                 </button>
@@ -765,13 +787,13 @@ const PostModal: React.FC<PostModalProps> = ({
                     <button
                       key={index}
                       className={`${styles.dot} ${
-                        index === currentIndex ? styles.active : ""
+                        currentIndex === index ? styles.active : ""
                       }`}
                       onClick={(e) => {
                         e.stopPropagation();
                         setCurrentIndex(index);
                       }}
-                    />
+                    ></button>
                   ))}
                 </div>
               </>

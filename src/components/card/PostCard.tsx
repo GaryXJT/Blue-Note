@@ -1,6 +1,10 @@
 import React, { useState, useRef, useEffect, memo } from "react";
 import { Post } from "@/api/types";
-import { HeartOutlined, HeartFilled } from "@ant-design/icons";
+import {
+  HeartOutlined,
+  HeartFilled,
+  PlayCircleFilled,
+} from "@ant-design/icons";
 import PostModal from "../post/PostModal";
 import styles from "./PostCard.module.scss";
 import { Skeleton } from "antd";
@@ -34,7 +38,7 @@ export const PostCardSkeleton: React.FC = () => {
 // 使用memo优化不必要的重渲染
 const PostCard: React.FC<PostCardProps> = memo(({ post, onHeightChange }) => {
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const [imageLoaded, setImageLoaded] = useState(false);
+  const [mediaLoaded, setMediaLoaded] = useState(false);
   const [isLiked, setIsLiked] = useState(post.likedByUser || false);
   const [likesCount, setLikesCount] = useState(post.likes);
   // 默认比例设置根据帖子类型，避免初始比例变化引起的抽搐
@@ -116,7 +120,7 @@ const PostCard: React.FC<PostCardProps> = memo(({ post, onHeightChange }) => {
       }
     }
 
-    setImageLoaded(true);
+    setMediaLoaded(true);
 
     // 图片加载完成后等待一小段时间再报告高度，确保布局稳定
     setTimeout(() => {
@@ -148,8 +152,8 @@ const PostCard: React.FC<PostCardProps> = memo(({ post, onHeightChange }) => {
     });
   };
 
-  // 获取图片URL
-  const getImageUrl = () => {
+  // 获取媒体URL
+  const getMediaUrl = () => {
     if (!post.coverUrl) return "";
 
     return post.coverUrl.startsWith("http")
@@ -159,7 +163,7 @@ const PostCard: React.FC<PostCardProps> = memo(({ post, onHeightChange }) => {
 
   // 卡片高度变化时通知父组件
   useEffect(() => {
-    if (imageLoaded && !hasReportedHeight.current) {
+    if (mediaLoaded && !hasReportedHeight.current) {
       reportHeight();
     }
 
@@ -169,18 +173,46 @@ const PostCard: React.FC<PostCardProps> = memo(({ post, onHeightChange }) => {
         clearTimeout(heightUpdateTimer.current);
       }
     };
-  }, [imageLoaded, imageRatio, post.id]);
+  }, [mediaLoaded, imageRatio, post.id]);
 
   // 图片加载错误处理
-  const handleImageError = () => {
-    console.error(`Failed to load image for post: ${post.id}`);
+  const handleMediaError = () => {
+    console.error(`Failed to load media for post: ${post.id}`);
     // 保持原来的比例，不要改变
-    setImageLoaded(true);
+    setMediaLoaded(true);
 
     // 通知高度变化
     setTimeout(() => {
       reportHeight();
     }, 50);
+  };
+
+  // 判断当前帖子是否为视频类型
+  const isVideo = post.type === "video";
+
+  // 生成媒体内容
+  const renderMedia = () => {
+    const mediaUrl = getMediaUrl();
+
+    return (
+      <>
+        <img
+          ref={imgRef}
+          src={mediaUrl}
+          alt={post.title}
+          className={styles.image}
+          loading="lazy"
+          onLoad={handleImageLoad}
+          onError={handleMediaError}
+          style={{ opacity: mediaLoaded ? 1 : 0 }} // 使用opacity代替display确保正确计算高度
+        />
+        {isVideo && (
+          <div className={styles.playButton}>
+            <PlayCircleFilled />
+          </div>
+        )}
+      </>
+    );
   };
 
   return (
@@ -198,19 +230,10 @@ const PostCard: React.FC<PostCardProps> = memo(({ post, onHeightChange }) => {
           className={styles.imageWrapper}
           style={{ paddingBottom: imageRatio }}
         >
-          <img
-            ref={imgRef}
-            src={getImageUrl()}
-            alt={post.title}
-            className={styles.image}
-            loading="lazy"
-            onLoad={handleImageLoad}
-            onError={handleImageError}
-            style={{ opacity: imageLoaded ? 1 : 0 }} // 使用opacity代替display确保正确计算高度
-          />
+          {renderMedia()}
 
           {/* 加载时显示骨架屏 */}
-          {!imageLoaded && (
+          {!mediaLoaded && (
             <div className={styles.imageSkeleton}>
               <Skeleton.Image active className={styles.skeletonImage} />
             </div>

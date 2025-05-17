@@ -125,6 +125,63 @@
   transform: translateZ(0); /* 启用GPU加速 */
 }
 
+// 视频容器样式
+.videoContainer {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  border-radius: 8px 8px 0 0;
+  overflow: hidden;
+  transform: translateZ(0); /* 启用GPU加速 */
+}
+
+// 视频样式
+.video {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  border-radius: 8px 8px 0 0;
+  transition: opacity 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+  will-change: opacity;
+  transform: translateZ(0); /* 启用GPU加速 */
+}
+
+// 播放按钮样式
+.playButton {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 60px;
+  height: 60px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  z-index: 5;
+  transition: all 0.3s ease;
+
+  svg {
+    font-size: 60px;
+    color: rgba(255, 255, 255, 0.8);
+    filter: drop-shadow(0 2px 8px rgba(0, 0, 0, 0.3));
+    transition: all 0.3s ease;
+  }
+
+  &:hover {
+    svg {
+      color: rgba(255, 255, 255, 1);
+      transform: scale(1.1);
+    }
+  }
+}
+
+// 图片和视频共用的骨架屏样式
 .imageSkeleton {
   position: absolute;
   top: 0;
