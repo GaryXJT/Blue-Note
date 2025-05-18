@@ -4,6 +4,7 @@ import { useRouter } from "next/router";
 import useAuthStore from "@/store/useAuthStore";
 import ThemeProvider from "@/components/theme/ThemeProvider";
 import "@/styles/globals.scss";
+import config from "@/config";
 
 // 定义需要登录才能访问的路由
 const protectedRoutes = ["/post/drafts", "/post/works", "/admin"];
@@ -25,7 +26,7 @@ export default function App({ Component, pageProps }: AppProps) {
     setIsHydrated(true);
 
     // 检查localStorage中的token和当前zustand状态
-    const storedToken = localStorage.getItem("token");
+    const storedToken = localStorage.getItem(config.cache.tokenKey);
 
     // 如果localStorage有token但zustand没有登录状态，尝试恢复登录状态
     if (storedToken && !isLoggedIn) {

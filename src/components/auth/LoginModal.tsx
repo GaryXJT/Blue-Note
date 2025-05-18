@@ -6,10 +6,12 @@ import {
   SafetyOutlined,
   KeyOutlined,
 } from "@ant-design/icons";
-import styles from "./LoginModal.module.scss";
+import styles from "@/styles/LoginModal.module.scss";
 import { useRouter } from "next/router";
-import { authAPI, profileAPI } from "../../api/services";
-import useAuthStore from "../../store/useAuthStore";
+import * as authAPI from "@/api/services/auth";
+import * as profileAPI from "@/api/services/profile";
+import useAuthStore from "@/store/useAuthStore";
+import config from "@/config";
 
 interface LoginModalProps {
   visible: boolean;

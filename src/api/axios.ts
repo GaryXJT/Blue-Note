@@ -75,6 +75,7 @@ instance.interceptors.response.use(
         case 401:
           // 未授权，清除token
           // localStorage.removeItem("token");
+          // localStorage.removeItem(config.cache.tokenKey);
 
           // 只有当当前路径不是根路径时才跳转
           // if (window.location.pathname !== "/") {

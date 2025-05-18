@@ -10,6 +10,7 @@ import styles from "@/styles/Home.module.scss";
 import useAuthStore from "@/store/useAuthStore";
 import { getCursorPosts } from "@/api/services/posts";
 import { message, Modal } from "antd";
+import config from "@/config";
 
 // 扩展window类型，添加_lastLoadingKey属性
 declare global {
@@ -166,7 +167,7 @@ const Home: React.FC = () => {
         const profileUserId = router.query.profile as string;
 
         // 检查localStorage中的token，确保登录状态一致
-        const storedToken = localStorage.getItem("token");
+        const storedToken = localStorage.getItem(config.cache.tokenKey);
         const storeState = useAuthStore.getState();
 
         // 额外的安全检查 - 确保zustand状态与localStorage一致
@@ -452,7 +453,7 @@ const Home: React.FC = () => {
           const profileUserId = router.query.profile as string;
 
           // 检查localStorage中的token，确保登录状态一致
-          const storedToken = localStorage.getItem("token");
+          const storedToken = localStorage.getItem(config.cache.tokenKey);
           const storeState = useAuthStore.getState();
 
           // 额外的安全检查 - 确保zustand状态与localStorage一致
@@ -646,7 +647,7 @@ const Home: React.FC = () => {
         const profileUserId = router.query.profile as string;
 
         // 检查localStorage中的token，确保登录状态一致
-        const storedToken = localStorage.getItem("token");
+        const storedToken = localStorage.getItem(config.cache.tokenKey);
         const storeState = useAuthStore.getState();
 
         // 额外的安全检查 - 确保zustand状态与localStorage一致

@@ -30,6 +30,7 @@ import useAuthStore from "@/store/useAuthStore";
 import styles from "./EditProfileModal.module.scss";
 import { provinceData } from "@/data/location"; // 我们需要创建这个文件
 import { profileAPI } from "@/api/services"; // 导入新的profile API
+import config from "@/config";
 
 const { Option } = Select;
 const { TextArea } = Input;
@@ -149,7 +150,7 @@ const EditProfileModal: React.FC<EditProfileModalProps> = ({
       // 处理头像和资料更新
       try {
         // 检查token是否存在
-        const token = localStorage.getItem("token");
+        const token = localStorage.getItem(config.cache.tokenKey);
         console.log("更新个人资料时的token:", token ? "存在" : "不存在");
         if (!token) {
           message.error("您的登录已过期，请重新登录");

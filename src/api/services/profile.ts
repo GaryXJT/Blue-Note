@@ -1,7 +1,7 @@
 import { request } from "../axios";
 import { UserInfo, User } from "@/api/types";
 import { AxiosResponse } from "axios";
-
+import config from "@/config";
 
 // 获取指定用户的个人资料
 export const getUserProfile = (userId: string) => {
@@ -39,7 +39,7 @@ export const updateUserProfile = (data: {
     });
 
     // 获取token
-    const token = localStorage.getItem("token");
+    const token = localStorage.getItem(config.cache.tokenKey);
 
     // 发送含有文件的FormData请求
     return request<AxiosResponse<User>>({
@@ -53,7 +53,7 @@ export const updateUserProfile = (data: {
     });
   } else {
     // 获取token
-    const token = localStorage.getItem("token");
+    const token = localStorage.getItem(config.cache.tokenKey);
 
     // 常规JSON请求 (当avatar是URL字符串或未定义时)
     return request<AxiosResponse<User>>({
