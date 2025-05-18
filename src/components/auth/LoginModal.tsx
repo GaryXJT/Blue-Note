@@ -6,7 +6,7 @@ import {
   SafetyOutlined,
   KeyOutlined,
 } from "@ant-design/icons";
-import styles from "@/styles/LoginModal.module.scss";
+import styles from "./LoginModal.module.scss";
 import { useRouter } from "next/router";
 import * as authAPI from "@/api/services/auth";
 import * as profileAPI from "@/api/services/profile";
