@@ -12,7 +12,7 @@ const config = {
     baseURL:
       process.env.NEXT_PUBLIC_API_BASE_URL ||
       (isProd
-        ? "https://kzomycfaghsw.sealoshzh.site/api/v1" // 生产环境API地址
+        ? "https://yprwajgspanh.sealoshzh.site/api/v1" // 生产环境API地址
         : "http://localhost:8080/api/v1"), // 开发环境API地址
     timeout: 10000, // 请求超时时间(ms)
     withCredentials: false, // 是否携带cookie

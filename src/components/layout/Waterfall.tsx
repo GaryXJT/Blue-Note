@@ -9,20 +9,7 @@ import React, {
 import PostCard, { PostCardSkeleton } from "../card/PostCard";
 import styles from "./Waterfall.module.scss";
 import { Post } from "@/api/types";
-import { Skeleton } from "antd";
 import { useRouter } from "next/router";
-
-// 添加一个简单的节流函数
-function throttle(func: Function, delay: number) {
-  let lastCall = 0;
-  return function (...args: any[]) {
-    const now = Date.now();
-    if (now - lastCall >= delay) {
-      lastCall = now;
-      func(...args);
-    }
-  };
-}
 
 interface WaterfallProps {
   posts: Post[];
@@ -54,17 +41,12 @@ const Waterfall: React.FC<WaterfallProps> = ({
   const isProfilePage = !!router.query.profile; // 判断是否在个人资料页
   const containerRef = useRef<HTMLDivElement>(null);
   const [columns, setColumns] = useState(getInitialColumns()); // 使用函数获取初始列数
-  const [columnHeights, setColumnHeights] = useState<number[]>(
-    new Array(getInitialColumns()).fill(0)
-  ); // 初始化为正确的列数
   const [layout, setLayout] = useState<Post[][]>(
     Array.from({ length: getInitialColumns() }, () => [])
   ); // 初始化为正确的列数
-  const observerRef = useRef<IntersectionObserver | null>(null);
   const loadingRef = useRef<HTMLDivElement>(null);
   const itemRefs = useRef<Map<string, HTMLDivElement>>(new Map());
   const itemHeights = useRef<Map<string, number>>(new Map());
-  const resizeTimerRef = useRef<NodeJS.Timeout | null>(null);
   const [initialLoading, setInitialLoading] = useState(posts.length === 0);
   const [needsReflow, setNeedsReflow] = useState(false);
   const [filteredPosts, setFilteredPosts] = useState<Post[]>([]);
@@ -221,7 +203,6 @@ const Waterfall: React.FC<WaterfallProps> = ({
 
     // 使用批量更新
     setLayout(newLayout);
-    setColumnHeights(heights);
 
     console.log("Waterfall: 初始布局分配完成");
   };
@@ -254,7 +235,6 @@ const Waterfall: React.FC<WaterfallProps> = ({
     // 使用较短的延迟，因为我们在后面会使用requestAnimationFrame
     const timer = setTimeout(() => {
       // 重置列高度，准备重新计算
-      setColumnHeights(new Array(columns).fill(0));
       setNeedsReflow(true);
       setIsFiltering(false); // 标记筛选完成
     }, 100);
@@ -284,27 +264,6 @@ const Waterfall: React.FC<WaterfallProps> = ({
       setColumns(newColumns);
     }
   }, [columns]);
-
-  // 获取元素实际高度
-  const getItemHeight = (post: Post): number => {
-    // 首先检查是否已经有测量过的高度
-    const cachedHeight = itemHeights.current.get(post.id);
-    if (cachedHeight) {
-      return cachedHeight + GAP;
-    }
-
-    // 如果没有测量过，检查DOM元素
-    const element = itemRefs.current.get(post.id);
-    if (element) {
-      const height = element.offsetHeight + GAP;
-      // 缓存高度
-      itemHeights.current.set(post.id, height);
-      return height;
-    }
-
-    // 如果没有高度信息，返回默认值
-    return 350 + GAP; // 默认高度
-  };
 
   // 分配项目到最短的列 - 只追加新内容，避免闪烁
   const distributeItems = useCallback(() => {
@@ -394,7 +353,6 @@ const Waterfall: React.FC<WaterfallProps> = ({
 
         // 更新状态
         setLayout(newLayout);
-        setColumnHeights(newHeights);
         console.log("布局已更新，列数调整为:", columns);
       }
 
@@ -436,7 +394,6 @@ const Waterfall: React.FC<WaterfallProps> = ({
 
     // 设置新的布局和高度
     setLayout(newLayout);
-    setColumnHeights(heights);
 
     console.log("Waterfall: 新帖子添加完成", {
       columns,
@@ -467,7 +424,6 @@ const Waterfall: React.FC<WaterfallProps> = ({
         });
       });
 
-      setColumnHeights(updatedHeights);
       setNeedsReflow(false);
     }
   }, [needsReflow, isFiltering, filteredPosts.length, layout, columns]);
@@ -513,7 +469,6 @@ const Waterfall: React.FC<WaterfallProps> = ({
 
       // 设置新布局
       setLayout(newLayout);
-      setColumnHeights(heights);
     }
   }, [columns, filteredPosts, layout]);
 
@@ -566,18 +521,6 @@ const Waterfall: React.FC<WaterfallProps> = ({
     }`;
   }, [isFiltering]);
 
-  // 生成骨架屏
-  const renderSkeletons = () => {
-    // 只在初始加载时显示骨架屏
-    if (!initialLoading) return null;
-
-    const skeletons = [];
-    for (let i = 0; i < columns * 2; i++) {
-      skeletons.push(<PostCardSkeleton key={`skeleton-${i}`} />);
-    }
-    return skeletons;
-  };
-
   // 没有匹配内容时显示的提示
   const renderEmptyState = () => {
     // 如果正在加载中，不显示空状态
@@ -606,9 +549,6 @@ const Waterfall: React.FC<WaterfallProps> = ({
     }
     return null;
   };
-
-  // 判断是否应该显示内容
-  const shouldShowContent = layout.length > 0 && !isFiltering;
 
   // 添加一个ref来保存上一次渲染的布局，避免布局抖动
   const prevLayoutRef = useRef<Post[][]>([]);
@@ -651,7 +591,6 @@ const Waterfall: React.FC<WaterfallProps> = ({
     itemHeights.current.clear();
     itemRefs.current.clear();
     hasLoadedMoreRef.current = false;
-    setColumnHeights(new Array(columns).fill(0));
     setNeedsReflow(true);
   }, [columns]);
 

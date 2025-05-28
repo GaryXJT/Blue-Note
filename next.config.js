@@ -4,7 +4,7 @@ const path = require("path");
 const nextConfig = {
   reactStrictMode: false,
   images: {
-    domains: ["localhost"],
+    domains: ["localhost", "yrohjdxmhthm.sealoshzh.site"],
     unoptimized: true,
   },
   sassOptions: {
